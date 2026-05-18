@@ -53,7 +53,7 @@ shirokuma-flow is split into multiple binaries. `install.sh` only installs `shir
 
 | Binary | Package | Purpose |
 |--------|---------|---------|
-| `shirokuma-flow` | `@shirokuma-library/shirokuma-flow` | GitHub workflow management (the main CLI) |
+| `shirokuma-flow` | `@shirokuma-library/flow` | GitHub workflow management (the main CLI) |
 | `shirokuma-portal` | `@shirokuma-library/portal` | Documentation generation |
 | `shirokuma-lint` | `@shirokuma-library/lint` | Structural lint for code, docs, tests |
 | `shirokuma-md` | `@shirokuma-library/markdown` | LLM-optimized Markdown bundle / lint |

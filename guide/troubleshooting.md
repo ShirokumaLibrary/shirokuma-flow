@@ -12,7 +12,7 @@
 
 ```bash
 # npm グローバルインストールの場合
-npm list -g @shirokuma-library/shirokuma-flow
+npm list -g @shirokuma-library/flow
 
 # ワンライナーインストールの場合、~/.local/bin がパスに含まれているか確認
 echo $PATH | tr ':' '\n' | grep local
@@ -286,7 +286,7 @@ rm -f ~/.local/bin/shirokuma-flow
 rm -rf ~/.local/share/shirokuma-flow
 
 # npm 経由の場合
-npm uninstall -g @shirokuma-library/shirokuma-flow
+npm uninstall -g @shirokuma-library/flow
 ```
 
 ### プロジェクトごとのファイルを削除する

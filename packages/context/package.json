@@ -1,6 +1,6 @@
 {
   "name": "@shirokuma-library/context",
-  "version": "0.3.0-alpha.130",
+  "version": "0.3.0-alpha.134",
   "description": "External documentation fetching CLI for shirokuma workflows.",
   "type": "module",
   "private": false,
@@ -49,5 +49,8 @@
     "type": "git",
     "url": "git+https://github.com/ShirokumaDevelopment/shirokuma-docs.git",
     "directory": "packages/context"
+  },
+  "publishConfig": {
+    "access": "public"
   }
 }

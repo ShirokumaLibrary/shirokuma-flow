@@ -1,4 +1,4 @@
-# @shirokuma-library/shirokuma-flow
+# @shirokuma-library/flow
 
 AI 駆動の開発ワークフロー管理 CLI。GitHub Projects / Issues / Discussions と Claude Code スキルを統合し、計画 → 実装 → レビュー → リリースの開発サイクルを一元管理する。
 
@@ -17,7 +17,7 @@ AI 駆動の開発ワークフロー管理 CLI。GitHub Projects / Issues / Disc
 curl -fsSL https://raw.githubusercontent.com/ShirokumaLibrary/shirokuma-flow/main/install.sh | bash
 
 # または npm
-npm install -g @shirokuma-library/shirokuma-flow
+npm install -g @shirokuma-library/flow
 ```
 
 ドキュメント生成系・Markdown 管理・コードマップ抽出・外部ドキュメント取得は別パッケージとして配布されている。必要に応じて個別にインストールする:

@@ -47,10 +47,10 @@ curl -fsSL https://raw.githubusercontent.com/ShirokumaLibrary/shirokuma-flow/mai
 
 ```bash
 # npm
-npm install -g @shirokuma-library/shirokuma-flow
+npm install -g @shirokuma-library/flow
 
 # pnpm
-pnpm add -g @shirokuma-library/shirokuma-flow
+pnpm add -g @shirokuma-library/flow
 ```
 
 ### 方法 C: 関連バイナリを追加で入れる
@@ -253,7 +253,7 @@ Discussion カテゴリ、Project フィールド、ワークフロー自動化�
 curl -fsSL https://raw.githubusercontent.com/ShirokumaLibrary/shirokuma-flow/main/install.sh | bash
 
 # npm の場合
-npm update -g @shirokuma-library/shirokuma-flow
+npm update -g @shirokuma-library/flow
 ```
 
 ### ステップ 2: プラグイン・ルール・キャッシュを更新する

@@ -1526,7 +1526,7 @@ export interface CliUpdateResult {
  *
  * `import.meta.url` からファイルパスを取得し、`/node_modules/` の最初の出現位置を
  * 基に wrapper ディレクトリを特定する。wrapper ディレクトリの `package.json` に
- * `@shirokuma-library/shirokuma-flow` の依存があることを検証する。
+ * `@shirokuma-library/flow` の依存があることを検証する。
  *
  * 開発環境（リポジトリ直接実行）の場合は `null` を返す。
  *
@@ -1550,7 +1550,7 @@ export function getCliInstallDir(): string | null {
 
     const content = readFileSync(pkgPath, "utf-8");
     const pkg = JSON.parse(content) as { dependencies?: Record<string, string> };
-    if (!pkg.dependencies?.["@shirokuma-library/shirokuma-flow"]) {
+    if (!pkg.dependencies?.["@shirokuma-library/flow"]) {
       return null;
     }
 
@@ -1598,7 +1598,7 @@ export function updateCliPackage(
   try {
     execFileSync(
       "npm",
-      ["install", "@shirokuma-library/shirokuma-flow@latest"],
+      ["install", "@shirokuma-library/flow@latest"],
       { cwd: installDir, stdio: "pipe", timeout: 90000 },
     );
   } catch (error) {

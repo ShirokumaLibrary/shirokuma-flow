@@ -74,7 +74,7 @@ shirokuma-flow は複数のバイナリに分かれている。`install.sh` は 
 
 | バイナリ | パッケージ | 用途 |
 |---------|-----------|------|
-| `shirokuma-flow` | `@shirokuma-library/shirokuma-flow` | GitHub ワークフロー管理（CLI のメイン） |
+| `shirokuma-flow` | `@shirokuma-library/flow` | GitHub ワークフロー管理（CLI のメイン） |
 | `shirokuma-portal` | `@shirokuma-library/portal` | ドキュメント生成 |
 | `shirokuma-lint` | `@shirokuma-library/lint` | コード・ドキュメント・テストの構造 lint |
 | `shirokuma-md` | `@shirokuma-library/markdown` | LLM 最適化 Markdown 結合・lint |

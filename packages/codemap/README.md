@@ -36,5 +36,5 @@ shirokuma-codemap --help
 
 ## 関連パッケージ
 
-- [`@shirokuma-library/shirokuma-flow`](https://www.npmjs.com/package/@shirokuma-library/shirokuma-flow) — ワークフロー管理 CLI
+- [`@shirokuma-library/flow`](https://www.npmjs.com/package/@shirokuma-library/flow) — ワークフロー管理 CLI
 - [`@shirokuma-library/portal`](https://www.npmjs.com/package/@shirokuma-library/portal) — ドキュメントポータル生成

@@ -34,7 +34,7 @@ NC='\033[0m' # No Color
 # Installation directories
 INSTALL_DIR="$HOME/.local/share/shirokuma-flow"
 BIN_DIR="$HOME/.local/bin"
-PACKAGE_NAME="@shirokuma-library/shirokuma-flow"
+PACKAGE_NAME="@shirokuma-library/flow"
 BIN_NAME="shirokuma-flow"
 
 # Channel (stable | prerelease) - controls npm dist-tag
