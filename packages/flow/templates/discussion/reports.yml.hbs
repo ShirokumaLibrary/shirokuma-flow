@@ -1,0 +1,68 @@
+title: ""
+labels: []
+body:
+  - type: markdown
+    attributes:
+      value: |
+        ## {{t "reports.header.title"}}
+        {{t "reports.header.description"}}
+
+  - type: dropdown
+    id: report-type
+    attributes:
+      label: {{t "reports.reportType.label"}}
+      description: {{t "reports.reportType.description"}}
+      options:
+        - Code Review
+        - Security Review
+        - Implementation
+        - Design
+        - Other
+    validations:
+      required: true
+
+  - type: textarea
+    id: summary
+    attributes:
+      label: {{t "reports.summary.label"}}
+      description: {{t "reports.summary.description"}}
+      placeholder: |
+        {{ti "reports.summary.placeholder" 8}}
+    validations:
+      required: true
+
+  - type: textarea
+    id: findings
+    attributes:
+      label: {{t "reports.findings.label"}}
+      description: {{t "reports.findings.description"}}
+      placeholder: |
+        {{ti "reports.findings.placeholder" 8}}
+
+  - type: textarea
+    id: files-involved
+    attributes:
+      label: {{t "reports.filesInvolved.label"}}
+      description: {{t "reports.filesInvolved.description"}}
+      placeholder: |
+        {{ti "reports.filesInvolved.placeholder" 8}}
+
+  - type: checkboxes
+    id: verification
+    attributes:
+      label: {{t "reports.verification.label"}}
+      description: {{t "reports.verification.description"}}
+      options:
+        - label: {{t "reports.verification.options.tests"}}
+        - label: {{t "reports.verification.options.lint"}}
+        - label: {{t "reports.verification.options.typecheck"}}
+        - label: {{t "reports.verification.options.build"}}
+        - label: {{t "reports.verification.options.manual"}}
+
+  - type: textarea
+    id: notes
+    attributes:
+      label: {{t "reports.notes.label"}}
+      description: {{t "reports.notes.description"}}
+      placeholder: |
+        {{ti "reports.notes.placeholder" 8}}

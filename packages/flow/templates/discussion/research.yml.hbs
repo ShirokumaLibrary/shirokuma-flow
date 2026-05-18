@@ -1,0 +1,61 @@
+title: ""
+labels: []
+body:
+  - type: markdown
+    attributes:
+      value: |
+        ## {{t "research.header.title"}}
+        {{t "research.header.description"}}
+
+  - type: textarea
+    id: question
+    attributes:
+      label: {{t "research.question.label"}}
+      description: {{t "research.question.description"}}
+      placeholder: |
+        {{ti "research.question.placeholder" 8}}
+    validations:
+      required: true
+
+  - type: textarea
+    id: context
+    attributes:
+      label: {{t "research.context.label"}}
+      description: {{t "research.context.description"}}
+      placeholder: |
+        {{ti "research.context.placeholder" 8}}
+
+  - type: textarea
+    id: scope
+    attributes:
+      label: {{t "research.scope.label"}}
+      description: {{t "research.scope.description"}}
+      placeholder: |
+        {{ti "research.scope.placeholder" 8}}
+
+  - type: textarea
+    id: findings
+    attributes:
+      label: {{t "research.findings.label"}}
+      description: {{t "research.findings.description"}}
+      placeholder: |
+        {{ti "research.findings.placeholder" 8}}
+
+  - type: textarea
+    id: conclusion
+    attributes:
+      label: {{t "research.conclusion.label"}}
+      description: {{t "research.conclusion.description"}}
+      placeholder: |
+        {{ti "research.conclusion.placeholder" 8}}
+
+  - type: checkboxes
+    id: next-actions
+    attributes:
+      label: {{t "research.nextActions.label"}}
+      description: {{t "research.nextActions.description"}}
+      options:
+        - label: {{t "research.nextActions.options.adr"}}
+        - label: {{t "research.nextActions.options.knowledge"}}
+        - label: {{t "research.nextActions.options.issue"}}
+        - label: {{t "research.nextActions.options.rule"}}

@@ -1,0 +1,186 @@
+{
+  "adr": {
+    "header": {
+      "title": "Architecture Decision Record",
+      "description": "設計上の重要な決定を記録します。"
+    },
+    "status": {
+      "label": "ステータス",
+      "description": "ADR のステータス"
+    },
+    "context": {
+      "label": "背景",
+      "description": "この決定が必要になった背景・課題",
+      "placeholder": "現在の状況として...\n課題として..."
+    },
+    "decision": {
+      "label": "決定",
+      "description": "決定した内容",
+      "placeholder": "XXX を採用する。\n理由は..."
+    },
+    "consequences": {
+      "label": "影響",
+      "description": "この決定による影響（良い点・悪い点）",
+      "placeholder": "**メリット:**\n- メリット1\n- メリット2\n\n**デメリット:**\n- デメリット1"
+    },
+    "alternatives": {
+      "label": "検討した代替案",
+      "description": "検討した他の選択肢",
+      "placeholder": "1. **選択肢A**: 説明... → 不採用理由\n2. **選択肢B**: 説明... → 不採用理由"
+    },
+    "references": {
+      "label": "参照",
+      "description": "関連するドキュメント、Issue、Discussion",
+      "placeholder": "- Issue #XX\n- Discussion #YY\n- https://docs.example.com/"
+    }
+  },
+  "knowledge": {
+    "header": {
+      "title": "技術知見",
+      "description": "確定した技術的知見・パターンを記録します。"
+    },
+    "problem": {
+      "label": "問題",
+      "description": "どんな問題を解決するか",
+      "placeholder": "Radix UI コンポーネントでハイドレーションエラーが発生する"
+    },
+    "solution": {
+      "label": "解決策",
+      "description": "確定した解決策",
+      "placeholder": "`mounted` state パターンを使用する"
+    },
+    "example": {
+      "label": "例",
+      "description": "コード例",
+      "placeholder": "const [mounted, setMounted] = useState(false)\nuseEffect(() => { setMounted(true) }, [])\n\nif (!mounted) return <Placeholder />\nreturn <RadixComponent />"
+    },
+    "whenToUse": {
+      "label": "適用タイミング",
+      "description": "この知見を適用すべき状況",
+      "placeholder": "- DropdownMenu, Select, Collapsible などの Radix UI コンポーネント使用時\n- SSR 環境で ID 不一致エラーが出る場合"
+    },
+    "references": {
+      "label": "参照",
+      "description": "関連するドキュメント、Issue、Discussion",
+      "placeholder": "- Issue #XX で発見\n- https://github.com/radix-ui/primitives/issues/XXX"
+    },
+    "relatedRule": {
+      "label": "関連ルール",
+      "description": "対応する .claude/rules/ ファイル（あれば）",
+      "placeholder": ".claude/rules/radix-ui.md"
+    }
+  },
+  "research": {
+    "header": {
+      "title": "調査依頼",
+      "description": "調査依頼・調査結果を記録します。"
+    },
+    "question": {
+      "label": "質問",
+      "description": "調査したい内容",
+      "placeholder": "Drizzle ORM で soft delete を実装するベストプラクティスは？"
+    },
+    "context": {
+      "label": "背景",
+      "description": "なぜこの調査が必要か",
+      "placeholder": "ユーザーデータの削除時に物理削除ではなく論理削除を実装したい。\n関連: Issue #XX"
+    },
+    "scope": {
+      "label": "スコープ",
+      "description": "調査の範囲・観点",
+      "placeholder": "- Drizzle ORM 公式ドキュメント\n- 既存プロジェクトの実装例\n- パフォーマンスへの影響"
+    },
+    "findings": {
+      "label": "調査結果",
+      "description": "調査結果（調査完了後に更新）",
+      "placeholder": "*調査中...*\n\n---\n**調査完了後:**\n1. 方法A: ...\n2. 方法B: ..."
+    },
+    "conclusion": {
+      "label": "結論",
+      "description": "結論・推奨事項",
+      "placeholder": "**推奨**: 方法A を採用\n\n理由: ..."
+    },
+    "nextActions": {
+      "label": "次のアクション",
+      "description": "調査後のアクション",
+      "options": {
+        "adr": "ADR を作成する（決定が必要な場合）",
+        "knowledge": "Knowledge を作成する（パターンが確定した場合）",
+        "issue": "Issue を作成する（実装が必要な場合）",
+        "rule": "Rule を作成/更新する（AI 用の抽出）"
+      }
+    }
+  },
+  "evolution": {
+    "header": {
+      "title": "進化シグナル",
+      "description": "ルール・スキルの改善シグナルを記録します。"
+    },
+    "signalType": {
+      "label": "シグナル種別",
+      "description": "シグナルの種類",
+      "placeholder": "ルール摩擦 | 不足パターン | スキル改善 | lint 傾向 | 成功率"
+    },
+    "target": {
+      "label": "対象",
+      "description": "対象のルール名またはスキル名",
+      "placeholder": "git-commit-style / review-issue / 一般"
+    },
+    "context": {
+      "label": "コンテキスト",
+      "description": "発生状況の簡潔な説明",
+      "placeholder": "Issue #XX の作業中にルール Y を無視して手動修正した"
+    },
+    "proposal": {
+      "label": "改善提案",
+      "description": "改善案があれば記載",
+      "placeholder": "ルール Y にケース Z を追加すべき"
+    },
+    "summary": {
+      "label": "集計サマリー",
+      "description": "蓄積シグナルの分析サマリー（evolving-rules が更新）",
+      "placeholder": "*分析中...*\n\n---\n**分析完了後:**\n- ルール摩擦: N 件\n- 不足パターン: N 件"
+    }
+  },
+  "reports": {
+    "header": {
+      "title": "エージェント / 手動レポート",
+      "description": "レビュー結果、実装レポート、デザインレポートを記録します。"
+    },
+    "reportType": {
+      "label": "レポートタイプ",
+      "description": "レポートの種類"
+    },
+    "summary": {
+      "label": "概要",
+      "description": "実施内容と全体結果の要約",
+      "placeholder": "Server Action ファイル5件をレビュー。セキュリティ状態は良好。\nTDDアプローチでユーザープロフィール編集を実装。"
+    },
+    "findings": {
+      "label": "詳細 / 発見事項",
+      "description": "詳細な発見事項、問題点、決定事項、または実装詳細",
+      "placeholder": "| 問題 | 場所 | 重大度 | 説明 |\n|------|------|--------|------|\n| 認証チェック欠落 | file.ts:45 | Critical | セッション検証なし |"
+    },
+    "filesInvolved": {
+      "label": "関連ファイル",
+      "description": "作成、変更、またはレビューしたファイル",
+      "placeholder": "| ファイル | 目的 / 変更内容 |\n|---------|----------------|\n| `lib/actions/profile.ts` | 新規 Server Action |\n| `components/profile-form.tsx` | フォームコンポーネント変更 |"
+    },
+    "verification": {
+      "label": "検証",
+      "description": "検証チェックリスト",
+      "options": {
+        "tests": "全テスト合格",
+        "lint": "lint エラーなし",
+        "typecheck": "型チェック合格",
+        "build": "ビルド成功",
+        "manual": "手動検証済み"
+      }
+    },
+    "notes": {
+      "label": "備考 / 推奨事項",
+      "description": "フォローアップタスク、推奨事項、追加コンテキスト",
+      "placeholder": "1. **即時対応**: 認証の重大な問題を修正\n2. **マージ前**: レート制限を追加\n3. **将来**: キャッシュ戦略の検討"
+    }
+  }
+}

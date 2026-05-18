@@ -1,0 +1,118 @@
+{
+  "name": "@shirokuma-library/shirokuma-flow",
+  "version": "0.3.0-alpha.133",
+  "description": "Next.js プロジェクト用ドキュメント自動生成 CLI",
+  "type": "module",
+  "main": "dist/index.js",
+  "bin": {
+    "shirokuma-flow": "bin/shirokuma-flow"
+  },
+  "publishConfig": {
+    "access": "public"
+  },
+  "scripts": {
+    "build": "tsc",
+    "dev": "tsc --watch",
+    "start": "node dist/index.js",
+    "lint": "eslint src",
+    "test": "node --experimental-vm-modules ../../node_modules/jest-cli/bin/jest.js",
+    "test:coverage": "node --experimental-vm-modules ../../node_modules/jest-cli/bin/jest.js --coverage",
+    "prepare": "tsc"
+  },
+  "keywords": [
+    "documentation",
+    "cli",
+    "nextjs",
+    "typedoc",
+    "drizzle",
+    "dbml"
+  ],
+  "author": "ShirokumaLibrary",
+  "license": "Apache-2.0",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/ShirokumaLibrary/shirokuma-flow.git",
+    "directory": "packages/flow"
+  },
+  "homepage": "https://github.com/ShirokumaLibrary/shirokuma-flow#readme",
+  "bugs": {
+    "url": "https://github.com/ShirokumaLibrary/shirokuma-flow/issues"
+  },
+  "dependencies": {
+    "@shirokuma-library/lint": "workspace:*",
+    "@shirokuma-library/portal": "workspace:*",
+    "@11ty/gray-matter": "^2.0.1",
+    "@octokit/plugin-retry": "^8.1.0",
+    "@octokit/plugin-throttling": "^11.0.3",
+    "@octokit/rest": "^22.0.1",
+    "chalk": "^5.3.0",
+    "chokidar": "^5.0.0",
+    "commander": "^14.0.3",
+    "glob": "^13.0.3",
+    "gpt-tokenizer": "^3.4.0",
+    "handlebars": "^4.7.8",
+    "markdown-it": "^14.1.1",
+    "mdast-util-to-string": "^4.0.0",
+    "minimatch": "^10.2.4",
+    "ora": "^9.3.0",
+    "remark-gfm": "^4.0.1",
+    "remark-parse": "^11.0.0",
+    "remark-stringify": "^11.0.0",
+    "simple-git": "^3.32.2",
+    "ts-morph": "^27.0.2",
+    "turndown": "^7.2.2",
+    "unified": "^11.0.5",
+    "unist-util-visit": "^5.0.0",
+    "vfile": "^6.0.3",
+    "yaml": "^2.6.0",
+    "zod": "^4.3.6"
+  },
+  "devDependencies": {
+    "@jest/globals": "^30.2.0",
+    "@shirokuma-library/dev-preset": "workspace:*",
+    "@types/jest": "^30.0.0",
+    "@types/markdown-it": "^14.1.2",
+    "@types/mdast": "^4.0.4",
+    "@types/node": "^25.2.3",
+    "@types/turndown": "^5.0.6",
+    "@types/unist": "^3.0.3",
+    "eslint": "^10.0.3",
+    "jest": "^30.2.0",
+    "jiti": "^2.6.1",
+    "ts-jest": "^29.4.6",
+    "typescript": "^5.7.2",
+    "typescript-eslint": "^8.57.0"
+  },
+  "peerDependencies": {
+    "dependency-cruiser": ">=16.0.0",
+    "drizzle-dbml-generator": ">=0.7.0",
+    "typedoc": ">=0.26.0",
+    "typedoc-plugin-markdown": ">=4.0.0"
+  },
+  "peerDependenciesMeta": {
+    "typedoc": {
+      "optional": true
+    },
+    "typedoc-plugin-markdown": {
+      "optional": true
+    },
+    "dependency-cruiser": {
+      "optional": true
+    },
+    "drizzle-dbml-generator": {
+      "optional": true
+    }
+  },
+  "engines": {
+    "node": ">=20.0.0"
+  },
+  "files": [
+    "dist",
+    "bin",
+    "templates",
+    "i18n",
+    "LICENSE",
+    "README.md",
+    "THIRD_PARTY_NOTICES.md"
+  ]
+}

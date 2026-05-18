@@ -1,0 +1,367 @@
+{{!--
+  Coverage Dashboard HTML Template
+
+  Variables:
+  - projectName: プロジェクト名
+  - generatedAt: 生成日時
+  - total: 合計カバレッジ {lines, statements, functions, branches}
+  - files: ファイル一覧 [{path, lines, statements, functions, branches}]
+
+  Helpers:
+  - coverageStatus(pct): 'high' | 'medium' | 'low'
+--}}
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Coverage Dashboard - {{projectName}}</title>
+  <style>
+    :root {
+      --bg-color: #0a0a0a;
+      --card-bg: #141414;
+      --border-color: #262626;
+      --text-primary: #fafafa;
+      --text-secondary: #a1a1aa;
+      --accent-green: #22c55e;
+      --accent-orange: #f97316;
+      --accent-red: #ef4444;
+      --accent-blue: #3b82f6;
+    }
+
+    * {
+      margin: 0;
+      padding: 0;
+      box-sizing: border-box;
+    }
+
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+      background: var(--bg-color);
+      color: var(--text-primary);
+      min-height: 100vh;
+      line-height: 1.6;
+    }
+
+    .container {
+      max-width: 1400px;
+      margin: 0 auto;
+      padding: 2rem;
+    }
+
+    header {
+      text-align: center;
+      margin-bottom: 3rem;
+    }
+
+    header h1 {
+      font-size: 2rem;
+      margin-bottom: 0.5rem;
+    }
+
+    .subtitle {
+      color: var(--text-secondary);
+    }
+
+    .summary-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+      gap: 1rem;
+      margin-bottom: 3rem;
+    }
+
+    .summary-card {
+      background: var(--card-bg);
+      border: 1px solid var(--border-color);
+      border-radius: 12px;
+      padding: 1.5rem;
+      text-align: center;
+    }
+
+    .summary-card h3 {
+      font-size: 0.875rem;
+      color: var(--text-secondary);
+      text-transform: uppercase;
+      letter-spacing: 0.05em;
+      margin-bottom: 0.5rem;
+    }
+
+    .summary-card .pct {
+      font-size: 2.5rem;
+      font-weight: 700;
+      line-height: 1;
+      margin-bottom: 0.5rem;
+    }
+
+    .summary-card .details {
+      font-size: 0.875rem;
+      color: var(--text-secondary);
+    }
+
+    .progress-bar {
+      height: 8px;
+      background: var(--border-color);
+      border-radius: 4px;
+      overflow: hidden;
+      margin-top: 0.75rem;
+    }
+
+    .progress-bar-fill {
+      height: 100%;
+      border-radius: 4px;
+    }
+
+    .high { color: var(--accent-green); }
+    .high .progress-bar-fill { background: var(--accent-green); }
+    .medium { color: var(--accent-orange); }
+    .medium .progress-bar-fill { background: var(--accent-orange); }
+    .low { color: var(--accent-red); }
+    .low .progress-bar-fill { background: var(--accent-red); }
+
+    .section-title {
+      font-size: 1.25rem;
+      font-weight: 600;
+      margin-bottom: 1rem;
+      color: var(--text-secondary);
+    }
+
+    .table-container {
+      overflow-x: auto;
+    }
+
+    table {
+      width: 100%;
+      border-collapse: collapse;
+      background: var(--card-bg);
+      border-radius: 12px;
+      overflow: hidden;
+    }
+
+    th, td {
+      padding: 1rem;
+      text-align: left;
+      border-bottom: 1px solid var(--border-color);
+    }
+
+    th {
+      background: var(--bg-color);
+      font-weight: 600;
+      font-size: 0.875rem;
+      color: var(--text-secondary);
+      text-transform: uppercase;
+      letter-spacing: 0.05em;
+      cursor: pointer;
+    }
+
+    th:hover {
+      color: var(--text-primary);
+    }
+
+    tr:last-child td {
+      border-bottom: none;
+    }
+
+    tr:hover {
+      background: rgba(255,255,255,0.02);
+    }
+
+    .file-path {
+      font-family: 'SFMono-Regular', Consolas, monospace;
+      font-size: 0.875rem;
+      word-break: break-all;
+    }
+
+    .metric {
+      text-align: center;
+      font-weight: 500;
+    }
+
+    footer {
+      text-align: center;
+      margin-top: 3rem;
+      padding-top: 2rem;
+      border-top: 1px solid var(--border-color);
+      color: var(--text-secondary);
+      font-size: 0.875rem;
+    }
+
+    .filter-bar {
+      margin-bottom: 1rem;
+      display: flex;
+      gap: 1rem;
+      align-items: center;
+    }
+
+    .filter-input {
+      flex: 1;
+      padding: 0.75rem 1rem;
+      background: var(--card-bg);
+      border: 1px solid var(--border-color);
+      border-radius: 8px;
+      color: var(--text-primary);
+      font-size: 0.875rem;
+    }
+
+    .filter-input:focus {
+      outline: none;
+      border-color: var(--accent-blue);
+    }
+
+    .filter-select {
+      padding: 0.75rem 1rem;
+      background: var(--card-bg);
+      border: 1px solid var(--border-color);
+      border-radius: 8px;
+      color: var(--text-primary);
+      font-size: 0.875rem;
+    }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <header>
+      <h1>Coverage Dashboard</h1>
+      <p class="subtitle">{{projectName}} - {{files.length}} files analyzed</p>
+    </header>
+
+    <div class="summary-grid">
+      <div class="summary-card {{total.lines.status}}">
+        <h3>Lines</h3>
+        <div class="pct">{{total.lines.pct}}%</div>
+        <div class="details">{{total.lines.covered}} / {{total.lines.total}}</div>
+        <div class="progress-bar">
+          <div class="progress-bar-fill" style="width: {{total.lines.pct}}%"></div>
+        </div>
+      </div>
+      <div class="summary-card {{total.statements.status}}">
+        <h3>Statements</h3>
+        <div class="pct">{{total.statements.pct}}%</div>
+        <div class="details">{{total.statements.covered}} / {{total.statements.total}}</div>
+        <div class="progress-bar">
+          <div class="progress-bar-fill" style="width: {{total.statements.pct}}%"></div>
+        </div>
+      </div>
+      <div class="summary-card {{total.functions.status}}">
+        <h3>Functions</h3>
+        <div class="pct">{{total.functions.pct}}%</div>
+        <div class="details">{{total.functions.covered}} / {{total.functions.total}}</div>
+        <div class="progress-bar">
+          <div class="progress-bar-fill" style="width: {{total.functions.pct}}%"></div>
+        </div>
+      </div>
+      <div class="summary-card {{total.branches.status}}">
+        <h3>Branches</h3>
+        <div class="pct">{{total.branches.pct}}%</div>
+        <div class="details">{{total.branches.covered}} / {{total.branches.total}}</div>
+        <div class="progress-bar">
+          <div class="progress-bar-fill" style="width: {{total.branches.pct}}%"></div>
+        </div>
+      </div>
+    </div>
+
+    <h2 class="section-title">File Coverage</h2>
+
+    <div class="filter-bar">
+      <input type="text" class="filter-input" id="filter" placeholder="Filter by file path...">
+      <select class="filter-select" id="statusFilter">
+        <option value="all">All Status</option>
+        <option value="low">Low (&lt;70%)</option>
+        <option value="medium">Medium (70-89%)</option>
+        <option value="high">High (90%+)</option>
+      </select>
+    </div>
+
+    <div class="table-container">
+      <table id="fileTable">
+        <thead>
+          <tr>
+            <th data-sort="path">File</th>
+            <th data-sort="lines">Lines</th>
+            <th data-sort="statements">Statements</th>
+            <th data-sort="functions">Functions</th>
+            <th data-sort="branches">Branches</th>
+          </tr>
+        </thead>
+        <tbody>
+          {{#each files}}
+          <tr data-status="{{lines.status}}" data-path="{{path}}">
+            <td class="file-path">{{path}}</td>
+            <td class="metric {{lines.status}}">{{lines.pct}}%</td>
+            <td class="metric {{statements.status}}">{{statements.pct}}%</td>
+            <td class="metric {{functions.status}}">{{functions.pct}}%</td>
+            <td class="metric {{branches.status}}">{{branches.pct}}%</td>
+          </tr>
+          {{/each}}
+        </tbody>
+      </table>
+    </div>
+
+    <footer>
+      <p>Generated by shirokuma-flow | {{generatedAt}}</p>
+    </footer>
+  </div>
+
+  <script>
+    // Filter functionality
+    const filterInput = document.getElementById('filter');
+    const statusFilter = document.getElementById('statusFilter');
+    const tableBody = document.querySelector('#fileTable tbody');
+    const rows = Array.from(tableBody.querySelectorAll('tr'));
+
+    function applyFilters() {
+      const searchTerm = filterInput.value.toLowerCase();
+      const statusTerm = statusFilter.value;
+
+      rows.forEach(row => {
+        const path = row.dataset.path.toLowerCase();
+        const status = row.dataset.status;
+
+        const matchesSearch = path.includes(searchTerm);
+        const matchesStatus = statusTerm === 'all' || status === statusTerm;
+
+        row.style.display = matchesSearch && matchesStatus ? '' : 'none';
+      });
+    }
+
+    filterInput.addEventListener('input', applyFilters);
+    statusFilter.addEventListener('change', applyFilters);
+
+    // Sort functionality
+    const headers = document.querySelectorAll('th[data-sort]');
+    let currentSort = { column: 'lines', direction: 'asc' };
+
+    headers.forEach(header => {
+      header.addEventListener('click', () => {
+        const column = header.dataset.sort;
+        const direction = currentSort.column === column && currentSort.direction === 'asc' ? 'desc' : 'asc';
+        currentSort = { column, direction };
+
+        rows.sort((a, b) => {
+          let aVal, bVal;
+
+          if (column === 'path') {
+            aVal = a.dataset.path;
+            bVal = b.dataset.path;
+            return direction === 'asc'
+              ? aVal.localeCompare(bVal)
+              : bVal.localeCompare(aVal);
+          } else {
+            const aCell = a.querySelector(`td:nth-child(${getColumnIndex(column)})`);
+            const bCell = b.querySelector(`td:nth-child(${getColumnIndex(column)})`);
+            aVal = parseFloat(aCell.textContent);
+            bVal = parseFloat(bCell.textContent);
+            return direction === 'asc' ? aVal - bVal : bVal - aVal;
+          }
+        });
+
+        rows.forEach(row => tableBody.appendChild(row));
+      });
+    });
+
+    function getColumnIndex(column) {
+      const columns = ['path', 'lines', 'statements', 'functions', 'branches'];
+      return columns.indexOf(column) + 1;
+    }
+  </script>
+</body>
+</html>

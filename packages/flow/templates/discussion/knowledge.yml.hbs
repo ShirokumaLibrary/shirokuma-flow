@@ -1,0 +1,60 @@
+title: ""
+labels: []
+body:
+  - type: markdown
+    attributes:
+      value: |
+        ## {{t "knowledge.header.title"}}
+        {{t "knowledge.header.description"}}
+
+  - type: textarea
+    id: problem
+    attributes:
+      label: {{t "knowledge.problem.label"}}
+      description: {{t "knowledge.problem.description"}}
+      placeholder: |
+        {{ti "knowledge.problem.placeholder" 8}}
+    validations:
+      required: true
+
+  - type: textarea
+    id: solution
+    attributes:
+      label: {{t "knowledge.solution.label"}}
+      description: {{t "knowledge.solution.description"}}
+      placeholder: |
+        {{ti "knowledge.solution.placeholder" 8}}
+    validations:
+      required: true
+
+  - type: textarea
+    id: example
+    attributes:
+      label: {{t "knowledge.example.label"}}
+      description: {{t "knowledge.example.description"}}
+      render: typescript
+      placeholder: |
+        {{ti "knowledge.example.placeholder" 8}}
+
+  - type: textarea
+    id: when-to-use
+    attributes:
+      label: {{t "knowledge.whenToUse.label"}}
+      description: {{t "knowledge.whenToUse.description"}}
+      placeholder: |
+        {{ti "knowledge.whenToUse.placeholder" 8}}
+
+  - type: textarea
+    id: references
+    attributes:
+      label: {{t "knowledge.references.label"}}
+      description: {{t "knowledge.references.description"}}
+      placeholder: |
+        {{ti "knowledge.references.placeholder" 8}}
+
+  - type: input
+    id: related-rule
+    attributes:
+      label: {{t "knowledge.relatedRule.label"}}
+      description: {{t "knowledge.relatedRule.description"}}
+      placeholder: {{t "knowledge.relatedRule.placeholder"}}

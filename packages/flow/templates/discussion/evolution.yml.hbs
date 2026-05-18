@@ -1,0 +1,52 @@
+title: ""
+labels: []
+body:
+  - type: markdown
+    attributes:
+      value: |
+        ## {{t "evolution.header.title"}}
+        {{t "evolution.header.description"}}
+
+  - type: textarea
+    id: signal-type
+    attributes:
+      label: {{t "evolution.signalType.label"}}
+      description: {{t "evolution.signalType.description"}}
+      placeholder: |
+        {{ti "evolution.signalType.placeholder" 8}}
+    validations:
+      required: true
+
+  - type: textarea
+    id: target
+    attributes:
+      label: {{t "evolution.target.label"}}
+      description: {{t "evolution.target.description"}}
+      placeholder: |
+        {{ti "evolution.target.placeholder" 8}}
+    validations:
+      required: true
+
+  - type: textarea
+    id: context
+    attributes:
+      label: {{t "evolution.context.label"}}
+      description: {{t "evolution.context.description"}}
+      placeholder: |
+        {{ti "evolution.context.placeholder" 8}}
+
+  - type: textarea
+    id: proposal
+    attributes:
+      label: {{t "evolution.proposal.label"}}
+      description: {{t "evolution.proposal.description"}}
+      placeholder: |
+        {{ti "evolution.proposal.placeholder" 8}}
+
+  - type: textarea
+    id: summary
+    attributes:
+      label: {{t "evolution.summary.label"}}
+      description: {{t "evolution.summary.description"}}
+      placeholder: |
+        {{ti "evolution.summary.placeholder" 8}}

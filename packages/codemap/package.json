@@ -1,0 +1,50 @@
+{
+  "name": "@shirokuma-library/codemap",
+  "version": "0.3.0-alpha.130",
+  "description": "AI-consumable codemap extraction CLI for shirokuma workflows.",
+  "type": "module",
+  "private": false,
+  "exports": {
+    ".": {
+      "types": "./dist/index.d.ts",
+      "import": "./dist/index.js"
+    },
+    "./cli": {
+      "types": "./dist/cli.d.ts",
+      "import": "./dist/cli.js"
+    }
+  },
+  "bin": {
+    "shirokuma-codemap": "./dist/cli.js"
+  },
+  "files": [
+    "dist",
+    "README.md"
+  ],
+  "scripts": {
+    "build": "tsc",
+    "test": "vitest run",
+    "typecheck": "tsc --noEmit"
+  },
+  "dependencies": {
+    "@shirokuma-library/lint": "workspace:*",
+    "commander": "^12.1.0",
+    "ulid": "^3.0.2"
+  },
+  "devDependencies": {
+    "@shirokuma-library/dev-preset": "workspace:*",
+    "@types/node": "^20.0.0",
+    "tsx": "^4.19.0",
+    "typescript": "^5.0.0",
+    "vitest": "^4.0.0"
+  },
+  "engines": {
+    "node": ">=20.0.0"
+  },
+  "license": "Apache-2.0",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/ShirokumaDevelopment/shirokuma-docs.git",
+    "directory": "packages/codemap"
+  }
+}

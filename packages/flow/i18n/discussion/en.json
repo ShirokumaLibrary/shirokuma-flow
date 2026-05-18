@@ -1,0 +1,186 @@
+{
+  "adr": {
+    "header": {
+      "title": "Architecture Decision Record",
+      "description": "Record important architectural decisions."
+    },
+    "status": {
+      "label": "Status",
+      "description": "ADR status"
+    },
+    "context": {
+      "label": "Context",
+      "description": "What is the issue that motivates this decision?",
+      "placeholder": "Currently...\nThe problem is..."
+    },
+    "decision": {
+      "label": "Decision",
+      "description": "What is the change being proposed/made?",
+      "placeholder": "We will adopt XXX.\nBecause..."
+    },
+    "consequences": {
+      "label": "Consequences",
+      "description": "What becomes easier or more difficult?",
+      "placeholder": "**Pros:**\n- Benefit 1\n- Benefit 2\n\n**Cons:**\n- Drawback 1"
+    },
+    "alternatives": {
+      "label": "Alternatives Considered",
+      "description": "Other options that were evaluated",
+      "placeholder": "1. **Option A**: Description... → Reason not chosen\n2. **Option B**: Description... → Reason not chosen"
+    },
+    "references": {
+      "label": "References",
+      "description": "Related documents, Issues, Discussions",
+      "placeholder": "- Issue #XX\n- Discussion #YY\n- https://docs.example.com/"
+    }
+  },
+  "knowledge": {
+    "header": {
+      "title": "Technical Knowledge",
+      "description": "Record confirmed technical knowledge and patterns."
+    },
+    "problem": {
+      "label": "Problem",
+      "description": "What problem does this solve?",
+      "placeholder": "Radix UI components cause hydration errors"
+    },
+    "solution": {
+      "label": "Solution",
+      "description": "The confirmed solution",
+      "placeholder": "Use the `mounted` state pattern"
+    },
+    "example": {
+      "label": "Example",
+      "description": "Code example",
+      "placeholder": "const [mounted, setMounted] = useState(false)\nuseEffect(() => { setMounted(true) }, [])\n\nif (!mounted) return <Placeholder />\nreturn <RadixComponent />"
+    },
+    "whenToUse": {
+      "label": "When to Use",
+      "description": "When to apply this knowledge",
+      "placeholder": "- When using DropdownMenu, Select, Collapsible Radix UI components\n- When getting ID mismatch errors in SSR"
+    },
+    "references": {
+      "label": "References",
+      "description": "Related documents, Issues, Discussions",
+      "placeholder": "- Discovered in Issue #XX\n- https://github.com/radix-ui/primitives/issues/XXX"
+    },
+    "relatedRule": {
+      "label": "Related Rule",
+      "description": "Corresponding .claude/rules/ file (if any)",
+      "placeholder": ".claude/rules/radix-ui.md"
+    }
+  },
+  "research": {
+    "header": {
+      "title": "Research Request",
+      "description": "Record research requests and findings."
+    },
+    "question": {
+      "label": "Question",
+      "description": "What needs to be researched?",
+      "placeholder": "What are the best practices for implementing soft delete in Drizzle ORM?"
+    },
+    "context": {
+      "label": "Context",
+      "description": "Why is this research needed?",
+      "placeholder": "Want to implement logical deletion instead of physical deletion for user data.\nRelated: Issue #XX"
+    },
+    "scope": {
+      "label": "Scope",
+      "description": "Research scope and aspects",
+      "placeholder": "- Drizzle ORM official documentation\n- Existing project implementations\n- Performance implications"
+    },
+    "findings": {
+      "label": "Findings",
+      "description": "Research results (update after completion)",
+      "placeholder": "*Researching...*\n\n---\n**After completion:**\n1. Method A: ...\n2. Method B: ..."
+    },
+    "conclusion": {
+      "label": "Conclusion",
+      "description": "Conclusion and recommendations",
+      "placeholder": "**Recommendation**: Adopt Method A\n\nReason: ..."
+    },
+    "nextActions": {
+      "label": "Next Actions",
+      "description": "Actions after research",
+      "options": {
+        "adr": "Create ADR (if decision needed)",
+        "knowledge": "Create Knowledge (if pattern confirmed)",
+        "issue": "Create Issue (if implementation needed)",
+        "rule": "Create/update Rule (AI extract)"
+      }
+    }
+  },
+  "evolution": {
+    "header": {
+      "title": "Evolution Signals",
+      "description": "Record improvement signals for rules and skills."
+    },
+    "signalType": {
+      "label": "Signal Type",
+      "description": "Type of signal",
+      "placeholder": "Rule friction | Missing pattern | Skill improvement | Lint trend | Success rate"
+    },
+    "target": {
+      "label": "Target",
+      "description": "Target rule or skill name",
+      "placeholder": "git-commit-style / review-issue / general"
+    },
+    "context": {
+      "label": "Context",
+      "description": "Brief description of the situation",
+      "placeholder": "Ignored rule Y and manually corrected during Issue #XX work"
+    },
+    "proposal": {
+      "label": "Improvement Proposal",
+      "description": "Proposed improvement if any",
+      "placeholder": "Rule Y should add case Z"
+    },
+    "summary": {
+      "label": "Aggregated Summary",
+      "description": "Analysis summary of accumulated signals (updated by evolving-rules)",
+      "placeholder": "*Analyzing...*\n\n---\n**After analysis:**\n- Rule friction: N cases\n- Missing patterns: N cases"
+    }
+  },
+  "reports": {
+    "header": {
+      "title": "Agent / Manual Report",
+      "description": "Record review results, implementation reports, or design reports."
+    },
+    "reportType": {
+      "label": "Report Type",
+      "description": "Type of report"
+    },
+    "summary": {
+      "label": "Summary",
+      "description": "Brief summary of what was done and overall outcome",
+      "placeholder": "Reviewed 5 Server Action files. Overall security posture is Good.\nImplemented user profile editing with TDD approach."
+    },
+    "findings": {
+      "label": "Findings / Details",
+      "description": "Detailed findings, issues, decisions, or implementation details",
+      "placeholder": "| Issue | Location | Severity | Description |\n|-------|----------|----------|-------------|\n| Missing auth check | file.ts:45 | Critical | No session verification |"
+    },
+    "filesInvolved": {
+      "label": "Files Involved",
+      "description": "Files created, modified, or reviewed",
+      "placeholder": "| File | Purpose / Changes |\n|------|-------------------|\n| `lib/actions/profile.ts` | New Server Action |\n| `components/profile-form.tsx` | Modified form component |"
+    },
+    "verification": {
+      "label": "Verification",
+      "description": "Verification checklist",
+      "options": {
+        "tests": "All tests pass",
+        "lint": "No lint errors",
+        "typecheck": "Type check passes",
+        "build": "Build passes",
+        "manual": "Manual verification done"
+      }
+    },
+    "notes": {
+      "label": "Notes / Recommendations",
+      "description": "Follow-up tasks, recommendations, or additional context",
+      "placeholder": "1. **Immediate**: Fix critical auth issue\n2. **Before merge**: Add rate limiting\n3. **Future**: Consider caching strategy"
+    }
+  }
+}

@@ -1,0 +1,65 @@
+title: "ADR-XXX: "
+labels: []
+body:
+  - type: markdown
+    attributes:
+      value: |
+        ## {{t "adr.header.title"}}
+        {{t "adr.header.description"}}
+
+  - type: dropdown
+    id: status
+    attributes:
+      label: {{t "adr.status.label"}}
+      description: {{t "adr.status.description"}}
+      options:
+        - Proposed
+        - Accepted
+        - Deprecated
+        - Superseded
+    validations:
+      required: true
+
+  - type: textarea
+    id: context
+    attributes:
+      label: {{t "adr.context.label"}}
+      description: {{t "adr.context.description"}}
+      placeholder: |
+        {{ti "adr.context.placeholder" 8}}
+    validations:
+      required: true
+
+  - type: textarea
+    id: decision
+    attributes:
+      label: {{t "adr.decision.label"}}
+      description: {{t "adr.decision.description"}}
+      placeholder: |
+        {{ti "adr.decision.placeholder" 8}}
+    validations:
+      required: true
+
+  - type: textarea
+    id: consequences
+    attributes:
+      label: {{t "adr.consequences.label"}}
+      description: {{t "adr.consequences.description"}}
+      placeholder: |
+        {{ti "adr.consequences.placeholder" 8}}
+
+  - type: textarea
+    id: alternatives
+    attributes:
+      label: {{t "adr.alternatives.label"}}
+      description: {{t "adr.alternatives.description"}}
+      placeholder: |
+        {{ti "adr.alternatives.placeholder" 8}}
+
+  - type: textarea
+    id: references
+    attributes:
+      label: {{t "adr.references.label"}}
+      description: {{t "adr.references.description"}}
+      placeholder: |
+        {{ti "adr.references.placeholder" 8}}
