@@ -159,8 +159,8 @@ shirokuma-flow init --with-nextjs --with-skills --with-rules         # shirokuma
 shirokuma-flow init --channel rc                                     # プラグインリリースチャンネル指定
 shirokuma-flow update                                                # CLI + スキル + ルールを更新（--sync はデフォルト有効）
 shirokuma-flow update --sync --with-rules                            # 詳細オプション付き更新
-shirokuma-flow plugin-install-local                                  # ローカル plugin/ をグローバルキャッシュへ
-shirokuma-flow plugin-install-local --cleanup-rules                  # 管理外ルール（過去 plugin リリースの orphan）も削除（switch-plugin.sh dev 経由）
+shirokuma-flow plugin-install-local                                  # ローカル plugin/ をグローバルキャッシュへ（緊急時用）
+shirokuma-flow plugin-install-local --cleanup-rules                  # 管理外ルール（過去 plugin リリースの orphan）も削除
 ```
 
 ### スキル管理

@@ -208,7 +208,6 @@ export function getPluginCacheBaseRoot(): string {
  *
  * モジュールの位置を基準にプラグインディレクトリを解決する。
  * - 開発時 (pnpm workspace): {repo-root}/plugin/{pluginName}/（pnpm-workspace.yaml で判定）
- * - dev-deploy (~/.local/share/...): {packageRoot}/plugin/{pluginName}/（switch-cli.sh が事前にコピー）
  * - npm インストール後: 同梱していないため存在しないパスを返す。プラグインは
  *   Claude プラグインキャッシュ経由で利用するのが正規ルートで、本関数の戻り値は
  *   `getGlobalCachePath()` がキャッシュミスした場合のフォールバック用途のみ。

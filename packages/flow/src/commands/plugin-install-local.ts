@@ -61,9 +61,8 @@ interface PluginInstallLocalOptions {
    * deployRules に cleanup: true を渡し、`.shirokuma/rules/shirokuma/` 配下の管理外
    * ルールファイル（過去 plugin リリースが配置した orphan ファイル等）を削除する。
    *
-   * デフォルトは false。#1507 の設計判断「ローカルインストールは開発用途であり、
-   * 意図的にファイルを置いている可能性がある」と整合させるためオプトインとする。
-   * `scripts/switch-plugin.sh dev` 経由でのみ true で呼び出される想定。
+   * デフォルトは false。ローカル install は開発・緊急用途であり、意図的にファイルを
+   * 置いている可能性があるためオプトイン。手動 cleanup したい場合に明示指定する。
    */
   cleanupRules?: boolean;
   /** Verbose logging */

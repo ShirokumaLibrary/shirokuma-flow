@@ -115,9 +115,9 @@ stable と prerelease は **同時に登録できない**（同じ `marketplace.
 
 過去に `claude plugin marketplace add ShirokumaLibrary/shirokuma-plugins` で alpha 版を install していたユーザーは、引き続き同じコマンドで stable チャネルを受ける。prerelease を試したい場合のみ上記の `shirokuma-flow plugin install --prerelease` を実行する。
 
-### 方法 C: ローカル plugin/ をテストする
+### 方法 C: ローカル plugin/ をテストする（緊急時のみ）
 
-開発中のプラグインをグローバルキャッシュに反映させる:
+CDN 障害や publish 前の動作確認など、レジストリ経由が使えない場合の脱出弁:
 
 ```bash
 shirokuma-flow plugin-install-local
@@ -126,7 +126,7 @@ shirokuma-flow plugin-install-local
 shirokuma-flow plugin-install-local --cleanup-rules
 ```
 
-`--cleanup-rules` のデフォルトは無効。`scripts/switch-plugin.sh dev` は内部で `--cleanup-rules` 付きで呼び出すため、dev 切替時には orphan rule が自動削除される。
+`--cleanup-rules` のデフォルトは無効。通常開発は **alpha publish + `shirokuma-flow plugin install --prerelease`** の経路を使うこと。詳細は本リポ開発者向けドキュメント [.claude/rules/dev-cli-switch.md](../.claude/rules/dev-cli-switch.md) を参照。
 
 ## 更新方法
 

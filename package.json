@@ -5,8 +5,7 @@
     "build": "pnpm -r build",
     "test": "pnpm -r test",
     "typecheck": "pnpm -r typecheck",
-    "prepare": "[ -d .githooks ] && git config core.hooksPath .githooks || true",
-    "postinstall": "[ -d plugin ] && [ -z \"$CI\" ] && ./scripts/switch-plugin.sh dev > /dev/null 2>&1 || true"
+    "prepare": "[ -d .githooks ] && git config core.hooksPath .githooks || true"
   },
   "engines": {
     "node": ">=20.0.0"
