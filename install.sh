@@ -152,6 +152,9 @@ install_package() {
     error "Installation failed: binary not found."
     exit 1
   fi
+
+  # install 時のチャネルを記録（shirokuma-flow update が同じチャネルで更新するため）
+  echo "$CHANNEL" > "$INSTALL_DIR/.channel"
 }
 
 # Create symlink in bin directory

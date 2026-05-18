@@ -1593,11 +1593,27 @@ export function updateCliPackage(
     };
   }
 
+  // install 時に記録された channel を読み取り、`@alpha` or `@latest` を選択する。
+  // install.sh が `.channel` ファイル (内容: "stable" or "prerelease") を書く。
+  // ない場合は stable とみなして `@latest` を取得 (旧 install からの互換性)。
+  let installSpec = "@shirokuma-library/flow@latest";
+  try {
+    const channelFile = join(installDir, ".channel");
+    if (existsSync(channelFile)) {
+      const channel = readFileSync(channelFile, "utf-8").trim();
+      if (channel === "prerelease") {
+        installSpec = "@shirokuma-library/flow@alpha";
+      }
+    }
+  } catch {
+    // 読み取りエラーは無視、デフォルト (@latest) を使う
+  }
+
   // npm install で更新
   try {
     execFileSync(
       "npm",
-      ["install", "@shirokuma-library/flow@latest"],
+      ["install", installSpec],
       { cwd: installDir, stdio: "pipe", timeout: 90000 },
     );
   } catch (error) {
@@ -1613,7 +1629,7 @@ export function updateCliPackage(
   // 更新後バージョンをディスクから直接読み取り
   let newVersion: string;
   try {
-    const pkgPath = join(installDir, "node_modules", "@shirokuma-library", "shirokuma-flow", "package.json");
+    const pkgPath = join(installDir, "node_modules", "@shirokuma-library", "flow", "package.json");
     const content = readFileSync(pkgPath, "utf-8");
     const pkg = JSON.parse(content) as { version?: string };
     newVersion = pkg.version ?? "unknown";
