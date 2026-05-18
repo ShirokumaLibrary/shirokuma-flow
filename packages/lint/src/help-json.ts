@@ -155,18 +155,25 @@ export function isBenignCommanderError(err: CommanderError): boolean {
 export interface PreflightResult {
   pretty: boolean;
   help: 'json' | 'human' | null;
+  /**
+   * `--version` / `-V` を検出したかどうか。
+   * `walkCommands` が `configureOutput.writeOut` を空関数に置き換えるため Commander 標準の
+   * version 表示が抑制される。各 CLI で `if (preflight.version)` を見て自前で出力する。
+   */
+  version: boolean;
   target: Command;
   remainingArgv: string[];
 }
 
 /**
- * argv を 1 パスで scan し、--pretty / --help / --help-human を抽出 + 対象コマンド解決。
+ * argv を 1 パスで scan し、--pretty / --help / --help-human / --version を抽出 + 対象コマンド解決。
  * Commander parse 前に呼び、unknown option エラーを回避するために返り値の remainingArgv を渡す。
  * value-taking option（--locale ja 等）を正しく消費するため program.options を参照する。
  */
 export function preflightArgv(argv: string[], root: Command): PreflightResult {
   let pretty = false;
   let help: 'json' | 'human' | null = null;
+  let version = false;
   const positional: string[] = [];
   const remaining: string[] = argv.slice(0, 2);
 
@@ -205,6 +212,11 @@ export function preflightArgv(argv: string[], root: Command): PreflightResult {
       remaining.push(a);
       continue;
     }
+    if (a === '--version' || a === '-V') {
+      version = true;
+      // Commander には渡さない（writeOut 抑制で空出力になるのを回避）
+      continue;
+    }
 
     // value-taking option は次のトークンをスキップ（positional 誤検出防止）
     if (valueTakingFlags.has(a)) {
@@ -224,7 +236,7 @@ export function preflightArgv(argv: string[], root: Command): PreflightResult {
     target = next;
   }
 
-  return { pretty, help, target, remainingArgv: remaining };
+  return { pretty, help, version, target, remainingArgv: remaining };
 }
 
 export function walkCommands(root: Command, fn: (cmd: Command) => void): void {

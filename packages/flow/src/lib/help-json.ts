@@ -52,6 +52,12 @@ export interface EmitOptions {
 export interface PreflightResult {
   pretty: boolean;
   help: 'json' | 'human' | null;
+  /**
+   * `--version` / `-V` を検出したかどうか。
+   * `walkCommands` が `writeOut` を空関数化するため Commander 標準の version 表示が抑制される。
+   * 各 CLI で `if (preflight.version)` を見て自前で出力する。
+   */
+  version: boolean;
   target: AnyCommand;
   remainingArgv: string[];
 }

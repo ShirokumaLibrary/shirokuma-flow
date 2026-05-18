@@ -61,6 +61,10 @@ const preflight = preflightArgv(process.argv, program);
 pretty = preflight.pretty;
 const { help, target, remainingArgv } = preflight;
 
+if (preflight.version) {
+  process.stdout.write(version + '\n');
+  process.exit(0);
+}
 if (help === 'json') {
   emitJson(commandToJson(target), { pretty });
 }

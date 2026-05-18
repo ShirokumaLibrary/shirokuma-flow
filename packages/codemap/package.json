@@ -1,6 +1,6 @@
 {
   "name": "@shirokuma-library/codemap",
-  "version": "0.3.0-alpha.134",
+  "version": "0.3.0-alpha.135",
   "description": "AI-consumable codemap extraction CLI for shirokuma workflows.",
   "type": "module",
   "private": false,
