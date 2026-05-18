@@ -1,0 +1,1359 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>helpers.test.ts - Other - テストケース - Project</title>
+  <style>
+
+:root {
+  --bg-color: #0a0a0a;
+  --card-bg: #141414;
+  --border-color: #262626;
+  --text-primary: #fafafa;
+  --text-secondary: #a1a1aa;
+  --accent-blue: #3b82f6;
+  --accent-green: #22c55e;
+  --accent-purple: #a855f7;
+  --accent-orange: #f97316;
+  --accent-pink: #ec4899;
+  --code-bg: #1e1e1e;
+  --sidebar-width: 280px;
+}
+
+
+* {
+  margin: 0;
+  padding: 0;
+  box-sizing: border-box;
+}
+
+body {
+  font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;
+  background: var(--bg-color);
+  color: var(--text-primary);
+  min-height: 100vh;
+  line-height: 1.6;
+}
+
+a {
+  color: var(--accent-blue);
+  text-decoration: none;
+}
+
+a:hover {
+  text-decoration: underline;
+}
+
+
+.container {
+  max-width: 1200px;
+  margin: 0 auto;
+  padding: 2rem;
+}
+
+.grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(350px, 1fr));
+  gap: 1.5rem;
+  margin-bottom: 3rem;
+}
+
+
+.card {
+  background: var(--card-bg);
+  border: 1px solid var(--border-color);
+  border-radius: 12px;
+  padding: 1.5rem;
+  transition: border-color 0.2s, transform 0.2s;
+}
+
+.card:hover {
+  border-color: var(--text-secondary);
+  transform: translateY(-2px);
+}
+
+.card-header {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  margin-bottom: 1rem;
+}
+
+.card-icon {
+  width: 40px;
+  height: 40px;
+  border-radius: 8px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 1.25rem;
+}
+
+.icon-blue { background: rgba(59, 130, 246, 0.2); color: var(--accent-blue); }
+.icon-green { background: rgba(34, 197, 94, 0.2); color: var(--accent-green); }
+.icon-purple { background: rgba(168, 85, 247, 0.2); color: var(--accent-purple); }
+.icon-orange { background: rgba(249, 115, 22, 0.2); color: var(--accent-orange); }
+.icon-pink { background: rgba(236, 72, 153, 0.2); color: var(--accent-pink); }
+
+.card h2 {
+  font-size: 1.25rem;
+  font-weight: 600;
+}
+
+.card p {
+  color: var(--text-secondary);
+  font-size: 0.9rem;
+  line-height: 1.6;
+  margin-bottom: 1rem;
+}
+
+
+.links {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.5rem;
+}
+
+.link {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.25rem;
+  padding: 0.5rem 0.75rem;
+  background: var(--bg-color);
+  border: 1px solid var(--border-color);
+  border-radius: 6px;
+  color: var(--text-primary);
+  text-decoration: none;
+  font-size: 0.85rem;
+  transition: background 0.2s, border-color 0.2s;
+}
+
+.link:hover {
+  background: var(--border-color);
+  border-color: var(--text-secondary);
+  text-decoration: none;
+}
+
+.link svg {
+  width: 14px;
+  height: 14px;
+}
+
+
+header:not(.global-header):not(.hero) {
+  text-align: center;
+  margin-bottom: 3rem;
+  padding-bottom: 2rem;
+  border-bottom: 1px solid var(--border-color);
+}
+
+header:not(.global-header):not(.hero) h1 {
+  font-size: 2.5rem;
+  font-weight: 700;
+  margin-bottom: 0.5rem;
+}
+
+header:not(.global-header):not(.hero) .subtitle {
+  color: var(--text-secondary);
+  font-size: 1.1rem;
+}
+
+
+footer {
+  text-align: center;
+  margin-top: 3rem;
+  padding-top: 2rem;
+  border-top: 1px solid var(--border-color);
+  color: var(--text-secondary);
+  font-size: 0.9rem;
+}
+
+
+.section-title {
+  font-size: 1.1rem;
+  font-weight: 600;
+  margin-bottom: 1rem;
+  color: var(--text-secondary);
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+}
+
+
+.page-header {
+  margin-bottom: 2rem;
+  text-align: center;
+}
+
+.page-title {
+  font-size: 2rem;
+  font-weight: 800;
+  margin-bottom: 0.5rem;
+}
+
+.page-description {
+  font-size: 1rem;
+  color: var(--text-secondary);
+  max-width: 600px;
+  margin: 0 auto;
+}
+
+.page-meta {
+  font-size: 0.875rem;
+  color: var(--text-secondary);
+  margin-top: 0.5rem;
+}
+
+.page-badge {
+  display: inline-block;
+  padding: 0.25rem 0.75rem;
+  border-radius: 9999px;
+  font-size: 0.75rem;
+  font-weight: 600;
+  margin-left: 0.5rem;
+  vertical-align: middle;
+}
+
+.page-badge.badge-action { background: rgba(59, 130, 246, 0.2); color: var(--accent-blue); }
+.page-badge.badge-screen { background: rgba(34, 197, 94, 0.2); color: var(--accent-green); }
+.page-badge.badge-component { background: rgba(168, 85, 247, 0.2); color: var(--accent-purple); }
+.page-badge.badge-table { background: rgba(249, 115, 22, 0.2); color: var(--accent-orange); }
+
+.page-module-prefix {
+  color: var(--text-secondary);
+  font-weight: 400;
+}
+
+
+    .container {
+      max-width: 900px;
+      margin: 0 auto;
+      padding: 2rem;
+    }
+
+    .header {
+      background: var(--card-bg);
+      border-bottom: 1px solid var(--border-color);
+      padding: 1rem 2rem;
+    }
+
+    .back-link {
+      display: inline-flex;
+      align-items: center;
+      gap: 0.5rem;
+      color: var(--text-secondary);
+      text-decoration: none;
+      padding: 0.5rem 1rem;
+      border-radius: 6px;
+      transition: background 0.2s;
+    }
+
+    .back-link:hover {
+      background: var(--border-color);
+      color: var(--text-primary);
+      text-decoration: none;
+    }
+
+    .breadcrumb {
+      display: flex;
+      align-items: center;
+      gap: 0.5rem;
+      font-size: 0.9rem;
+      margin-bottom: 1.5rem;
+    }
+
+    .breadcrumb a {
+      color: var(--accent-blue);
+      text-decoration: none;
+    }
+
+    .breadcrumb a:hover {
+      text-decoration: underline;
+    }
+
+    .breadcrumb .separator {
+      color: var(--text-secondary);
+    }
+
+    .breadcrumb .current {
+      color: var(--text-primary);
+    }
+
+    .page-header {
+      margin-bottom: 2rem;
+    }
+
+    .page-header h1 {
+      font-size: 1.75rem;
+      font-weight: 700;
+      font-family: monospace;
+      margin-bottom: 0.5rem;
+    }
+
+    .file-desc {
+      color: var(--text-secondary);
+      margin-bottom: 0.75rem;
+    }
+
+    .module-link-large {
+      display: inline-flex;
+      align-items: center;
+      gap: 0.5rem;
+      padding: 0.5rem 1rem;
+      background: rgba(59, 130, 246, 0.1);
+      border: 1px solid rgba(59, 130, 246, 0.2);
+      border-radius: 6px;
+      color: var(--accent-blue);
+      text-decoration: none;
+      font-size: 0.9rem;
+      transition: all 0.2s;
+    }
+
+    .module-link-large:hover {
+      background: rgba(59, 130, 246, 0.2);
+      border-color: var(--accent-blue);
+      text-decoration: none;
+    }
+
+    .test-groups {
+      display: flex;
+      flex-direction: column;
+      gap: 2rem;
+    }
+
+    .test-group {
+      background: var(--card-bg);
+      border: 1px solid var(--border-color);
+      border-radius: 8px;
+      padding: 1.25rem;
+    }
+
+    .group-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 0.75rem;
+      padding-bottom: 0.75rem;
+      border-bottom: 1px solid var(--border-color);
+    }
+
+    .group-name {
+      font-size: 1.1rem;
+      font-weight: 600;
+      color: var(--text-primary);
+    }
+
+    .group-count {
+      font-size: 0.8rem;
+      color: var(--text-secondary);
+    }
+
+    .group-desc {
+      font-size: 0.9rem;
+      color: var(--text-secondary);
+      margin-bottom: 1rem;
+      padding: 0.5rem 0.75rem;
+      background: rgba(168, 85, 247, 0.08);
+      border-radius: 6px;
+    }
+
+    .test-list {
+      display: flex;
+      flex-direction: column;
+      gap: 0.75rem;
+    }
+
+    .test-item {
+      padding: 0.75rem;
+      border-radius: 6px;
+      border: 1px solid transparent;
+      transition: all 0.15s;
+    }
+
+    .test-item:hover {
+      background: var(--bg-color);
+      border-color: var(--border-color);
+    }
+
+    .test-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: flex-start;
+      gap: 1rem;
+    }
+
+    .test-name {
+      font-size: 0.9rem;
+      color: var(--text-primary);
+      font-weight: 500;
+    }
+
+    .test-line {
+      font-size: 0.75rem;
+      color: var(--text-secondary);
+      font-family: monospace;
+    }
+
+    .test-original {
+      font-size: 0.8rem;
+      color: var(--text-secondary);
+      margin-top: 0.25rem;
+    }
+
+    .test-details {
+      margin-top: 0.5rem;
+      padding: 0.5rem 0.75rem;
+      background: var(--bg-color);
+      border-radius: 4px;
+      font-size: 0.85rem;
+    }
+
+    .detail-item {
+      padding: 0.25rem 0;
+      color: var(--text-secondary);
+    }
+
+    .detail-label {
+      font-weight: 600;
+      color: var(--accent-purple);
+    }
+
+    .test-category {
+      margin-top: 0.5rem;
+    }
+
+    .test-category-badge {
+      display: inline-flex;
+      align-items: center;
+      gap: 0.25rem;
+      padding: 0.125rem 0.5rem;
+      border-radius: 4px;
+      font-size: 0.75rem;
+      font-weight: 500;
+    }
+  
+  </style>
+<link rel="stylesheet" href="../../global-nav.css">
+</head>
+<body>
+
+    <div class="header">
+      <a href="../other.html" class="back-link">
+        <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M19 12H5M12 19l-7-7 7-7"/></svg>
+        ファイル一覧に戻る
+      </a>
+    </div>
+    <div class="container">
+      <nav class="breadcrumb">
+        <a href="../../test-cases.html">テストケース</a>
+        <span class="separator">/</span>
+        <a href="../other.html">Other</a>
+        <span class="separator">/</span>
+        <span class="current">helpers.test.ts</span>
+      </nav>
+
+      <div class="page-header">
+        <h1>helpers.test.ts</h1>
+        <p class="file-desc">helpers のテスト</p>
+        
+      </div>
+
+      <div class="test-groups">
+        
+        <div class="test-group" id="Handlebars-helpers---eq">
+          <h2 class="group-header">
+            <span class="group-name">Handlebars helpers &gt; eq</span>
+            <span class="group-count">3 tests</span>
+          </h2>
+          
+          <div class="test-list">
+            
+            <div class="test-item">
+              <div class="test-header">
+                <span class="test-name">同値なら true を返す</span>
+                <span class="test-line">L28</span>
+              </div>
+              <p class="test-original">EN: should return true for equal values</p>
+              
+              <div class="test-category"><span class="test-category-badge" style="background: #22c55e20; color: #22c55e" title="正常系">✅ 1</span></div>
+            </div>
+          
+
+            <div class="test-item">
+              <div class="test-header">
+                <span class="test-name">異なる値なら false を返す</span>
+                <span class="test-line">L35</span>
+              </div>
+              <p class="test-original">EN: should return false for different values</p>
+              
+              <div class="test-category"><span class="test-category-badge" style="background: #22c55e20; color: #22c55e" title="正常系">✅ 1</span></div>
+            </div>
+          
+
+            <div class="test-item">
+              <div class="test-header">
+                <span class="test-name">型が異なれば false（strict equality）</span>
+                <span class="test-line">L42</span>
+              </div>
+              <p class="test-original">EN: should use strict equality</p>
+              
+              <div class="test-category"><span class="test-category-badge" style="background: #22c55e20; color: #22c55e" title="正常系">✅ 1</span></div>
+            </div>
+          
+          </div>
+        </div>
+      
+
+        <div class="test-group" id="Handlebars-helpers---ne">
+          <h2 class="group-header">
+            <span class="group-name">Handlebars helpers &gt; ne</span>
+            <span class="group-count">1 tests</span>
+          </h2>
+          
+          <div class="test-list">
+            
+            <div class="test-item">
+              <div class="test-header">
+                <span class="test-name">異なる値なら true を返す</span>
+                <span class="test-line">L51</span>
+              </div>
+              <p class="test-original">EN: should return true for different values</p>
+              
+              <div class="test-category"><span class="test-category-badge" style="background: #22c55e20; color: #22c55e" title="正常系">✅ 1</span></div>
+            </div>
+          
+          </div>
+        </div>
+      
+
+        <div class="test-group" id="Handlebars-helpers---and">
+          <h2 class="group-header">
+            <span class="group-name">Handlebars helpers &gt; and</span>
+            <span class="group-count">2 tests</span>
+          </h2>
+          
+          <div class="test-list">
+            
+            <div class="test-item">
+              <div class="test-header">
+                <span class="test-name">全値が truthy なら true を返す</span>
+                <span class="test-line">L60</span>
+              </div>
+              <p class="test-original">EN: should return true when all values are truthy</p>
+              
+              <div class="test-category"><span class="test-category-badge" style="background: #22c55e20; color: #22c55e" title="正常系">✅ 1</span></div>
+            </div>
+          
+
+            <div class="test-item">
+              <div class="test-header">
+                <span class="test-name">いずれかが falsy なら false を返す</span>
+                <span class="test-line">L67</span>
+              </div>
+              <p class="test-original">EN: should return false when any value is falsy</p>
+              
+              <div class="test-category"><span class="test-category-badge" style="background: #22c55e20; color: #22c55e" title="正常系">✅ 1</span></div>
+            </div>
+          
+          </div>
+        </div>
+      
+
+        <div class="test-group" id="Handlebars-helpers---or">
+          <h2 class="group-header">
+            <span class="group-name">Handlebars helpers &gt; or</span>
+            <span class="group-count">2 tests</span>
+          </h2>
+          
+          <div class="test-list">
+            
+            <div class="test-item">
+              <div class="test-header">
+                <span class="test-name">いずれかが truthy なら true を返す</span>
+                <span class="test-line">L76</span>
+              </div>
+              <p class="test-original">EN: should return true when any value is truthy</p>
+              
+              <div class="test-category"><span class="test-category-badge" style="background: #22c55e20; color: #22c55e" title="正常系">✅ 1</span></div>
+            </div>
+          
+
+            <div class="test-item">
+              <div class="test-header">
+                <span class="test-name">全値が falsy なら false を返す</span>
+                <span class="test-line">L83</span>
+              </div>
+              <p class="test-original">EN: should return false when all values are falsy</p>
+              
+              <div class="test-category"><span class="test-category-badge" style="background: #22c55e20; color: #22c55e" title="正常系">✅ 1</span></div>
+            </div>
+          
+          </div>
+        </div>
+      
+
+        <div class="test-group" id="Handlebars-helpers---not">
+          <h2 class="group-header">
+            <span class="group-name">Handlebars helpers &gt; not</span>
+            <span class="group-count">2 tests</span>
+          </h2>
+          
+          <div class="test-list">
+            
+            <div class="test-item">
+              <div class="test-header">
+                <span class="test-name">truthy 値を反転する</span>
+                <span class="test-line">L92</span>
+              </div>
+              <p class="test-original">EN: should negate truthy value</p>
+              
+              <div class="test-category"><span class="test-category-badge" style="background: #22c55e20; color: #22c55e" title="正常系">✅ 1</span></div>
+            </div>
+          
+
+            <div class="test-item">
+              <div class="test-header">
+                <span class="test-name">falsy 値を反転する</span>
+                <span class="test-line">L99</span>
+              </div>
+              <p class="test-original">EN: should negate falsy value</p>
+              
+              <div class="test-category"><span class="test-category-badge" style="background: #22c55e20; color: #22c55e" title="正常系">✅ 1</span></div>
+            </div>
+          
+          </div>
+        </div>
+      
+
+        <div class="test-group" id="Handlebars-helpers---length">
+          <h2 class="group-header">
+            <span class="group-name">Handlebars helpers &gt; length</span>
+            <span class="group-count">3 tests</span>
+          </h2>
+          
+          <div class="test-list">
+            
+            <div class="test-item">
+              <div class="test-header">
+                <span class="test-name">配列の長さを返す</span>
+                <span class="test-line">L112</span>
+              </div>
+              <p class="test-original">EN: should return array length</p>
+              
+              <div class="test-category"><span class="test-category-badge" style="background: #22c55e20; color: #22c55e" title="正常系">✅ 1</span></div>
+            </div>
+          
+
+            <div class="test-item">
+              <div class="test-header">
+                <span class="test-name">オブジェクトのキー数を返す</span>
+                <span class="test-line">L119</span>
+              </div>
+              <p class="test-original">EN: should return object key count</p>
+              
+              <div class="test-category"><span class="test-category-badge" style="background: #22c55e20; color: #22c55e" title="正常系">✅ 1</span></div>
+            </div>
+          
+
+            <div class="test-item">
+              <div class="test-header">
+                <span class="test-name">非コレクションは 0 を返す</span>
+                <span class="test-line">L126</span>
+              </div>
+              <p class="test-original">EN: should return 0 for non-collection</p>
+              
+              <div class="test-category"><span class="test-category-badge" style="background: #22c55e20; color: #22c55e" title="正常系">✅ 1</span></div>
+            </div>
+          
+          </div>
+        </div>
+      
+
+        <div class="test-group" id="Handlebars-helpers---isEmpty">
+          <h2 class="group-header">
+            <span class="group-name">Handlebars helpers &gt; isEmpty</span>
+            <span class="group-count">3 tests</span>
+          </h2>
+          
+          <div class="test-list">
+            
+            <div class="test-item">
+              <div class="test-header">
+                <span class="test-name">空配列は true を返す</span>
+                <span class="test-line">L135</span>
+              </div>
+              <p class="test-original">EN: should return true for empty array</p>
+              
+              <div class="test-category"><span class="test-category-badge" style="background: #3b82f620; color: #3b82f6" title="バリデーション">📋 1</span></div>
+            </div>
+          
+
+            <div class="test-item">
+              <div class="test-header">
+                <span class="test-name">null/undefined は true を返す</span>
+                <span class="test-line">L142</span>
+              </div>
+              <p class="test-original">EN: should return true for null</p>
+              
+              <div class="test-category"><span class="test-category-badge" style="background: #22c55e20; color: #22c55e" title="正常系">✅ 1</span></div>
+            </div>
+          
+
+            <div class="test-item">
+              <div class="test-header">
+                <span class="test-name">要素がある配列は false を返す</span>
+                <span class="test-line">L149</span>
+              </div>
+              <p class="test-original">EN: should return false for non-empty array</p>
+              
+              <div class="test-category"><span class="test-category-badge" style="background: #3b82f620; color: #3b82f6" title="バリデーション">📋 1</span></div>
+            </div>
+          
+          </div>
+        </div>
+      
+
+        <div class="test-group" id="Handlebars-helpers---first">
+          <h2 class="group-header">
+            <span class="group-name">Handlebars helpers &gt; first</span>
+            <span class="group-count">2 tests</span>
+          </h2>
+          
+          <div class="test-list">
+            
+            <div class="test-item">
+              <div class="test-header">
+                <span class="test-name">配列の先頭要素を返す</span>
+                <span class="test-line">L158</span>
+              </div>
+              <p class="test-original">EN: should return first element</p>
+              
+              <div class="test-category"><span class="test-category-badge" style="background: #22c55e20; color: #22c55e" title="正常系">✅ 1</span></div>
+            </div>
+          
+
+            <div class="test-item">
+              <div class="test-header">
+                <span class="test-name">非配列は undefined を返す</span>
+                <span class="test-line">L165</span>
+              </div>
+              <p class="test-original">EN: should return empty for non-array</p>
+              
+              <div class="test-category"><span class="test-category-badge" style="background: #3b82f620; color: #3b82f6" title="バリデーション">📋 1</span></div>
+            </div>
+          
+          </div>
+        </div>
+      
+
+        <div class="test-group" id="Handlebars-helpers---take">
+          <h2 class="group-header">
+            <span class="group-name">Handlebars helpers &gt; take</span>
+            <span class="group-count">2 tests</span>
+          </h2>
+          
+          <div class="test-list">
+            
+            <div class="test-item">
+              <div class="test-header">
+                <span class="test-name">先頭 N 件を返す</span>
+                <span class="test-line">L174</span>
+              </div>
+              <p class="test-original">EN: should return first N items</p>
+              
+              <div class="test-category"><span class="test-category-badge" style="background: #22c55e20; color: #22c55e" title="正常系">✅ 1</span></div>
+            </div>
+          
+
+            <div class="test-item">
+              <div class="test-header">
+                <span class="test-name">非配列は空配列を返す</span>
+                <span class="test-line">L182</span>
+              </div>
+              <p class="test-original">EN: should return empty array for non-array</p>
+              
+              <div class="test-category"><span class="test-category-badge" style="background: #3b82f620; color: #3b82f6" title="バリデーション">📋 1</span></div>
+            </div>
+          
+          </div>
+        </div>
+      
+
+        <div class="test-group" id="Handlebars-helpers---entries">
+          <h2 class="group-header">
+            <span class="group-name">Handlebars helpers &gt; entries</span>
+            <span class="group-count">2 tests</span>
+          </h2>
+          
+          <div class="test-list">
+            
+            <div class="test-item">
+              <div class="test-header">
+                <span class="test-name">オブジェクトを key/value エントリ配列に変換する</span>
+                <span class="test-line">L191</span>
+              </div>
+              <p class="test-original">EN: should convert object to entries</p>
+              
+              <div class="test-category"><span class="test-category-badge" style="background: #22c55e20; color: #22c55e" title="正常系">✅ 1</span></div>
+            </div>
+          
+
+            <div class="test-item">
+              <div class="test-header">
+                <span class="test-name">null は空配列を返す</span>
+                <span class="test-line">L199</span>
+              </div>
+              <p class="test-original">EN: should return empty for null</p>
+              
+              <div class="test-category"><span class="test-category-badge" style="background: #3b82f620; color: #3b82f6" title="バリデーション">📋 1</span></div>
+            </div>
+          
+          </div>
+        </div>
+      
+
+        <div class="test-group" id="Handlebars-helpers---percent">
+          <h2 class="group-header">
+            <span class="group-name">Handlebars helpers &gt; percent</span>
+            <span class="group-count">2 tests</span>
+          </h2>
+          
+          <div class="test-list">
+            
+            <div class="test-item">
+              <div class="test-header">
+                <span class="test-name">小数を 100 倍してパーセントにする</span>
+                <span class="test-line">L212</span>
+              </div>
+              <p class="test-original">EN: should convert decimal to percentage</p>
+              
+              <div class="test-category"><span class="test-category-badge" style="background: #22c55e20; color: #22c55e" title="正常系">✅ 1</span></div>
+            </div>
+          
+
+            <div class="test-item">
+              <div class="test-header">
+                <span class="test-name">NaN は &quot;0&quot; を返す</span>
+                <span class="test-line">L219</span>
+              </div>
+              <p class="test-original">EN: should return 0 for NaN</p>
+              
+              <div class="test-category"><span class="test-category-badge" style="background: #22c55e20; color: #22c55e" title="正常系">✅ 1</span></div>
+            </div>
+          
+          </div>
+        </div>
+      
+
+        <div class="test-group" id="Handlebars-helpers---round">
+          <h2 class="group-header">
+            <span class="group-name">Handlebars helpers &gt; round</span>
+            <span class="group-count">1 tests</span>
+          </h2>
+          
+          <div class="test-list">
+            
+            <div class="test-item">
+              <div class="test-header">
+                <span class="test-name">数値を四捨五入する</span>
+                <span class="test-line">L228</span>
+              </div>
+              <p class="test-original">EN: should round number</p>
+              
+              <div class="test-category"><span class="test-category-badge" style="background: #22c55e20; color: #22c55e" title="正常系">✅ 1</span></div>
+            </div>
+          
+          </div>
+        </div>
+      
+
+        <div class="test-group" id="Handlebars-helpers---add---sub">
+          <h2 class="group-header">
+            <span class="group-name">Handlebars helpers &gt; add / sub</span>
+            <span class="group-count">2 tests</span>
+          </h2>
+          
+          <div class="test-list">
+            
+            <div class="test-item">
+              <div class="test-header">
+                <span class="test-name">加算する</span>
+                <span class="test-line">L237</span>
+              </div>
+              <p class="test-original">EN: should add numbers</p>
+              
+              <div class="test-category"><span class="test-category-badge" style="background: #22c55e20; color: #22c55e" title="正常系">✅ 1</span></div>
+            </div>
+          
+
+            <div class="test-item">
+              <div class="test-header">
+                <span class="test-name">減算する</span>
+                <span class="test-line">L244</span>
+              </div>
+              <p class="test-original">EN: should subtract numbers</p>
+              
+              <div class="test-category"><span class="test-category-badge" style="background: #22c55e20; color: #22c55e" title="正常系">✅ 1</span></div>
+            </div>
+          
+          </div>
+        </div>
+      
+
+        <div class="test-group" id="Handlebars-helpers---commaNumber">
+          <h2 class="group-header">
+            <span class="group-name">Handlebars helpers &gt; commaNumber</span>
+            <span class="group-count">1 tests</span>
+          </h2>
+          
+          <div class="test-list">
+            
+            <div class="test-item">
+              <div class="test-header">
+                <span class="test-name">数値をカンマ区切りにする</span>
+                <span class="test-line">L253</span>
+              </div>
+              <p class="test-original">EN: should format number with commas</p>
+              
+              <div class="test-category"><span class="test-category-badge" style="background: #22c55e20; color: #22c55e" title="正常系">✅ 1</span></div>
+            </div>
+          
+          </div>
+        </div>
+      
+
+        <div class="test-group" id="Handlebars-helpers---inRange">
+          <h2 class="group-header">
+            <span class="group-name">Handlebars helpers &gt; inRange</span>
+            <span class="group-count">3 tests</span>
+          </h2>
+          
+          <div class="test-list">
+            
+            <div class="test-item">
+              <div class="test-header">
+                <span class="test-name">範囲内なら true を返す</span>
+                <span class="test-line">L262</span>
+              </div>
+              <p class="test-original">EN: should return true when in range</p>
+              
+              <div class="test-category"><span class="test-category-badge" style="background: #22c55e20; color: #22c55e" title="正常系">✅ 1</span></div>
+            </div>
+          
+
+            <div class="test-item">
+              <div class="test-header">
+                <span class="test-name">範囲外なら false を返す</span>
+                <span class="test-line">L269</span>
+              </div>
+              <p class="test-original">EN: should return false when out of range</p>
+              
+              <div class="test-category"><span class="test-category-badge" style="background: #22c55e20; color: #22c55e" title="正常系">✅ 1</span></div>
+            </div>
+          
+
+            <div class="test-item">
+              <div class="test-header">
+                <span class="test-name">境界値を含む</span>
+                <span class="test-line">L276</span>
+              </div>
+              <p class="test-original">EN: should include boundary values</p>
+              
+              <div class="test-category"><span class="test-category-badge" style="background: #8b5cf620; color: #8b5cf6" title="境界値">🔍 1</span></div>
+            </div>
+          
+          </div>
+        </div>
+      
+
+        <div class="test-group" id="Handlebars-helpers---isEven">
+          <h2 class="group-header">
+            <span class="group-name">Handlebars helpers &gt; isEven</span>
+            <span class="group-count">2 tests</span>
+          </h2>
+          
+          <div class="test-list">
+            
+            <div class="test-item">
+              <div class="test-header">
+                <span class="test-name">偶数なら true を返す</span>
+                <span class="test-line">L286</span>
+              </div>
+              <p class="test-original">EN: should return true for even index</p>
+              
+              <div class="test-category"><span class="test-category-badge" style="background: #22c55e20; color: #22c55e" title="正常系">✅ 1</span></div>
+            </div>
+          
+
+            <div class="test-item">
+              <div class="test-header">
+                <span class="test-name">奇数なら false を返す</span>
+                <span class="test-line">L294</span>
+              </div>
+              <p class="test-original">EN: should return false for odd index</p>
+              
+              <div class="test-category"><span class="test-category-badge" style="background: #22c55e20; color: #22c55e" title="正常系">✅ 1</span></div>
+            </div>
+          
+          </div>
+        </div>
+      
+
+        <div class="test-group" id="Handlebars-helpers---truncate">
+          <h2 class="group-header">
+            <span class="group-name">Handlebars helpers &gt; truncate</span>
+            <span class="group-count">2 tests</span>
+          </h2>
+          
+          <div class="test-list">
+            
+            <div class="test-item">
+              <div class="test-header">
+                <span class="test-name">長い文字列を切り詰める</span>
+                <span class="test-line">L307</span>
+              </div>
+              <p class="test-original">EN: should truncate long string</p>
+              
+              <div class="test-category"><span class="test-category-badge" style="background: #22c55e20; color: #22c55e" title="正常系">✅ 1</span></div>
+            </div>
+          
+
+            <div class="test-item">
+              <div class="test-header">
+                <span class="test-name">短い文字列はそのまま返す</span>
+                <span class="test-line">L314</span>
+              </div>
+              <p class="test-original">EN: should not truncate short string</p>
+              
+              <div class="test-category"><span class="test-category-badge" style="background: #22c55e20; color: #22c55e" title="正常系">✅ 1</span></div>
+            </div>
+          
+          </div>
+        </div>
+      
+
+        <div class="test-group" id="Handlebars-helpers---replace">
+          <h2 class="group-header">
+            <span class="group-name">Handlebars helpers &gt; replace</span>
+            <span class="group-count">3 tests</span>
+          </h2>
+          
+          <div class="test-list">
+            
+            <div class="test-item">
+              <div class="test-header">
+                <span class="test-name">文字列を全置換する（ReDoS 安全）</span>
+                <span class="test-line">L323</span>
+              </div>
+              <p class="test-original">EN: should replace all occurrences without regex</p>
+              
+              <div class="test-category"><span class="test-category-badge" style="background: #22c55e20; color: #22c55e" title="正常系">✅ 1</span></div>
+            </div>
+          
+
+            <div class="test-item">
+              <div class="test-header">
+                <span class="test-name">正規表現特殊文字を含む from でもリテラル置換する</span>
+                <span class="test-line">L330</span>
+              </div>
+              <p class="test-original">EN: should treat from as literal string, not regex</p>
+              
+              <div class="test-category"><span class="test-category-badge" style="background: #22c55e20; color: #22c55e" title="正常系">✅ 1</span></div>
+            </div>
+          
+
+            <div class="test-item">
+              <div class="test-header">
+                <span class="test-name">null 入力を安全に処理する</span>
+                <span class="test-line">L337</span>
+              </div>
+              <p class="test-original">EN: should handle null input</p>
+              
+              <div class="test-category"><span class="test-category-badge" style="background: #3b82f620; color: #3b82f6" title="バリデーション">📋 1</span></div>
+            </div>
+          
+          </div>
+        </div>
+      
+
+        <div class="test-group" id="Handlebars-helpers---slugify">
+          <h2 class="group-header">
+            <span class="group-name">Handlebars helpers &gt; slugify</span>
+            <span class="group-count">2 tests</span>
+          </h2>
+          
+          <div class="test-list">
+            
+            <div class="test-item">
+              <div class="test-header">
+                <span class="test-name">スペースをハイフンに変換しスラッグを生成する</span>
+                <span class="test-line">L346</span>
+              </div>
+              <p class="test-original">EN: should generate slug</p>
+              
+              <div class="test-category"><span class="test-category-badge" style="background: #22c55e20; color: #22c55e" title="正常系">✅ 1</span></div>
+            </div>
+          
+
+            <div class="test-item">
+              <div class="test-header">
+                <span class="test-name">特殊文字を除去する</span>
+                <span class="test-line">L353</span>
+              </div>
+              <p class="test-original">EN: should remove special characters</p>
+              
+              <div class="test-category"><span class="test-category-badge" style="background: #22c55e20; color: #22c55e" title="正常系">✅ 1</span></div>
+            </div>
+          
+          </div>
+        </div>
+      
+
+        <div class="test-group" id="Handlebars-helpers---urlEncode">
+          <h2 class="group-header">
+            <span class="group-name">Handlebars helpers &gt; urlEncode</span>
+            <span class="group-count">1 tests</span>
+          </h2>
+          
+          <div class="test-list">
+            
+            <div class="test-item">
+              <div class="test-header">
+                <span class="test-name">URL エンコードする</span>
+                <span class="test-line">L362</span>
+              </div>
+              <p class="test-original">EN: should URL encode value</p>
+              
+              <div class="test-category"><span class="test-category-badge" style="background: #22c55e20; color: #22c55e" title="正常系">✅ 1</span></div>
+            </div>
+          
+          </div>
+        </div>
+      
+
+        <div class="test-group" id="Handlebars-helpers---json--XSS-protection-">
+          <h2 class="group-header">
+            <span class="group-name">Handlebars helpers &gt; json (XSS protection)</span>
+            <span class="group-count">4 tests</span>
+          </h2>
+          
+          <div class="test-list">
+            
+            <div class="test-item">
+              <div class="test-header">
+                <span class="test-name">オブジェクトを JSON 文字列に変換する</span>
+                <span class="test-line">L375</span>
+              </div>
+              <p class="test-original">EN: should stringify object to JSON</p>
+              
+              <div class="test-category"><span class="test-category-badge" style="background: #22c55e20; color: #22c55e" title="正常系">✅ 1</span></div>
+            </div>
+          
+
+            <div class="test-item">
+              <div class="test-header">
+                <span class="test-name">&lt;/script&gt; を含むデータで &lt; をエスケープする</span>
+                <span class="test-line">L383</span>
+              </div>
+              <p class="test-original">EN: should escape &lt; to prevent script tag breakout</p>
+              
+              <div class="test-category"><span class="test-category-badge" style="background: #22c55e20; color: #22c55e" title="正常系">✅ 1</span></div>
+            </div>
+          
+
+            <div class="test-item">
+              <div class="test-header">
+                <span class="test-name">ネストされたオブジェクト内の &lt; もエスケープする</span>
+                <span class="test-line">L392</span>
+              </div>
+              <p class="test-original">EN: should escape &lt; in nested objects</p>
+              
+              <div class="test-category"><span class="test-category-badge" style="background: #22c55e20; color: #22c55e" title="正常系">✅ 1</span></div>
+            </div>
+          
+
+            <div class="test-item">
+              <div class="test-header">
+                <span class="test-name">null を安全にシリアライズする</span>
+                <span class="test-line">L401</span>
+              </div>
+              <p class="test-original">EN: should handle null</p>
+              
+              <div class="test-category"><span class="test-category-badge" style="background: #22c55e20; color: #22c55e" title="正常系">✅ 1</span></div>
+            </div>
+          
+          </div>
+        </div>
+      
+
+        <div class="test-group" id="Handlebars-helpers---raw">
+          <h2 class="group-header">
+            <span class="group-name">Handlebars helpers &gt; raw</span>
+            <span class="group-count">2 tests</span>
+          </h2>
+          
+          <div class="test-list">
+            
+            <div class="test-item">
+              <div class="test-header">
+                <span class="test-name">HTML をエスケープせずに出力する</span>
+                <span class="test-line">L410</span>
+              </div>
+              <p class="test-original">EN: should output raw HTML without escaping</p>
+              
+              <div class="test-category"><span class="test-category-badge" style="background: #22c55e20; color: #22c55e" title="正常系">✅ 1</span></div>
+            </div>
+          
+
+            <div class="test-item">
+              <div class="test-header">
+                <span class="test-name">null は空文字列を返す</span>
+                <span class="test-line">L417</span>
+              </div>
+              <p class="test-original">EN: should return empty string for null</p>
+              
+              <div class="test-category"><span class="test-category-badge" style="background: #3b82f620; color: #3b82f6" title="バリデーション">📋 1</span></div>
+            </div>
+          
+          </div>
+        </div>
+      
+
+        <div class="test-group" id="Handlebars-helpers---ifExists">
+          <h2 class="group-header">
+            <span class="group-name">Handlebars helpers &gt; ifExists</span>
+            <span class="group-count">4 tests</span>
+          </h2>
+          
+          <div class="test-list">
+            
+            <div class="test-item">
+              <div class="test-header">
+                <span class="test-name">値が存在する場合はブロックを表示する</span>
+                <span class="test-line">L430</span>
+              </div>
+              <p class="test-original">EN: should render block when value exists</p>
+              
+              <div class="test-category"><span class="test-category-badge" style="background: #22c55e20; color: #22c55e" title="正常系">✅ 1</span></div>
+            </div>
+          
+
+            <div class="test-item">
+              <div class="test-header">
+                <span class="test-name">null の場合はブロックを表示しない</span>
+                <span class="test-line">L437</span>
+              </div>
+              <p class="test-original">EN: should not render block for null</p>
+              
+              <div class="test-category"><span class="test-category-badge" style="background: #22c55e20; color: #22c55e" title="正常系">✅ 1</span></div>
+            </div>
+          
+
+            <div class="test-item">
+              <div class="test-header">
+                <span class="test-name">空文字列の場合はブロックを表示しない</span>
+                <span class="test-line">L444</span>
+              </div>
+              <p class="test-original">EN: should not render block for empty string</p>
+              
+              <div class="test-category"><span class="test-category-badge" style="background: #3b82f620; color: #3b82f6" title="バリデーション">📋 1</span></div>
+            </div>
+          
+
+            <div class="test-item">
+              <div class="test-header">
+                <span class="test-name">else ブロックが使える</span>
+                <span class="test-line">L451</span>
+              </div>
+              <p class="test-original">EN: should support else block</p>
+              
+              <div class="test-category"><span class="test-category-badge" style="background: #22c55e20; color: #22c55e" title="正常系">✅ 1</span></div>
+            </div>
+          
+          </div>
+        </div>
+      
+
+        <div class="test-group" id="Handlebars-helpers---ifNotEmpty">
+          <h2 class="group-header">
+            <span class="group-name">Handlebars helpers &gt; ifNotEmpty</span>
+            <span class="group-count">4 tests</span>
+          </h2>
+          
+          <div class="test-list">
+            
+            <div class="test-item">
+              <div class="test-header">
+                <span class="test-name">空でない配列ならブロックを表示する</span>
+                <span class="test-line">L460</span>
+              </div>
+              <p class="test-original">EN: should render block for non-empty array</p>
+              
+              <div class="test-category"><span class="test-category-badge" style="background: #3b82f620; color: #3b82f6" title="バリデーション">📋 1</span></div>
+            </div>
+          
+
+            <div class="test-item">
+              <div class="test-header">
+                <span class="test-name">空配列ならブロックを表示しない</span>
+                <span class="test-line">L467</span>
+              </div>
+              <p class="test-original">EN: should not render block for empty array</p>
+              
+              <div class="test-category"><span class="test-category-badge" style="background: #3b82f620; color: #3b82f6" title="バリデーション">📋 1</span></div>
+            </div>
+          
+
+            <div class="test-item">
+              <div class="test-header">
+                <span class="test-name">空でないオブジェクトならブロックを表示する</span>
+                <span class="test-line">L474</span>
+              </div>
+              <p class="test-original">EN: should render block for non-empty object</p>
+              
+              <div class="test-category"><span class="test-category-badge" style="background: #3b82f620; color: #3b82f6" title="バリデーション">📋 1</span></div>
+            </div>
+          
+
+            <div class="test-item">
+              <div class="test-header">
+                <span class="test-name">null ならブロックを表示しない</span>
+                <span class="test-line">L481</span>
+              </div>
+              <p class="test-original">EN: should not render block for null</p>
+              
+              <div class="test-category"><span class="test-category-badge" style="background: #22c55e20; color: #22c55e" title="正常系">✅ 1</span></div>
+            </div>
+          
+          </div>
+        </div>
+      
+
+        <div class="test-group" id="Handlebars-helpers---currentYear">
+          <h2 class="group-header">
+            <span class="group-name">Handlebars helpers &gt; currentYear</span>
+            <span class="group-count">1 tests</span>
+          </h2>
+          
+          <div class="test-list">
+            
+            <div class="test-item">
+              <div class="test-header">
+                <span class="test-name">現在年を返す</span>
+                <span class="test-line">L494</span>
+              </div>
+              <p class="test-original">EN: should return current year</p>
+              
+              <div class="test-category"><span class="test-category-badge" style="background: #22c55e20; color: #22c55e" title="正常系">✅ 1</span></div>
+            </div>
+          
+          </div>
+        </div>
+      
+      </div>
+    </div>
+  
+
+<script src="../../global-nav.js"></script>
+</body>
+</html>

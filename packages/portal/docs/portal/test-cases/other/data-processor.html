@@ -1,0 +1,677 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>data-processor.test.ts - Other - テストケース - Project</title>
+  <style>
+
+:root {
+  --bg-color: #0a0a0a;
+  --card-bg: #141414;
+  --border-color: #262626;
+  --text-primary: #fafafa;
+  --text-secondary: #a1a1aa;
+  --accent-blue: #3b82f6;
+  --accent-green: #22c55e;
+  --accent-purple: #a855f7;
+  --accent-orange: #f97316;
+  --accent-pink: #ec4899;
+  --code-bg: #1e1e1e;
+  --sidebar-width: 280px;
+}
+
+
+* {
+  margin: 0;
+  padding: 0;
+  box-sizing: border-box;
+}
+
+body {
+  font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;
+  background: var(--bg-color);
+  color: var(--text-primary);
+  min-height: 100vh;
+  line-height: 1.6;
+}
+
+a {
+  color: var(--accent-blue);
+  text-decoration: none;
+}
+
+a:hover {
+  text-decoration: underline;
+}
+
+
+.container {
+  max-width: 1200px;
+  margin: 0 auto;
+  padding: 2rem;
+}
+
+.grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(350px, 1fr));
+  gap: 1.5rem;
+  margin-bottom: 3rem;
+}
+
+
+.card {
+  background: var(--card-bg);
+  border: 1px solid var(--border-color);
+  border-radius: 12px;
+  padding: 1.5rem;
+  transition: border-color 0.2s, transform 0.2s;
+}
+
+.card:hover {
+  border-color: var(--text-secondary);
+  transform: translateY(-2px);
+}
+
+.card-header {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  margin-bottom: 1rem;
+}
+
+.card-icon {
+  width: 40px;
+  height: 40px;
+  border-radius: 8px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 1.25rem;
+}
+
+.icon-blue { background: rgba(59, 130, 246, 0.2); color: var(--accent-blue); }
+.icon-green { background: rgba(34, 197, 94, 0.2); color: var(--accent-green); }
+.icon-purple { background: rgba(168, 85, 247, 0.2); color: var(--accent-purple); }
+.icon-orange { background: rgba(249, 115, 22, 0.2); color: var(--accent-orange); }
+.icon-pink { background: rgba(236, 72, 153, 0.2); color: var(--accent-pink); }
+
+.card h2 {
+  font-size: 1.25rem;
+  font-weight: 600;
+}
+
+.card p {
+  color: var(--text-secondary);
+  font-size: 0.9rem;
+  line-height: 1.6;
+  margin-bottom: 1rem;
+}
+
+
+.links {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.5rem;
+}
+
+.link {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.25rem;
+  padding: 0.5rem 0.75rem;
+  background: var(--bg-color);
+  border: 1px solid var(--border-color);
+  border-radius: 6px;
+  color: var(--text-primary);
+  text-decoration: none;
+  font-size: 0.85rem;
+  transition: background 0.2s, border-color 0.2s;
+}
+
+.link:hover {
+  background: var(--border-color);
+  border-color: var(--text-secondary);
+  text-decoration: none;
+}
+
+.link svg {
+  width: 14px;
+  height: 14px;
+}
+
+
+header:not(.global-header):not(.hero) {
+  text-align: center;
+  margin-bottom: 3rem;
+  padding-bottom: 2rem;
+  border-bottom: 1px solid var(--border-color);
+}
+
+header:not(.global-header):not(.hero) h1 {
+  font-size: 2.5rem;
+  font-weight: 700;
+  margin-bottom: 0.5rem;
+}
+
+header:not(.global-header):not(.hero) .subtitle {
+  color: var(--text-secondary);
+  font-size: 1.1rem;
+}
+
+
+footer {
+  text-align: center;
+  margin-top: 3rem;
+  padding-top: 2rem;
+  border-top: 1px solid var(--border-color);
+  color: var(--text-secondary);
+  font-size: 0.9rem;
+}
+
+
+.section-title {
+  font-size: 1.1rem;
+  font-weight: 600;
+  margin-bottom: 1rem;
+  color: var(--text-secondary);
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+}
+
+
+.page-header {
+  margin-bottom: 2rem;
+  text-align: center;
+}
+
+.page-title {
+  font-size: 2rem;
+  font-weight: 800;
+  margin-bottom: 0.5rem;
+}
+
+.page-description {
+  font-size: 1rem;
+  color: var(--text-secondary);
+  max-width: 600px;
+  margin: 0 auto;
+}
+
+.page-meta {
+  font-size: 0.875rem;
+  color: var(--text-secondary);
+  margin-top: 0.5rem;
+}
+
+.page-badge {
+  display: inline-block;
+  padding: 0.25rem 0.75rem;
+  border-radius: 9999px;
+  font-size: 0.75rem;
+  font-weight: 600;
+  margin-left: 0.5rem;
+  vertical-align: middle;
+}
+
+.page-badge.badge-action { background: rgba(59, 130, 246, 0.2); color: var(--accent-blue); }
+.page-badge.badge-screen { background: rgba(34, 197, 94, 0.2); color: var(--accent-green); }
+.page-badge.badge-component { background: rgba(168, 85, 247, 0.2); color: var(--accent-purple); }
+.page-badge.badge-table { background: rgba(249, 115, 22, 0.2); color: var(--accent-orange); }
+
+.page-module-prefix {
+  color: var(--text-secondary);
+  font-weight: 400;
+}
+
+
+    .container {
+      max-width: 900px;
+      margin: 0 auto;
+      padding: 2rem;
+    }
+
+    .header {
+      background: var(--card-bg);
+      border-bottom: 1px solid var(--border-color);
+      padding: 1rem 2rem;
+    }
+
+    .back-link {
+      display: inline-flex;
+      align-items: center;
+      gap: 0.5rem;
+      color: var(--text-secondary);
+      text-decoration: none;
+      padding: 0.5rem 1rem;
+      border-radius: 6px;
+      transition: background 0.2s;
+    }
+
+    .back-link:hover {
+      background: var(--border-color);
+      color: var(--text-primary);
+      text-decoration: none;
+    }
+
+    .breadcrumb {
+      display: flex;
+      align-items: center;
+      gap: 0.5rem;
+      font-size: 0.9rem;
+      margin-bottom: 1.5rem;
+    }
+
+    .breadcrumb a {
+      color: var(--accent-blue);
+      text-decoration: none;
+    }
+
+    .breadcrumb a:hover {
+      text-decoration: underline;
+    }
+
+    .breadcrumb .separator {
+      color: var(--text-secondary);
+    }
+
+    .breadcrumb .current {
+      color: var(--text-primary);
+    }
+
+    .page-header {
+      margin-bottom: 2rem;
+    }
+
+    .page-header h1 {
+      font-size: 1.75rem;
+      font-weight: 700;
+      font-family: monospace;
+      margin-bottom: 0.5rem;
+    }
+
+    .file-desc {
+      color: var(--text-secondary);
+      margin-bottom: 0.75rem;
+    }
+
+    .module-link-large {
+      display: inline-flex;
+      align-items: center;
+      gap: 0.5rem;
+      padding: 0.5rem 1rem;
+      background: rgba(59, 130, 246, 0.1);
+      border: 1px solid rgba(59, 130, 246, 0.2);
+      border-radius: 6px;
+      color: var(--accent-blue);
+      text-decoration: none;
+      font-size: 0.9rem;
+      transition: all 0.2s;
+    }
+
+    .module-link-large:hover {
+      background: rgba(59, 130, 246, 0.2);
+      border-color: var(--accent-blue);
+      text-decoration: none;
+    }
+
+    .test-groups {
+      display: flex;
+      flex-direction: column;
+      gap: 2rem;
+    }
+
+    .test-group {
+      background: var(--card-bg);
+      border: 1px solid var(--border-color);
+      border-radius: 8px;
+      padding: 1.25rem;
+    }
+
+    .group-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 0.75rem;
+      padding-bottom: 0.75rem;
+      border-bottom: 1px solid var(--border-color);
+    }
+
+    .group-name {
+      font-size: 1.1rem;
+      font-weight: 600;
+      color: var(--text-primary);
+    }
+
+    .group-count {
+      font-size: 0.8rem;
+      color: var(--text-secondary);
+    }
+
+    .group-desc {
+      font-size: 0.9rem;
+      color: var(--text-secondary);
+      margin-bottom: 1rem;
+      padding: 0.5rem 0.75rem;
+      background: rgba(168, 85, 247, 0.08);
+      border-radius: 6px;
+    }
+
+    .test-list {
+      display: flex;
+      flex-direction: column;
+      gap: 0.75rem;
+    }
+
+    .test-item {
+      padding: 0.75rem;
+      border-radius: 6px;
+      border: 1px solid transparent;
+      transition: all 0.15s;
+    }
+
+    .test-item:hover {
+      background: var(--bg-color);
+      border-color: var(--border-color);
+    }
+
+    .test-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: flex-start;
+      gap: 1rem;
+    }
+
+    .test-name {
+      font-size: 0.9rem;
+      color: var(--text-primary);
+      font-weight: 500;
+    }
+
+    .test-line {
+      font-size: 0.75rem;
+      color: var(--text-secondary);
+      font-family: monospace;
+    }
+
+    .test-original {
+      font-size: 0.8rem;
+      color: var(--text-secondary);
+      margin-top: 0.25rem;
+    }
+
+    .test-details {
+      margin-top: 0.5rem;
+      padding: 0.5rem 0.75rem;
+      background: var(--bg-color);
+      border-radius: 4px;
+      font-size: 0.85rem;
+    }
+
+    .detail-item {
+      padding: 0.25rem 0;
+      color: var(--text-secondary);
+    }
+
+    .detail-label {
+      font-weight: 600;
+      color: var(--accent-purple);
+    }
+
+    .test-category {
+      margin-top: 0.5rem;
+    }
+
+    .test-category-badge {
+      display: inline-flex;
+      align-items: center;
+      gap: 0.25rem;
+      padding: 0.125rem 0.5rem;
+      border-radius: 4px;
+      font-size: 0.75rem;
+      font-weight: 500;
+    }
+  
+  </style>
+<link rel="stylesheet" href="../../global-nav.css">
+</head>
+<body>
+
+    <div class="header">
+      <a href="../other.html" class="back-link">
+        <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M19 12H5M12 19l-7-7 7-7"/></svg>
+        ファイル一覧に戻る
+      </a>
+    </div>
+    <div class="container">
+      <nav class="breadcrumb">
+        <a href="../../test-cases.html">テストケース</a>
+        <span class="separator">/</span>
+        <a href="../other.html">Other</a>
+        <span class="separator">/</span>
+        <span class="current">data-processor.test.ts</span>
+      </nav>
+
+      <div class="page-header">
+        <h1>data-processor.test.ts</h1>
+        <p class="file-desc">data-processor のテスト</p>
+        
+      </div>
+
+      <div class="test-groups">
+        
+        <div class="test-group" id="loadPortalData">
+          <h2 class="group-header">
+            <span class="group-name">loadPortalData</span>
+            <span class="group-count">18 tests</span>
+          </h2>
+          
+          <div class="test-list">
+            
+            <div class="test-item">
+              <div class="test-header">
+                <span class="test-name">JSON ファイルが存在しない場合は null を返す</span>
+                <span class="test-line">L120</span>
+              </div>
+              <p class="test-original">EN: should return null fields when JSON files do not exist</p>
+              
+              <div class="test-category"><span class="test-category-badge" style="background: #22c55e20; color: #22c55e" title="正常系">✅ 1</span></div>
+            </div>
+          
+
+            <div class="test-item">
+              <div class="test-header">
+                <span class="test-name">全データが null の場合の available フラグが正しい</span>
+                <span class="test-line">L141</span>
+              </div>
+              <p class="test-original">EN: should set all available flags to false when no data</p>
+              
+              <div class="test-category"><span class="test-category-badge" style="background: #22c55e20; color: #22c55e" title="正常系">✅ 1</span></div>
+            </div>
+          
+
+            <div class="test-item">
+              <div class="test-header">
+                <span class="test-name">feature-map.json が存在する場合は読み込む</span>
+                <span class="test-line">L164</span>
+              </div>
+              <p class="test-original">EN: should load feature-map.json when it exists</p>
+              
+              <div class="test-category"><span class="test-category-badge" style="background: #22c55e20; color: #22c55e" title="正常系">✅ 1</span></div>
+            </div>
+          
+
+            <div class="test-item">
+              <div class="test-header">
+                <span class="test-name">test-cases.json が存在する場合は読み込む</span>
+                <span class="test-line">L178</span>
+              </div>
+              <p class="test-original">EN: should load test-cases.json when it exists</p>
+              
+              <div class="test-category"><span class="test-category-badge" style="background: #22c55e20; color: #22c55e" title="正常系">✅ 1</span></div>
+            </div>
+          
+
+            <div class="test-item">
+              <div class="test-header">
+                <span class="test-name">db-schema.json が存在する場合は読み込む</span>
+                <span class="test-line">L192</span>
+              </div>
+              <p class="test-original">EN: should load db-schema.json when it exists</p>
+              
+              <div class="test-category"><span class="test-category-badge" style="background: #22c55e20; color: #22c55e" title="正常系">✅ 1</span></div>
+            </div>
+          
+
+            <div class="test-item">
+              <div class="test-header">
+                <span class="test-name">i18n.json が存在する場合は読み込む</span>
+                <span class="test-line">L206</span>
+              </div>
+              <p class="test-original">EN: should load i18n.json when it exists</p>
+              
+              <div class="test-category"><span class="test-category-badge" style="background: #22c55e20; color: #22c55e" title="正常系">✅ 1</span></div>
+            </div>
+          
+
+            <div class="test-item">
+              <div class="test-header">
+                <span class="test-name">packages.json が存在する場合は読み込む</span>
+                <span class="test-line">L219</span>
+              </div>
+              <p class="test-original">EN: should load packages.json when it exists</p>
+              
+              <div class="test-category"><span class="test-category-badge" style="background: #22c55e20; color: #22c55e" title="正常系">✅ 1</span></div>
+            </div>
+          
+
+            <div class="test-item">
+              <div class="test-header">
+                <span class="test-name">api-tools.json が存在する場合は読み込む</span>
+                <span class="test-line">L232</span>
+              </div>
+              <p class="test-original">EN: should load api-tools.json when it exists</p>
+              
+              <div class="test-category"><span class="test-category-badge" style="background: #22c55e20; color: #22c55e" title="正常系">✅ 1</span></div>
+            </div>
+          
+
+            <div class="test-item">
+              <div class="test-header">
+                <span class="test-name">coverage.json が存在する場合は読み込む</span>
+                <span class="test-line">L245</span>
+              </div>
+              <p class="test-original">EN: should load coverage.json when it exists</p>
+              
+              <div class="test-category"><span class="test-category-badge" style="background: #22c55e20; color: #22c55e" title="正常系">✅ 1</span></div>
+            </div>
+          
+
+            <div class="test-item">
+              <div class="test-header">
+                <span class="test-name">github-data.json が存在する場合は読み込む</span>
+                <span class="test-line">L257</span>
+              </div>
+              <p class="test-original">EN: should load github-data.json when it exists</p>
+              
+              <div class="test-category"><span class="test-category-badge" style="background: #22c55e20; color: #22c55e" title="正常系">✅ 1</span></div>
+            </div>
+          
+
+            <div class="test-item">
+              <div class="test-header">
+                <span class="test-name">overview.md がプロジェクトルートに存在する場合は読み込む</span>
+                <span class="test-line">L274</span>
+              </div>
+              <p class="test-original">EN: should load overview.md from project root</p>
+              
+              <div class="test-category"><span class="test-category-badge" style="background: #22c55e20; color: #22c55e" title="正常系">✅ 1</span></div>
+            </div>
+          
+
+            <div class="test-item">
+              <div class="test-header">
+                <span class="test-name">OVERVIEW.md がなく README.md がある場合はフォールバックする</span>
+                <span class="test-line">L288</span>
+              </div>
+              <p class="test-original">EN: should fall back to README.md when OVERVIEW.md does not exist</p>
+              
+              <div class="test-category"><span class="test-category-badge" style="background: #22c55e20; color: #22c55e" title="正常系">✅ 1</span></div>
+            </div>
+          
+
+            <div class="test-item">
+              <div class="test-header">
+                <span class="test-name">JSON パースエラーの場合は null を返す</span>
+                <span class="test-line">L305</span>
+              </div>
+              <p class="test-original">EN: should return null when JSON is malformed</p>
+              
+              <div class="test-category"><span class="test-category-badge" style="background: #ef444420; color: #ef4444" title="エラー処理">❌ 1</span></div>
+            </div>
+          
+
+            <div class="test-item">
+              <div class="test-header">
+                <span class="test-name">applications.json が存在しない場合は自動生成する</span>
+                <span class="test-line">L322</span>
+              </div>
+              <p class="test-original">EN: should auto-generate applications when applications.json is missing</p>
+              
+              <div class="test-category"><span class="test-category-badge" style="background: #3b82f620; color: #3b82f6" title="バリデーション">📋 1</span></div>
+            </div>
+          
+
+            <div class="test-item">
+              <div class="test-header">
+                <span class="test-name">featureMap がある場合は Web アプリを自動生成する</span>
+                <span class="test-line">L334</span>
+              </div>
+              <p class="test-original">EN: should auto-generate Web app when featureMap exists</p>
+              
+              <div class="test-category"><span class="test-category-badge" style="background: #22c55e20; color: #22c55e" title="正常系">✅ 1</span></div>
+            </div>
+          
+
+            <div class="test-item">
+              <div class="test-header">
+                <span class="test-name">apiTools がある場合は MCP アプリを自動生成する</span>
+                <span class="test-line">L349</span>
+              </div>
+              <p class="test-original">EN: should auto-generate MCP app when apiTools exists</p>
+              
+              <div class="test-category"><span class="test-category-badge" style="background: #22c55e20; color: #22c55e" title="正常系">✅ 1</span></div>
+            </div>
+          
+
+            <div class="test-item">
+              <div class="test-header">
+                <span class="test-name">testCases から Web/MCP のテスト数を分離カウントする</span>
+                <span class="test-line">L364</span>
+              </div>
+              <p class="test-original">EN: should separate test counts between Web and MCP</p>
+              
+              <div class="test-category"><span class="test-category-badge" style="background: #22c55e20; color: #22c55e" title="正常系">✅ 1</span></div>
+            </div>
+          
+
+            <div class="test-item">
+              <div class="test-header">
+                <span class="test-name">dbSchema がある場合は shared sections にテーブル数を含む</span>
+                <span class="test-line">L384</span>
+              </div>
+              <p class="test-original">EN: should include table count in shared sections when dbSchema exists</p>
+              
+              <div class="test-category"><span class="test-category-badge" style="background: #22c55e20; color: #22c55e" title="正常系">✅ 1</span></div>
+            </div>
+          
+          </div>
+        </div>
+      
+      </div>
+    </div>
+  
+
+<script src="../../global-nav.js"></script>
+</body>
+</html>

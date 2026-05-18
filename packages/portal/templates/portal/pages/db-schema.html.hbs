@@ -1,0 +1,49 @@
+<div class="max-w-5xl">
+  <div class="flex items-center justify-between mb-6">
+    <div>
+      <h1 class="text-2xl font-bold text-gray-900">DB スキーマ</h1>
+      <p class="text-gray-500 text-sm mt-1">{{totalTables}} テーブル{{#if multipleDb}} &middot; {{length databases}} データベース{{/if}}</p>
+    </div>
+    <a href="/db-schema/diagram" class="text-sm text-indigo-600 hover:underline">ER 図を見る →</a>
+  </div>
+
+  {{#if multipleDb}}
+  <div class="grid grid-cols-2 md:grid-cols-3 gap-4 mb-6">
+    {{#each databases}}
+    <a href="/db-schema/{{urlEncode this.name}}" class="bg-white rounded-lg border border-gray-200 p-4 hover:border-indigo-300 transition-colors">
+      <div class="font-medium text-gray-900">{{this.name}}</div>
+      <div class="text-sm text-gray-500 mt-1">{{this.tableCount}} テーブル</div>
+      {{#if this.description}}
+      <div class="text-xs text-gray-400 mt-1 truncate">{{this.description}}</div>
+      {{/if}}
+    </a>
+    {{/each}}
+  </div>
+  {{/if}}
+
+  <div class="space-y-4">
+    {{#each tablesByCategory}}
+    <div>
+      <h2 class="text-sm font-semibold {{this.colorClass}} mb-2 flex items-center gap-2">
+        <span class="w-2 h-2 rounded-full {{this.bgColorClass}} inline-block"></span>
+        {{this.label}} ({{length this.tables}})
+      </h2>
+      <div class="bg-white rounded-lg border border-gray-200 overflow-hidden">
+        <table class="w-full text-sm">
+          <tbody class="divide-y divide-gray-100">
+            {{#each this.tables}}
+            <tr class="hover:bg-gray-50">
+              <td class="px-4 py-2">
+                <a href="/db-schema/{{urlEncode this.name}}" class="font-medium text-indigo-600 hover:underline font-mono">{{this.name}}</a>
+              </td>
+              <td class="px-4 py-2 text-gray-500 truncate max-w-xs">{{this.description}}</td>
+              <td class="px-4 py-2 text-right text-gray-400">{{length this.columns}} 列</td>
+            </tr>
+            {{/each}}
+          </tbody>
+        </table>
+      </div>
+    </div>
+    {{/each}}
+  </div>
+</div>

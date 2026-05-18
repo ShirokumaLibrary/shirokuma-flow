@@ -1,0 +1,1062 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>test-cases-styles.test.ts - Other - テストケース - Project</title>
+  <style>
+
+:root {
+  --bg-color: #0a0a0a;
+  --card-bg: #141414;
+  --border-color: #262626;
+  --text-primary: #fafafa;
+  --text-secondary: #a1a1aa;
+  --accent-blue: #3b82f6;
+  --accent-green: #22c55e;
+  --accent-purple: #a855f7;
+  --accent-orange: #f97316;
+  --accent-pink: #ec4899;
+  --code-bg: #1e1e1e;
+  --sidebar-width: 280px;
+}
+
+
+* {
+  margin: 0;
+  padding: 0;
+  box-sizing: border-box;
+}
+
+body {
+  font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;
+  background: var(--bg-color);
+  color: var(--text-primary);
+  min-height: 100vh;
+  line-height: 1.6;
+}
+
+a {
+  color: var(--accent-blue);
+  text-decoration: none;
+}
+
+a:hover {
+  text-decoration: underline;
+}
+
+
+.container {
+  max-width: 1200px;
+  margin: 0 auto;
+  padding: 2rem;
+}
+
+.grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(350px, 1fr));
+  gap: 1.5rem;
+  margin-bottom: 3rem;
+}
+
+
+.card {
+  background: var(--card-bg);
+  border: 1px solid var(--border-color);
+  border-radius: 12px;
+  padding: 1.5rem;
+  transition: border-color 0.2s, transform 0.2s;
+}
+
+.card:hover {
+  border-color: var(--text-secondary);
+  transform: translateY(-2px);
+}
+
+.card-header {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  margin-bottom: 1rem;
+}
+
+.card-icon {
+  width: 40px;
+  height: 40px;
+  border-radius: 8px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 1.25rem;
+}
+
+.icon-blue { background: rgba(59, 130, 246, 0.2); color: var(--accent-blue); }
+.icon-green { background: rgba(34, 197, 94, 0.2); color: var(--accent-green); }
+.icon-purple { background: rgba(168, 85, 247, 0.2); color: var(--accent-purple); }
+.icon-orange { background: rgba(249, 115, 22, 0.2); color: var(--accent-orange); }
+.icon-pink { background: rgba(236, 72, 153, 0.2); color: var(--accent-pink); }
+
+.card h2 {
+  font-size: 1.25rem;
+  font-weight: 600;
+}
+
+.card p {
+  color: var(--text-secondary);
+  font-size: 0.9rem;
+  line-height: 1.6;
+  margin-bottom: 1rem;
+}
+
+
+.links {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.5rem;
+}
+
+.link {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.25rem;
+  padding: 0.5rem 0.75rem;
+  background: var(--bg-color);
+  border: 1px solid var(--border-color);
+  border-radius: 6px;
+  color: var(--text-primary);
+  text-decoration: none;
+  font-size: 0.85rem;
+  transition: background 0.2s, border-color 0.2s;
+}
+
+.link:hover {
+  background: var(--border-color);
+  border-color: var(--text-secondary);
+  text-decoration: none;
+}
+
+.link svg {
+  width: 14px;
+  height: 14px;
+}
+
+
+header:not(.global-header):not(.hero) {
+  text-align: center;
+  margin-bottom: 3rem;
+  padding-bottom: 2rem;
+  border-bottom: 1px solid var(--border-color);
+}
+
+header:not(.global-header):not(.hero) h1 {
+  font-size: 2.5rem;
+  font-weight: 700;
+  margin-bottom: 0.5rem;
+}
+
+header:not(.global-header):not(.hero) .subtitle {
+  color: var(--text-secondary);
+  font-size: 1.1rem;
+}
+
+
+footer {
+  text-align: center;
+  margin-top: 3rem;
+  padding-top: 2rem;
+  border-top: 1px solid var(--border-color);
+  color: var(--text-secondary);
+  font-size: 0.9rem;
+}
+
+
+.section-title {
+  font-size: 1.1rem;
+  font-weight: 600;
+  margin-bottom: 1rem;
+  color: var(--text-secondary);
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+}
+
+
+.page-header {
+  margin-bottom: 2rem;
+  text-align: center;
+}
+
+.page-title {
+  font-size: 2rem;
+  font-weight: 800;
+  margin-bottom: 0.5rem;
+}
+
+.page-description {
+  font-size: 1rem;
+  color: var(--text-secondary);
+  max-width: 600px;
+  margin: 0 auto;
+}
+
+.page-meta {
+  font-size: 0.875rem;
+  color: var(--text-secondary);
+  margin-top: 0.5rem;
+}
+
+.page-badge {
+  display: inline-block;
+  padding: 0.25rem 0.75rem;
+  border-radius: 9999px;
+  font-size: 0.75rem;
+  font-weight: 600;
+  margin-left: 0.5rem;
+  vertical-align: middle;
+}
+
+.page-badge.badge-action { background: rgba(59, 130, 246, 0.2); color: var(--accent-blue); }
+.page-badge.badge-screen { background: rgba(34, 197, 94, 0.2); color: var(--accent-green); }
+.page-badge.badge-component { background: rgba(168, 85, 247, 0.2); color: var(--accent-purple); }
+.page-badge.badge-table { background: rgba(249, 115, 22, 0.2); color: var(--accent-orange); }
+
+.page-module-prefix {
+  color: var(--text-secondary);
+  font-weight: 400;
+}
+
+
+    .container {
+      max-width: 900px;
+      margin: 0 auto;
+      padding: 2rem;
+    }
+
+    .header {
+      background: var(--card-bg);
+      border-bottom: 1px solid var(--border-color);
+      padding: 1rem 2rem;
+    }
+
+    .back-link {
+      display: inline-flex;
+      align-items: center;
+      gap: 0.5rem;
+      color: var(--text-secondary);
+      text-decoration: none;
+      padding: 0.5rem 1rem;
+      border-radius: 6px;
+      transition: background 0.2s;
+    }
+
+    .back-link:hover {
+      background: var(--border-color);
+      color: var(--text-primary);
+      text-decoration: none;
+    }
+
+    .breadcrumb {
+      display: flex;
+      align-items: center;
+      gap: 0.5rem;
+      font-size: 0.9rem;
+      margin-bottom: 1.5rem;
+    }
+
+    .breadcrumb a {
+      color: var(--accent-blue);
+      text-decoration: none;
+    }
+
+    .breadcrumb a:hover {
+      text-decoration: underline;
+    }
+
+    .breadcrumb .separator {
+      color: var(--text-secondary);
+    }
+
+    .breadcrumb .current {
+      color: var(--text-primary);
+    }
+
+    .page-header {
+      margin-bottom: 2rem;
+    }
+
+    .page-header h1 {
+      font-size: 1.75rem;
+      font-weight: 700;
+      font-family: monospace;
+      margin-bottom: 0.5rem;
+    }
+
+    .file-desc {
+      color: var(--text-secondary);
+      margin-bottom: 0.75rem;
+    }
+
+    .module-link-large {
+      display: inline-flex;
+      align-items: center;
+      gap: 0.5rem;
+      padding: 0.5rem 1rem;
+      background: rgba(59, 130, 246, 0.1);
+      border: 1px solid rgba(59, 130, 246, 0.2);
+      border-radius: 6px;
+      color: var(--accent-blue);
+      text-decoration: none;
+      font-size: 0.9rem;
+      transition: all 0.2s;
+    }
+
+    .module-link-large:hover {
+      background: rgba(59, 130, 246, 0.2);
+      border-color: var(--accent-blue);
+      text-decoration: none;
+    }
+
+    .test-groups {
+      display: flex;
+      flex-direction: column;
+      gap: 2rem;
+    }
+
+    .test-group {
+      background: var(--card-bg);
+      border: 1px solid var(--border-color);
+      border-radius: 8px;
+      padding: 1.25rem;
+    }
+
+    .group-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 0.75rem;
+      padding-bottom: 0.75rem;
+      border-bottom: 1px solid var(--border-color);
+    }
+
+    .group-name {
+      font-size: 1.1rem;
+      font-weight: 600;
+      color: var(--text-primary);
+    }
+
+    .group-count {
+      font-size: 0.8rem;
+      color: var(--text-secondary);
+    }
+
+    .group-desc {
+      font-size: 0.9rem;
+      color: var(--text-secondary);
+      margin-bottom: 1rem;
+      padding: 0.5rem 0.75rem;
+      background: rgba(168, 85, 247, 0.08);
+      border-radius: 6px;
+    }
+
+    .test-list {
+      display: flex;
+      flex-direction: column;
+      gap: 0.75rem;
+    }
+
+    .test-item {
+      padding: 0.75rem;
+      border-radius: 6px;
+      border: 1px solid transparent;
+      transition: all 0.15s;
+    }
+
+    .test-item:hover {
+      background: var(--bg-color);
+      border-color: var(--border-color);
+    }
+
+    .test-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: flex-start;
+      gap: 1rem;
+    }
+
+    .test-name {
+      font-size: 0.9rem;
+      color: var(--text-primary);
+      font-weight: 500;
+    }
+
+    .test-line {
+      font-size: 0.75rem;
+      color: var(--text-secondary);
+      font-family: monospace;
+    }
+
+    .test-original {
+      font-size: 0.8rem;
+      color: var(--text-secondary);
+      margin-top: 0.25rem;
+    }
+
+    .test-details {
+      margin-top: 0.5rem;
+      padding: 0.5rem 0.75rem;
+      background: var(--bg-color);
+      border-radius: 4px;
+      font-size: 0.85rem;
+    }
+
+    .detail-item {
+      padding: 0.25rem 0;
+      color: var(--text-secondary);
+    }
+
+    .detail-label {
+      font-weight: 600;
+      color: var(--accent-purple);
+    }
+
+    .test-category {
+      margin-top: 0.5rem;
+    }
+
+    .test-category-badge {
+      display: inline-flex;
+      align-items: center;
+      gap: 0.25rem;
+      padding: 0.125rem 0.5rem;
+      border-radius: 4px;
+      font-size: 0.75rem;
+      font-weight: 500;
+    }
+  
+  </style>
+<link rel="stylesheet" href="../../global-nav.css">
+</head>
+<body>
+
+    <div class="header">
+      <a href="../other.html" class="back-link">
+        <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M19 12H5M12 19l-7-7 7-7"/></svg>
+        ファイル一覧に戻る
+      </a>
+    </div>
+    <div class="container">
+      <nav class="breadcrumb">
+        <a href="../../test-cases.html">テストケース</a>
+        <span class="separator">/</span>
+        <a href="../other.html">Other</a>
+        <span class="separator">/</span>
+        <span class="current">test-cases-styles.test.ts</span>
+      </nav>
+
+      <div class="page-header">
+        <h1>test-cases-styles.test.ts</h1>
+        <p class="file-desc">test-cases-styles のテスト</p>
+        
+      </div>
+
+      <div class="test-groups">
+        
+        <div class="test-group" id="fileToId">
+          <h2 class="group-header">
+            <span class="group-name">fileToId</span>
+            <span class="group-count">3 tests</span>
+          </h2>
+          
+          <div class="test-list">
+            
+            <div class="test-item">
+              <div class="test-header">
+                <span class="test-name">ファイルパスの英数字以外をハイフンに置換する</span>
+                <span class="test-line">L36</span>
+              </div>
+              <p class="test-original">EN: should replace non-alphanumeric characters with hyphens</p>
+              
+              <div class="test-category"><span class="test-category-badge" style="background: #22c55e20; color: #22c55e" title="正常系">✅ 1</span></div>
+            </div>
+          
+
+            <div class="test-item">
+              <div class="test-header">
+                <span class="test-name">スラッシュやドットをハイフンに変換する</span>
+                <span class="test-line">L43</span>
+              </div>
+              <p class="test-original">EN: should convert slashes and dots to hyphens</p>
+              
+              <div class="test-category"><span class="test-category-badge" style="background: #22c55e20; color: #22c55e" title="正常系">✅ 1</span></div>
+            </div>
+          
+
+            <div class="test-item">
+              <div class="test-header">
+                <span class="test-name">英数字のみのファイル名はそのまま返す</span>
+                <span class="test-line">L50</span>
+              </div>
+              <p class="test-original">EN: should keep alphanumeric-only names unchanged</p>
+              
+              <div class="test-category"><span class="test-category-badge" style="background: #22c55e20; color: #22c55e" title="正常系">✅ 1</span></div>
+            </div>
+          
+          </div>
+        </div>
+      
+
+        <div class="test-group" id="groupBy">
+          <h2 class="group-header">
+            <span class="group-name">groupBy</span>
+            <span class="group-count">4 tests</span>
+          </h2>
+          
+          <div class="test-list">
+            
+            <div class="test-item">
+              <div class="test-header">
+                <span class="test-name">配列をキー関数でグループ化して Map を返す</span>
+                <span class="test-line">L63</span>
+              </div>
+              <p class="test-original">EN: should group array items by key function</p>
+              
+              <div class="test-category"><span class="test-category-badge" style="background: #22c55e20; color: #22c55e" title="正常系">✅ 1</span></div>
+            </div>
+          
+
+            <div class="test-item">
+              <div class="test-header">
+                <span class="test-name">空配列の場合は空の Map を返す</span>
+                <span class="test-line">L77</span>
+              </div>
+              <p class="test-original">EN: should return empty Map for empty array</p>
+              
+              <div class="test-category"><span class="test-category-badge" style="background: #3b82f620; color: #3b82f6" title="バリデーション">📋 1</span></div>
+            </div>
+          
+
+            <div class="test-item">
+              <div class="test-header">
+                <span class="test-name">全要素が同一キーの場合は1グループにまとまる</span>
+                <span class="test-line">L85</span>
+              </div>
+              <p class="test-original">EN: should put all items in one group when key is same</p>
+              
+              <div class="test-category"><span class="test-category-badge" style="background: #22c55e20; color: #22c55e" title="正常系">✅ 1</span></div>
+            </div>
+          
+
+            <div class="test-item">
+              <div class="test-header">
+                <span class="test-name">グループ内の順序が挿入順を保持する</span>
+                <span class="test-line">L94</span>
+              </div>
+              <p class="test-original">EN: should maintain insertion order within groups</p>
+              
+              <div class="test-category"><span class="test-category-badge" style="background: #22c55e20; color: #22c55e" title="正常系">✅ 1</span></div>
+            </div>
+          
+          </div>
+        </div>
+      
+
+        <div class="test-group" id="categoryToSlug">
+          <h2 class="group-header">
+            <span class="group-name">categoryToSlug</span>
+            <span class="group-count">1 tests</span>
+          </h2>
+          
+          <div class="test-list">
+            
+            <div class="test-item">
+              <div class="test-header">
+                <span class="test-name">カテゴリ名を小文字のケバブケースに変換する</span>
+                <span class="test-line">L110</span>
+              </div>
+              <p class="test-original">EN: should convert category to lowercase kebab-case</p>
+              
+              <div class="test-category"><span class="test-category-badge" style="background: #22c55e20; color: #22c55e" title="正常系">✅ 1</span></div>
+            </div>
+          
+          </div>
+        </div>
+      
+
+        <div class="test-group" id="fileToSlug">
+          <h2 class="group-header">
+            <span class="group-name">fileToSlug</span>
+            <span class="group-count">5 tests</span>
+          </h2>
+          
+          <div class="test-list">
+            
+            <div class="test-item">
+              <div class="test-header">
+                <span class="test-name">.test.ts 拡張子を除去してスラッグを生成する</span>
+                <span class="test-line">L126</span>
+              </div>
+              <p class="test-original">EN: should remove .test.ts extension</p>
+              
+              <div class="test-category"><span class="test-category-badge" style="background: #22c55e20; color: #22c55e" title="正常系">✅ 1</span></div>
+            </div>
+          
+
+            <div class="test-item">
+              <div class="test-header">
+                <span class="test-name">.test.tsx 拡張子を除去してスラッグを生成する</span>
+                <span class="test-line">L133</span>
+              </div>
+              <p class="test-original">EN: should remove .test.tsx extension</p>
+              
+              <div class="test-category"><span class="test-category-badge" style="background: #22c55e20; color: #22c55e" title="正常系">✅ 1</span></div>
+            </div>
+          
+
+            <div class="test-item">
+              <div class="test-header">
+                <span class="test-name">.spec.ts 拡張子を除去してスラッグを生成する</span>
+                <span class="test-line">L140</span>
+              </div>
+              <p class="test-original">EN: should remove .spec.ts extension</p>
+              
+              <div class="test-category"><span class="test-category-badge" style="background: #22c55e20; color: #22c55e" title="正常系">✅ 1</span></div>
+            </div>
+          
+
+            <div class="test-item">
+              <div class="test-header">
+                <span class="test-name">.spec.js 拡張子を除去してスラッグを生成する</span>
+                <span class="test-line">L147</span>
+              </div>
+              <p class="test-original">EN: should remove .spec.js extension</p>
+              
+              <div class="test-category"><span class="test-category-badge" style="background: #22c55e20; color: #22c55e" title="正常系">✅ 1</span></div>
+            </div>
+          
+
+            <div class="test-item">
+              <div class="test-header">
+                <span class="test-name">特殊文字をハイフンに変換する</span>
+                <span class="test-line">L154</span>
+              </div>
+              <p class="test-original">EN: should replace special characters with hyphens</p>
+              
+              <div class="test-category"><span class="test-category-badge" style="background: #22c55e20; color: #22c55e" title="正常系">✅ 1</span></div>
+            </div>
+          
+          </div>
+        </div>
+      
+
+        <div class="test-group" id="getCategoryIcon">
+          <h2 class="group-header">
+            <span class="group-name">getCategoryIcon</span>
+            <span class="group-count">4 tests</span>
+          </h2>
+          
+          <div class="test-list">
+            
+            <div class="test-item">
+              <div class="test-header">
+                <span class="test-name">Server Actions カテゴリで ⚡ アイコンを返す</span>
+                <span class="test-line">L167</span>
+              </div>
+              <p class="test-original">EN: should return lightning icon for Server Actions</p>
+              
+              <div class="test-category"><span class="test-category-badge" style="background: #22c55e20; color: #22c55e" title="正常系">✅ 1</span></div>
+            </div>
+          
+
+            <div class="test-item">
+              <div class="test-header">
+                <span class="test-name">Components カテゴリで 🧩 アイコンを返す</span>
+                <span class="test-line">L174</span>
+              </div>
+              <p class="test-original">EN: should return puzzle icon for Components</p>
+              
+              <div class="test-category"><span class="test-category-badge" style="background: #22c55e20; color: #22c55e" title="正常系">✅ 1</span></div>
+            </div>
+          
+
+            <div class="test-item">
+              <div class="test-header">
+                <span class="test-name">E2E カテゴリで 🎭 アイコンを返す</span>
+                <span class="test-line">L181</span>
+              </div>
+              <p class="test-original">EN: should return theatre icon for E2E</p>
+              
+              <div class="test-category"><span class="test-category-badge" style="background: #22c55e20; color: #22c55e" title="正常系">✅ 1</span></div>
+            </div>
+          
+
+            <div class="test-item">
+              <div class="test-header">
+                <span class="test-name">未知のカテゴリでデフォルトの 📄 アイコンを返す</span>
+                <span class="test-line">L188</span>
+              </div>
+              <p class="test-original">EN: should return document icon for unknown category</p>
+              
+              <div class="test-category"><span class="test-category-badge" style="background: #22c55e20; color: #22c55e" title="正常系">✅ 1</span></div>
+            </div>
+          
+          </div>
+        </div>
+      
+
+        <div class="test-group" id="getCategoryColor">
+          <h2 class="group-header">
+            <span class="group-name">getCategoryColor</span>
+            <span class="group-count">1 tests</span>
+          </h2>
+          
+          <div class="test-list">
+            
+            <div class="test-item">
+              <div class="test-header">
+                <span class="test-name">各カテゴリに正しい色クラスを返す</span>
+                <span class="test-line">L201</span>
+              </div>
+              <p class="test-original">EN: should return correct color class for each category</p>
+              
+              <div class="test-category"><span class="test-category-badge" style="background: #22c55e20; color: #22c55e" title="正常系">✅ 1</span></div>
+            </div>
+          
+          </div>
+        </div>
+      
+
+        <div class="test-group" id="getCategoryBadgeHtml">
+          <h2 class="group-header">
+            <span class="group-name">getCategoryBadgeHtml</span>
+            <span class="group-count">4 tests</span>
+          </h2>
+          
+          <div class="test-list">
+            
+            <div class="test-item">
+              <div class="test-header">
+                <span class="test-name">count=0 の場合は空文字を返す</span>
+                <span class="test-line">L217</span>
+              </div>
+              <p class="test-original">EN: should return empty string when count is 0</p>
+              
+              <div class="test-category"><span class="test-category-badge" style="background: #3b82f620; color: #3b82f6" title="バリデーション">📋 1</span></div>
+            </div>
+          
+
+            <div class="test-item">
+              <div class="test-header">
+                <span class="test-name">happy-path カテゴリのバッジにアイコンとカウントを含む</span>
+                <span class="test-line">L224</span>
+              </div>
+              <p class="test-original">EN: should include icon and count for happy-path badge</p>
+              
+              <div class="test-category"><span class="test-category-badge" style="background: #22c55e20; color: #22c55e" title="正常系">✅ 1</span></div>
+            </div>
+          
+
+            <div class="test-item">
+              <div class="test-header">
+                <span class="test-name">error-handling カテゴリのバッジに赤色を使用する</span>
+                <span class="test-line">L235</span>
+              </div>
+              <p class="test-original">EN: should use red color for error-handling badge</p>
+              
+              <div class="test-category"><span class="test-category-badge" style="background: #ef444420; color: #ef4444" title="エラー処理">❌ 1</span></div>
+            </div>
+          
+
+            <div class="test-item">
+              <div class="test-header">
+                <span class="test-name">バッジが test-category-badge クラスを持つ span タグを返す</span>
+                <span class="test-line">L245</span>
+              </div>
+              <p class="test-original">EN: should return span with test-category-badge class</p>
+              
+              <div class="test-category"><span class="test-category-badge" style="background: #22c55e20; color: #22c55e" title="正常系">✅ 1</span></div>
+            </div>
+          
+          </div>
+        </div>
+      
+
+        <div class="test-group" id="getGlobalNavElements">
+          <h2 class="group-header">
+            <span class="group-name">getGlobalNavElements</span>
+            <span class="group-count">3 tests</span>
+          </h2>
+          
+          <div class="test-list">
+            
+            <div class="test-item">
+              <div class="test-header">
+                <span class="test-name">depth=1 で ../ プレフィックス付きの CSS と JS パスを返す</span>
+                <span class="test-line">L260</span>
+              </div>
+              <p class="test-original">EN: should return paths with ../ prefix at depth 1</p>
+              
+              <div class="test-category"><span class="test-category-badge" style="background: #22c55e20; color: #22c55e" title="正常系">✅ 1</span></div>
+            </div>
+          
+
+            <div class="test-item">
+              <div class="test-header">
+                <span class="test-name">depth=2 で ../../ プレフィックス付きのパスを返す</span>
+                <span class="test-line">L269</span>
+              </div>
+              <p class="test-original">EN: should return paths with ../../ prefix at depth 2</p>
+              
+              <div class="test-category"><span class="test-category-badge" style="background: #22c55e20; color: #22c55e" title="正常系">✅ 1</span></div>
+            </div>
+          
+
+            <div class="test-item">
+              <div class="test-header">
+                <span class="test-name">depth=0 でプレフィックスなしのパスを返す</span>
+                <span class="test-line">L278</span>
+              </div>
+              <p class="test-original">EN: should return paths without prefix at depth 0</p>
+              
+              <div class="test-category"><span class="test-category-badge" style="background: #22c55e20; color: #22c55e" title="正常系">✅ 1</span></div>
+            </div>
+          
+          </div>
+        </div>
+      
+
+        <div class="test-group" id="getSidebarStyles">
+          <h2 class="group-header">
+            <span class="group-name">getSidebarStyles</span>
+            <span class="group-count">5 tests</span>
+          </h2>
+          
+          <div class="test-list">
+            
+            <div class="test-item">
+              <div class="test-header">
+                <span class="test-name">サイドバー関連のCSSクラスを含む</span>
+                <span class="test-line">L294</span>
+              </div>
+              <p class="test-original">EN: should include sidebar CSS classes</p>
+              
+              <div class="test-category"><span class="test-category-badge" style="background: #22c55e20; color: #22c55e" title="正常系">✅ 1</span></div>
+            </div>
+          
+
+            <div class="test-item">
+              <div class="test-header">
+                <span class="test-name">サマリーカードのスタイルを含む</span>
+                <span class="test-line">L306</span>
+              </div>
+              <p class="test-original">EN: should include summary card styles</p>
+              
+              <div class="test-category"><span class="test-category-badge" style="background: #22c55e20; color: #22c55e" title="正常系">✅ 1</span></div>
+            </div>
+          
+
+            <div class="test-item">
+              <div class="test-header">
+                <span class="test-name">テストアイテムのスタイルを含む</span>
+                <span class="test-line">L316</span>
+              </div>
+              <p class="test-original">EN: should include test item styles</p>
+              
+              <div class="test-category"><span class="test-category-badge" style="background: #22c55e20; color: #22c55e" title="正常系">✅ 1</span></div>
+            </div>
+          
+
+            <div class="test-item">
+              <div class="test-header">
+                <span class="test-name">BDD アノテーションスタイルを含む</span>
+                <span class="test-line">L326</span>
+              </div>
+              <p class="test-original">EN: should include BDD annotation styles</p>
+              
+              <div class="test-category"><span class="test-category-badge" style="background: #22c55e20; color: #22c55e" title="正常系">✅ 1</span></div>
+            </div>
+          
+
+            <div class="test-item">
+              <div class="test-header">
+                <span class="test-name">[test-cases-styles/getSidebarStyles] レスポンシブメディアクエリを含む</span>
+                <span class="test-line">L338</span>
+              </div>
+              <p class="test-original">EN: should include responsive media query</p>
+              
+              <div class="test-category"><span class="test-category-badge" style="background: #22c55e20; color: #22c55e" title="正常系">✅ 1</span></div>
+            </div>
+          
+          </div>
+        </div>
+      
+
+        <div class="test-group" id="getSearchScript">
+          <h2 class="group-header">
+            <span class="group-name">getSearchScript</span>
+            <span class="group-count">3 tests</span>
+          </h2>
+          
+          <div class="test-list">
+            
+            <div class="test-item">
+              <div class="test-header">
+                <span class="test-name">searchInput イベントリスナーを含む</span>
+                <span class="test-line">L352</span>
+              </div>
+              <p class="test-original">EN: should include searchInput event listener</p>
+              
+              <div class="test-category"><span class="test-category-badge" style="background: #22c55e20; color: #22c55e" title="正常系">✅ 1</span></div>
+            </div>
+          
+
+            <div class="test-item">
+              <div class="test-header">
+                <span class="test-name">ファイルセクションのフィルタリングロジックを含む</span>
+                <span class="test-line">L361</span>
+              </div>
+              <p class="test-original">EN: should include file section filtering logic</p>
+              
+              <div class="test-category"><span class="test-category-badge" style="background: #22c55e20; color: #22c55e" title="正常系">✅ 1</span></div>
+            </div>
+          
+
+            <div class="test-item">
+              <div class="test-header">
+                <span class="test-name">スムーズスクロール機能を含む</span>
+                <span class="test-line">L370</span>
+              </div>
+              <p class="test-original">EN: should include smooth scroll functionality</p>
+              
+              <div class="test-category"><span class="test-category-badge" style="background: #22c55e20; color: #22c55e" title="正常系">✅ 1</span></div>
+            </div>
+          
+          </div>
+        </div>
+      
+
+        <div class="test-group" id="getCategoryListStyles">
+          <h2 class="group-header">
+            <span class="group-name">getCategoryListStyles</span>
+            <span class="group-count">3 tests</span>
+          </h2>
+          
+          <div class="test-list">
+            
+            <div class="test-item">
+              <div class="test-header">
+                <span class="test-name">カテゴリグリッドとカードのスタイルを含む</span>
+                <span class="test-line">L385</span>
+              </div>
+              <p class="test-original">EN: should include category grid and card styles</p>
+              
+              <div class="test-category"><span class="test-category-badge" style="background: #22c55e20; color: #22c55e" title="正常系">✅ 1</span></div>
+            </div>
+          
+
+            <div class="test-item">
+              <div class="test-header">
+                <span class="test-name">カテゴリ色のボーダースタイルを含む</span>
+                <span class="test-line">L395</span>
+              </div>
+              <p class="test-original">EN: should include category color border styles</p>
+              
+              <div class="test-category"><span class="test-category-badge" style="background: #22c55e20; color: #22c55e" title="正常系">✅ 1</span></div>
+            </div>
+          
+
+            <div class="test-item">
+              <div class="test-header">
+                <span class="test-name">[test-cases-styles/getCategoryListStyles] レスポンシブメディアクエリを含む</span>
+                <span class="test-line">L406</span>
+              </div>
+              <p class="test-original">EN: should include responsive media query</p>
+              
+              <div class="test-category"><span class="test-category-badge" style="background: #22c55e20; color: #22c55e" title="正常系">✅ 1</span></div>
+            </div>
+          
+          </div>
+        </div>
+      
+
+        <div class="test-group" id="getFileListStyles">
+          <h2 class="group-header">
+            <span class="group-name">getFileListStyles</span>
+            <span class="group-count">2 tests</span>
+          </h2>
+          
+          <div class="test-list">
+            
+            <div class="test-item">
+              <div class="test-header">
+                <span class="test-name">ファイルリストとカードのスタイルを含む</span>
+                <span class="test-line">L420</span>
+              </div>
+              <p class="test-original">EN: should include file list and card styles</p>
+              
+              <div class="test-category"><span class="test-category-badge" style="background: #22c55e20; color: #22c55e" title="正常系">✅ 1</span></div>
+            </div>
+          
+
+            <div class="test-item">
+              <div class="test-header">
+                <span class="test-name">[test-cases-styles/getFileListStyles] パンくずナビゲーションのスタイルを含む</span>
+                <span class="test-line">L430</span>
+              </div>
+              <p class="test-original">EN: should include breadcrumb styles</p>
+              
+              <div class="test-category"><span class="test-category-badge" style="background: #22c55e20; color: #22c55e" title="正常系">✅ 1</span></div>
+            </div>
+          
+          </div>
+        </div>
+      
+
+        <div class="test-group" id="getTestDetailStyles">
+          <h2 class="group-header">
+            <span class="group-name">getTestDetailStyles</span>
+            <span class="group-count">3 tests</span>
+          </h2>
+          
+          <div class="test-list">
+            
+            <div class="test-item">
+              <div class="test-header">
+                <span class="test-name">テストグループとアイテムのスタイルを含む</span>
+                <span class="test-line">L446</span>
+              </div>
+              <p class="test-original">EN: should include test group and item styles</p>
+              
+              <div class="test-category"><span class="test-category-badge" style="background: #22c55e20; color: #22c55e" title="正常系">✅ 1</span></div>
+            </div>
+          
+
+            <div class="test-item">
+              <div class="test-header">
+                <span class="test-name">[test-cases-styles/getTestDetailStyles] パンくずナビゲーションのスタイルを含む</span>
+                <span class="test-line">L457</span>
+              </div>
+              <p class="test-original">EN: should include breadcrumb styles</p>
+              
+              <div class="test-category"><span class="test-category-badge" style="background: #22c55e20; color: #22c55e" title="正常系">✅ 1</span></div>
+            </div>
+          
+
+            <div class="test-item">
+              <div class="test-header">
+                <span class="test-name">テストカテゴリバッジのスタイルを含む</span>
+                <span class="test-line">L465</span>
+              </div>
+              <p class="test-original">EN: should include test category badge styles</p>
+              
+              <div class="test-category"><span class="test-category-badge" style="background: #22c55e20; color: #22c55e" title="正常系">✅ 1</span></div>
+            </div>
+          
+          </div>
+        </div>
+      
+      </div>
+    </div>
+  
+
+<script src="../../global-nav.js"></script>
+</body>
+</html>

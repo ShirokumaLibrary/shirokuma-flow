@@ -1,0 +1,37 @@
+<div class="max-w-5xl">
+  <div class="mb-6">
+    <a href="/db-schema" class="text-sm text-indigo-600 hover:underline">&larr; DB スキーマ一覧</a>
+    <h1 class="text-2xl font-bold text-gray-900 mt-2">{{dbName}}</h1>
+    {{#if dbInfo.description}}
+    <p class="text-gray-500 text-sm mt-1">{{dbInfo.description}}</p>
+    {{/if}}
+    <p class="text-gray-400 text-xs mt-1">{{totalTables}} テーブル</p>
+  </div>
+
+  <div class="flex justify-end mb-4">
+    <a href="/db-schema/{{urlEncode dbName}}/diagram" class="text-sm text-indigo-600 hover:underline">ER 図を見る →</a>
+  </div>
+
+  <div class="space-y-4">
+    {{#each tablesByCategory}}
+    <div>
+      <h2 class="text-sm font-semibold {{this.colorClass}} mb-2">{{this.label}} ({{length this.tables}})</h2>
+      <div class="bg-white rounded-lg border border-gray-200 overflow-hidden">
+        <table class="w-full text-sm">
+          <tbody class="divide-y divide-gray-100">
+            {{#each this.tables}}
+            <tr class="hover:bg-gray-50">
+              <td class="px-4 py-2">
+                <a href="/db-schema/{{urlEncode this.name}}" class="font-medium text-indigo-600 hover:underline font-mono">{{this.name}}</a>
+              </td>
+              <td class="px-4 py-2 text-gray-500">{{this.description}}</td>
+              <td class="px-4 py-2 text-right text-gray-400">{{length this.columns}} 列</td>
+            </tr>
+            {{/each}}
+          </tbody>
+        </table>
+      </div>
+    </div>
+    {{/each}}
+  </div>
+</div>

@@ -1,0 +1,21 @@
+<div class="max-w-4xl">
+  <h1 class="text-2xl font-bold text-gray-900 mb-6">プロジェクト概要</h1>
+
+  <div id="markdown-content" class="prose prose-sm max-w-none bg-white rounded-lg border border-gray-200 p-6">
+    <div class="text-gray-500 text-sm">読み込み中...</div>
+  </div>
+
+  <script>
+    const markdownContent = {{{markdownContent}}};
+  </script>
+  <script src="https://cdn.jsdelivr.net/npm/marked@17.0.5/marked.min.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/dompurify@3.3.3/dist/purify.min.js"></script>
+  <script>
+    document.addEventListener('DOMContentLoaded', function() {
+      const el = document.getElementById('markdown-content');
+      if (el && markdownContent) {
+        el.innerHTML = DOMPurify.sanitize(marked.parse(markdownContent));
+      }
+    });
+  </script>
+</div>

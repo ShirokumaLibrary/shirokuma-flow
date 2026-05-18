@@ -1,0 +1,109 @@
+<div class="max-w-4xl">
+  <div class="mb-6">
+    <a href="/db-schema" class="text-sm text-indigo-600 hover:underline">&larr; DB スキーマ</a>
+    <h1 class="text-2xl font-bold text-gray-900 mt-2 font-mono">{{table.name}}</h1>
+    {{#if table.description}}
+    <p class="text-gray-500 text-sm mt-1">{{table.description}}</p>
+    {{/if}}
+    <div class="flex items-center gap-2 mt-2">
+      <span class="text-xs {{categoryConfig.bgColor}} {{categoryConfig.color}} px-2 py-0.5 rounded">{{categoryConfig.label}}</span>
+      {{#if table.schema}}
+      <span class="text-xs text-gray-400">スキーマ: {{table.schema}}</span>
+      {{/if}}
+    </div>
+  </div>
+
+  {{#if hasColumns}}
+  <div class="bg-white rounded-lg border border-gray-200 overflow-hidden mb-6">
+    <div class="px-4 py-2 border-b border-gray-100 bg-gray-50">
+      <h2 class="text-sm font-semibold text-gray-700">カラム</h2>
+    </div>
+    <table class="w-full text-sm">
+      <thead class="bg-gray-50 border-b border-gray-100">
+        <tr>
+          <th class="text-left px-4 py-2 font-medium text-gray-600">カラム名</th>
+          <th class="text-left px-4 py-2 font-medium text-gray-600">型</th>
+          <th class="text-left px-4 py-2 font-medium text-gray-600">NULL</th>
+          <th class="text-left px-4 py-2 font-medium text-gray-600">説明</th>
+        </tr>
+      </thead>
+      <tbody class="divide-y divide-gray-100">
+        {{#each table.columns}}
+        <tr class="hover:bg-gray-50 {{#if this.primaryKey}}bg-yellow-50{{/if}}">
+          <td class="px-4 py-2 font-mono font-medium text-gray-900">
+            {{this.name}}
+            {{#if this.primaryKey}}
+            <span class="text-xs bg-yellow-100 text-yellow-700 px-1 rounded ml-1">PK</span>
+            {{/if}}
+            {{#if this.unique}}
+            <span class="text-xs bg-purple-100 text-purple-700 px-1 rounded ml-1">UQ</span>
+            {{/if}}
+          </td>
+          <td class="px-4 py-2 font-mono text-blue-700">{{this.type}}</td>
+          <td class="px-4 py-2 text-gray-500">{{#if this.nullable}}YES{{else}}NO{{/if}}</td>
+          <td class="px-4 py-2 text-gray-500">{{this.description}}</td>
+        </tr>
+        {{/each}}
+      </tbody>
+    </table>
+  </div>
+  {{/if}}
+
+  {{#if hasForeignKeys}}
+  <div class="bg-white rounded-lg border border-gray-200 overflow-hidden mb-6">
+    <div class="px-4 py-2 border-b border-gray-100 bg-gray-50">
+      <h2 class="text-sm font-semibold text-gray-700">外部キー</h2>
+    </div>
+    <table class="w-full text-sm">
+      <thead class="bg-gray-50 border-b border-gray-100">
+        <tr>
+          <th class="text-left px-4 py-2 font-medium text-gray-600">カラム</th>
+          <th class="text-left px-4 py-2 font-medium text-gray-600">参照テーブル</th>
+          <th class="text-left px-4 py-2 font-medium text-gray-600">参照カラム</th>
+        </tr>
+      </thead>
+      <tbody class="divide-y divide-gray-100">
+        {{#each table.foreignKeys}}
+        <tr class="hover:bg-gray-50">
+          <td class="px-4 py-2 font-mono text-gray-900">{{this.column}}</td>
+          <td class="px-4 py-2">
+            <a href="/db-schema/{{urlEncode this.references.table}}" class="text-indigo-600 hover:underline font-mono">
+              {{this.references.table}}
+            </a>
+          </td>
+          <td class="px-4 py-2 font-mono text-gray-600">{{this.references.column}}</td>
+        </tr>
+        {{/each}}
+      </tbody>
+    </table>
+  </div>
+  {{/if}}
+
+  <!-- 参照情報 -->
+  {{#ifNotEmpty referencedTables}}
+  <div class="grid grid-cols-2 gap-4">
+    <div class="bg-white rounded-lg border border-gray-200 p-4">
+      <h3 class="text-sm font-semibold text-gray-700 mb-2">このテーブルが参照するテーブル</h3>
+      <ul class="space-y-1">
+        {{#each referencedTables}}
+        <li>
+          <a href="/db-schema/{{urlEncode this}}" class="text-sm text-indigo-600 hover:underline font-mono">{{this}}</a>
+        </li>
+        {{/each}}
+      </ul>
+    </div>
+    {{#ifNotEmpty referencingTables}}
+    <div class="bg-white rounded-lg border border-gray-200 p-4">
+      <h3 class="text-sm font-semibold text-gray-700 mb-2">このテーブルを参照するテーブル</h3>
+      <ul class="space-y-1">
+        {{#each referencingTables}}
+        <li>
+          <a href="/db-schema/{{urlEncode this}}" class="text-sm text-indigo-600 hover:underline font-mono">{{this}}</a>
+        </li>
+        {{/each}}
+      </ul>
+    </div>
+    {{/ifNotEmpty}}
+  </div>
+  {{/ifNotEmpty}}
+</div>

@@ -1,0 +1,32 @@
+<div class="max-w-4xl">
+  <div class="mb-6">
+    <a href="/test-cases" class="text-sm text-indigo-600 hover:underline">&larr; テストケース一覧</a>
+    <h1 class="text-xl font-bold text-gray-900 mt-2 font-mono">{{file}}</h1>
+    <p class="text-gray-500 text-sm mt-1">
+      <span class="{{#eq framework 'playwright'}}text-green-700{{else}}text-blue-700{{/eq}}">{{framework}}</span>
+      &middot; {{totalTests}} 件
+    </p>
+  </div>
+
+  <div class="space-y-4">
+    {{#each describeGroups}}
+    <div class="bg-white rounded-lg border border-gray-200">
+      <div class="px-4 py-3 border-b border-gray-100 bg-gray-50 rounded-t-lg">
+        <h3 class="text-sm font-medium text-gray-900">{{this.describe}}</h3>
+      </div>
+      <ul class="divide-y divide-gray-100">
+        {{#each this.tests}}
+        <li class="px-4 py-2 hover:bg-gray-50">
+          <a href="/test-cases/{{../../fileSlug}}/{{this.line}}" class="text-sm text-gray-700 hover:text-indigo-600 block">
+            {{this.it}}
+          </a>
+          {{#if this.category}}
+          <span class="text-xs text-gray-400">{{this.category}}</span>
+          {{/if}}
+        </li>
+        {{/each}}
+      </ul>
+    </div>
+    {{/each}}
+  </div>
+</div>

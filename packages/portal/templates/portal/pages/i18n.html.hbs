@@ -1,0 +1,57 @@
+<div class="max-w-5xl">
+  <div class="flex items-center justify-between mb-6">
+    <div>
+      <h1 class="text-2xl font-bold text-gray-900">i18n</h1>
+      <p class="text-gray-500 text-sm mt-1">{{stats.totalNamespaces}} 名前空間 &middot; {{stats.totalKeys}} キー</p>
+    </div>
+  </div>
+
+  <!-- 統計 -->
+  <div class="grid grid-cols-3 gap-4 mb-6">
+    <div class="bg-white rounded-lg border border-gray-200 p-4 text-center">
+      <div class="text-2xl font-bold text-gray-900">{{stats.coveragePercent}}%</div>
+      <div class="text-sm text-gray-500">翻訳率</div>
+    </div>
+    <div class="bg-white rounded-lg border border-gray-200 p-4 text-center">
+      <div class="text-2xl font-bold text-gray-900">{{stats.totalNamespaces}}</div>
+      <div class="text-sm text-gray-500">名前空間</div>
+    </div>
+    <div class="bg-white rounded-lg border border-gray-200 p-4 text-center">
+      <div class="text-2xl font-bold text-gray-900">{{length locales}}</div>
+      <div class="text-sm text-gray-500">ロケール数</div>
+    </div>
+  </div>
+
+  <!-- 名前空間一覧 -->
+  <div class="bg-white rounded-lg border border-gray-200 overflow-hidden">
+    <table class="w-full text-sm">
+      <thead class="bg-gray-50 border-b border-gray-200">
+        <tr>
+          <th class="text-left px-4 py-2 font-medium text-gray-700">名前空間</th>
+          <th class="text-left px-4 py-2 font-medium text-gray-700">アプリ</th>
+          <th class="text-right px-4 py-2 font-medium text-gray-700">キー数</th>
+          <th class="text-right px-4 py-2 font-medium text-gray-700">翻訳率</th>
+        </tr>
+      </thead>
+      <tbody class="divide-y divide-gray-100">
+        {{#each namespaces}}
+        <tr class="hover:bg-gray-50">
+          <td class="px-4 py-2">
+            <a href="/i18n/{{urlEncode this.name}}" class="font-medium text-indigo-600 hover:underline">{{this.name}}</a>
+            {{#if this.description}}
+            <p class="text-xs text-gray-400 mt-0.5">{{this.description}}</p>
+            {{/if}}
+          </td>
+          <td class="px-4 py-2 text-gray-500">{{this.app}}</td>
+          <td class="px-4 py-2 text-right text-gray-900">{{this.stats.totalKeys}}</td>
+          <td class="px-4 py-2 text-right">
+            <span class="{{#inRange this.coveragePercent 80 100}}text-green-700{{else}}{{#inRange this.coveragePercent 50 79}}text-amber-700{{else}}text-red-700{{/inRange}}{{/inRange}} font-medium">
+              {{this.coveragePercent}}%
+            </span>
+          </td>
+        </tr>
+        {{/each}}
+      </tbody>
+    </table>
+  </div>
+</div>

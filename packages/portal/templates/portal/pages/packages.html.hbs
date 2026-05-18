@@ -1,0 +1,30 @@
+<div class="max-w-5xl">
+  <div class="flex items-center justify-between mb-6">
+    <div>
+      <h1 class="text-2xl font-bold text-gray-900">パッケージ</h1>
+      <p class="text-gray-500 text-sm mt-1">{{summary.totalPackages}} パッケージ &middot; {{summary.totalModules}} モジュール</p>
+    </div>
+    <div class="text-xs text-gray-400">生成: {{generatedAt}}</div>
+  </div>
+
+  <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+    {{#each packages}}
+    <a href="/packages/{{urlEncode this.name}}" class="bg-white rounded-lg border border-gray-200 p-4 hover:border-indigo-300 transition-colors block">
+      <div class="flex items-start justify-between">
+        <div>
+          <div class="font-medium text-gray-900">{{this.name}}</div>
+          <div class="text-xs text-gray-400 font-mono mt-0.5">{{this.prefix}}</div>
+        </div>
+      </div>
+      {{#if this.description}}
+      <p class="text-sm text-gray-500 mt-2 line-clamp-2">{{this.description}}</p>
+      {{/if}}
+      <div class="flex gap-3 mt-3 text-xs text-gray-500">
+        <span>モジュール: {{this.stats.moduleCount}}</span>
+        <span>エクスポート: {{this.stats.exportCount}}</span>
+        <span>型: {{this.stats.typeCount}}</span>
+      </div>
+    </a>
+    {{/each}}
+  </div>
+</div>

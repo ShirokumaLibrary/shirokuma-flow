@@ -1,0 +1,138 @@
+<div class="max-w-full">
+  <div class="flex items-center justify-between mb-6">
+    <div>
+      <a href="/db-schema" class="text-sm text-indigo-600 hover:underline">&larr; DB スキーマ</a>
+      <h1 class="text-2xl font-bold text-gray-900 mt-2">ER 図: {{dbName}}</h1>
+      <p class="text-gray-500 text-sm mt-1">{{tableCount}} テーブル &middot; {{edgeCount}} リレーション</p>
+    </div>
+    <div class="flex gap-2">
+      <button onclick="switchView('cytoscape')" id="btn-cytoscape" class="text-sm px-3 py-1.5 bg-indigo-600 text-white rounded-md">インタラクティブ</button>
+      <button onclick="switchView('mermaid')" id="btn-mermaid" class="text-sm px-3 py-1.5 bg-gray-100 text-gray-700 rounded-md hover:bg-gray-200">Mermaid</button>
+    </div>
+  </div>
+
+  <!-- Cytoscape.js ビュー -->
+  <div id="view-cytoscape" class="bg-white rounded-lg border border-gray-200 overflow-hidden">
+    <div id="cy" class="w-full" style="height: 600px;"></div>
+  </div>
+
+  <!-- Mermaid ビュー -->
+  <div id="view-mermaid" class="bg-white rounded-lg border border-gray-200 p-6 hidden overflow-auto">
+    <pre class="mermaid text-xs">{{{mermaidChart}}}</pre>
+  </div>
+
+  <script>
+    const erNodes = {{{nodesJson}}};
+    const erEdges = {{{edgesJson}}};
+
+    function switchView(type) {
+      const cyView = document.getElementById('view-cytoscape');
+      const mermaidView = document.getElementById('view-mermaid');
+      const btnCy = document.getElementById('btn-cytoscape');
+      const btnMermaid = document.getElementById('btn-mermaid');
+
+      if (type === 'cytoscape') {
+        cyView.classList.remove('hidden');
+        mermaidView.classList.add('hidden');
+        btnCy.classList.add('bg-indigo-600', 'text-white');
+        btnCy.classList.remove('bg-gray-100', 'text-gray-700');
+        btnMermaid.classList.remove('bg-indigo-600', 'text-white');
+        btnMermaid.classList.add('bg-gray-100', 'text-gray-700');
+      } else {
+        cyView.classList.add('hidden');
+        mermaidView.classList.remove('hidden');
+        btnMermaid.classList.add('bg-indigo-600', 'text-white');
+        btnMermaid.classList.remove('bg-gray-100', 'text-gray-700');
+        btnCy.classList.remove('bg-indigo-600', 'text-white');
+        btnCy.classList.add('bg-gray-100', 'text-gray-700');
+      }
+    }
+  </script>
+
+  <script src="https://unpkg.com/cytoscape@3.30.2/dist/cytoscape.min.js"></script>
+  <script>
+    document.addEventListener('DOMContentLoaded', function() {
+      const colorMap = {
+        auth: '#3b82f6', organization: '#8b5cf6', project: '#f59e0b',
+        session: '#06b6d4', entity: '#f43f5e', activity: '#6366f1',
+        token: '#f97316', content: '#22c55e', context: '#14b8a6', other: '#6b7280'
+      };
+
+      const cytoscapeNodes = erNodes.map(n => ({
+        data: {
+          id: n.id,
+          label: n.label,
+          category: n.category,
+          columnCount: n.columnCount,
+        }
+      }));
+
+      const cytoscapeEdges = erEdges.map((e, i) => ({
+        data: {
+          id: `e${i}`,
+          source: e.source,
+          target: e.target,
+          label: e.label,
+        }
+      }));
+
+      const cy = cytoscape({
+        container: document.getElementById('cy'),
+        elements: [...cytoscapeNodes, ...cytoscapeEdges],
+        style: [
+          {
+            selector: 'node',
+            style: {
+              'background-color': function(ele) {
+                return colorMap[ele.data('category')] || '#6b7280';
+              },
+              'label': 'data(label)',
+              'color': '#fff',
+              'text-valign': 'center',
+              'text-halign': 'center',
+              'font-size': '11px',
+              'width': '120px',
+              'height': '40px',
+              'shape': 'roundrectangle',
+              'text-wrap': 'wrap',
+              'text-max-width': '100px',
+            }
+          },
+          {
+            selector: 'edge',
+            style: {
+              'width': 1.5,
+              'line-color': '#d1d5db',
+              'target-arrow-color': '#d1d5db',
+              'target-arrow-shape': 'triangle',
+              'curve-style': 'bezier',
+              'font-size': '9px',
+              'label': '',
+            }
+          },
+          {
+            selector: ':selected',
+            style: {
+              'background-color': '#6366f1',
+              'line-color': '#6366f1',
+              'target-arrow-color': '#6366f1',
+            }
+          }
+        ],
+        layout: {
+          name: 'cose',
+          animate: false,
+          nodeDimensionsIncludeLabels: true,
+        }
+      });
+
+      // クリックでテーブル詳細へ
+      cy.on('tap', 'node', function(evt) {
+        const node = evt.target;
+        window.location.href = `/db-schema/${encodeURIComponent(node.id())}`;
+      });
+    });
+  </script>
+  <script src="https://cdn.jsdelivr.net/npm/mermaid@11.13.0/dist/mermaid.min.js"></script>
+  <script>mermaid.initialize({ startOnLoad: true, theme: 'neutral' });</script>
+</div>

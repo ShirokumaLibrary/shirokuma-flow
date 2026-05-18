@@ -1,0 +1,853 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>details-module-page.test.ts - Other - テストケース - Project</title>
+  <style>
+
+:root {
+  --bg-color: #0a0a0a;
+  --card-bg: #141414;
+  --border-color: #262626;
+  --text-primary: #fafafa;
+  --text-secondary: #a1a1aa;
+  --accent-blue: #3b82f6;
+  --accent-green: #22c55e;
+  --accent-purple: #a855f7;
+  --accent-orange: #f97316;
+  --accent-pink: #ec4899;
+  --code-bg: #1e1e1e;
+  --sidebar-width: 280px;
+}
+
+
+* {
+  margin: 0;
+  padding: 0;
+  box-sizing: border-box;
+}
+
+body {
+  font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;
+  background: var(--bg-color);
+  color: var(--text-primary);
+  min-height: 100vh;
+  line-height: 1.6;
+}
+
+a {
+  color: var(--accent-blue);
+  text-decoration: none;
+}
+
+a:hover {
+  text-decoration: underline;
+}
+
+
+.container {
+  max-width: 1200px;
+  margin: 0 auto;
+  padding: 2rem;
+}
+
+.grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(350px, 1fr));
+  gap: 1.5rem;
+  margin-bottom: 3rem;
+}
+
+
+.card {
+  background: var(--card-bg);
+  border: 1px solid var(--border-color);
+  border-radius: 12px;
+  padding: 1.5rem;
+  transition: border-color 0.2s, transform 0.2s;
+}
+
+.card:hover {
+  border-color: var(--text-secondary);
+  transform: translateY(-2px);
+}
+
+.card-header {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  margin-bottom: 1rem;
+}
+
+.card-icon {
+  width: 40px;
+  height: 40px;
+  border-radius: 8px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 1.25rem;
+}
+
+.icon-blue { background: rgba(59, 130, 246, 0.2); color: var(--accent-blue); }
+.icon-green { background: rgba(34, 197, 94, 0.2); color: var(--accent-green); }
+.icon-purple { background: rgba(168, 85, 247, 0.2); color: var(--accent-purple); }
+.icon-orange { background: rgba(249, 115, 22, 0.2); color: var(--accent-orange); }
+.icon-pink { background: rgba(236, 72, 153, 0.2); color: var(--accent-pink); }
+
+.card h2 {
+  font-size: 1.25rem;
+  font-weight: 600;
+}
+
+.card p {
+  color: var(--text-secondary);
+  font-size: 0.9rem;
+  line-height: 1.6;
+  margin-bottom: 1rem;
+}
+
+
+.links {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.5rem;
+}
+
+.link {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.25rem;
+  padding: 0.5rem 0.75rem;
+  background: var(--bg-color);
+  border: 1px solid var(--border-color);
+  border-radius: 6px;
+  color: var(--text-primary);
+  text-decoration: none;
+  font-size: 0.85rem;
+  transition: background 0.2s, border-color 0.2s;
+}
+
+.link:hover {
+  background: var(--border-color);
+  border-color: var(--text-secondary);
+  text-decoration: none;
+}
+
+.link svg {
+  width: 14px;
+  height: 14px;
+}
+
+
+header:not(.global-header):not(.hero) {
+  text-align: center;
+  margin-bottom: 3rem;
+  padding-bottom: 2rem;
+  border-bottom: 1px solid var(--border-color);
+}
+
+header:not(.global-header):not(.hero) h1 {
+  font-size: 2.5rem;
+  font-weight: 700;
+  margin-bottom: 0.5rem;
+}
+
+header:not(.global-header):not(.hero) .subtitle {
+  color: var(--text-secondary);
+  font-size: 1.1rem;
+}
+
+
+footer {
+  text-align: center;
+  margin-top: 3rem;
+  padding-top: 2rem;
+  border-top: 1px solid var(--border-color);
+  color: var(--text-secondary);
+  font-size: 0.9rem;
+}
+
+
+.section-title {
+  font-size: 1.1rem;
+  font-weight: 600;
+  margin-bottom: 1rem;
+  color: var(--text-secondary);
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+}
+
+
+.page-header {
+  margin-bottom: 2rem;
+  text-align: center;
+}
+
+.page-title {
+  font-size: 2rem;
+  font-weight: 800;
+  margin-bottom: 0.5rem;
+}
+
+.page-description {
+  font-size: 1rem;
+  color: var(--text-secondary);
+  max-width: 600px;
+  margin: 0 auto;
+}
+
+.page-meta {
+  font-size: 0.875rem;
+  color: var(--text-secondary);
+  margin-top: 0.5rem;
+}
+
+.page-badge {
+  display: inline-block;
+  padding: 0.25rem 0.75rem;
+  border-radius: 9999px;
+  font-size: 0.75rem;
+  font-weight: 600;
+  margin-left: 0.5rem;
+  vertical-align: middle;
+}
+
+.page-badge.badge-action { background: rgba(59, 130, 246, 0.2); color: var(--accent-blue); }
+.page-badge.badge-screen { background: rgba(34, 197, 94, 0.2); color: var(--accent-green); }
+.page-badge.badge-component { background: rgba(168, 85, 247, 0.2); color: var(--accent-purple); }
+.page-badge.badge-table { background: rgba(249, 115, 22, 0.2); color: var(--accent-orange); }
+
+.page-module-prefix {
+  color: var(--text-secondary);
+  font-weight: 400;
+}
+
+
+    .container {
+      max-width: 900px;
+      margin: 0 auto;
+      padding: 2rem;
+    }
+
+    .header {
+      background: var(--card-bg);
+      border-bottom: 1px solid var(--border-color);
+      padding: 1rem 2rem;
+    }
+
+    .back-link {
+      display: inline-flex;
+      align-items: center;
+      gap: 0.5rem;
+      color: var(--text-secondary);
+      text-decoration: none;
+      padding: 0.5rem 1rem;
+      border-radius: 6px;
+      transition: background 0.2s;
+    }
+
+    .back-link:hover {
+      background: var(--border-color);
+      color: var(--text-primary);
+      text-decoration: none;
+    }
+
+    .breadcrumb {
+      display: flex;
+      align-items: center;
+      gap: 0.5rem;
+      font-size: 0.9rem;
+      margin-bottom: 1.5rem;
+    }
+
+    .breadcrumb a {
+      color: var(--accent-blue);
+      text-decoration: none;
+    }
+
+    .breadcrumb a:hover {
+      text-decoration: underline;
+    }
+
+    .breadcrumb .separator {
+      color: var(--text-secondary);
+    }
+
+    .breadcrumb .current {
+      color: var(--text-primary);
+    }
+
+    .page-header {
+      margin-bottom: 2rem;
+    }
+
+    .page-header h1 {
+      font-size: 1.75rem;
+      font-weight: 700;
+      font-family: monospace;
+      margin-bottom: 0.5rem;
+    }
+
+    .file-desc {
+      color: var(--text-secondary);
+      margin-bottom: 0.75rem;
+    }
+
+    .module-link-large {
+      display: inline-flex;
+      align-items: center;
+      gap: 0.5rem;
+      padding: 0.5rem 1rem;
+      background: rgba(59, 130, 246, 0.1);
+      border: 1px solid rgba(59, 130, 246, 0.2);
+      border-radius: 6px;
+      color: var(--accent-blue);
+      text-decoration: none;
+      font-size: 0.9rem;
+      transition: all 0.2s;
+    }
+
+    .module-link-large:hover {
+      background: rgba(59, 130, 246, 0.2);
+      border-color: var(--accent-blue);
+      text-decoration: none;
+    }
+
+    .test-groups {
+      display: flex;
+      flex-direction: column;
+      gap: 2rem;
+    }
+
+    .test-group {
+      background: var(--card-bg);
+      border: 1px solid var(--border-color);
+      border-radius: 8px;
+      padding: 1.25rem;
+    }
+
+    .group-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 0.75rem;
+      padding-bottom: 0.75rem;
+      border-bottom: 1px solid var(--border-color);
+    }
+
+    .group-name {
+      font-size: 1.1rem;
+      font-weight: 600;
+      color: var(--text-primary);
+    }
+
+    .group-count {
+      font-size: 0.8rem;
+      color: var(--text-secondary);
+    }
+
+    .group-desc {
+      font-size: 0.9rem;
+      color: var(--text-secondary);
+      margin-bottom: 1rem;
+      padding: 0.5rem 0.75rem;
+      background: rgba(168, 85, 247, 0.08);
+      border-radius: 6px;
+    }
+
+    .test-list {
+      display: flex;
+      flex-direction: column;
+      gap: 0.75rem;
+    }
+
+    .test-item {
+      padding: 0.75rem;
+      border-radius: 6px;
+      border: 1px solid transparent;
+      transition: all 0.15s;
+    }
+
+    .test-item:hover {
+      background: var(--bg-color);
+      border-color: var(--border-color);
+    }
+
+    .test-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: flex-start;
+      gap: 1rem;
+    }
+
+    .test-name {
+      font-size: 0.9rem;
+      color: var(--text-primary);
+      font-weight: 500;
+    }
+
+    .test-line {
+      font-size: 0.75rem;
+      color: var(--text-secondary);
+      font-family: monospace;
+    }
+
+    .test-original {
+      font-size: 0.8rem;
+      color: var(--text-secondary);
+      margin-top: 0.25rem;
+    }
+
+    .test-details {
+      margin-top: 0.5rem;
+      padding: 0.5rem 0.75rem;
+      background: var(--bg-color);
+      border-radius: 4px;
+      font-size: 0.85rem;
+    }
+
+    .detail-item {
+      padding: 0.25rem 0;
+      color: var(--text-secondary);
+    }
+
+    .detail-label {
+      font-weight: 600;
+      color: var(--accent-purple);
+    }
+
+    .test-category {
+      margin-top: 0.5rem;
+    }
+
+    .test-category-badge {
+      display: inline-flex;
+      align-items: center;
+      gap: 0.25rem;
+      padding: 0.125rem 0.5rem;
+      border-radius: 4px;
+      font-size: 0.75rem;
+      font-weight: 500;
+    }
+  
+  </style>
+<link rel="stylesheet" href="../../global-nav.css">
+</head>
+<body>
+
+    <div class="header">
+      <a href="../other.html" class="back-link">
+        <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M19 12H5M12 19l-7-7 7-7"/></svg>
+        ファイル一覧に戻る
+      </a>
+    </div>
+    <div class="container">
+      <nav class="breadcrumb">
+        <a href="../../test-cases.html">テストケース</a>
+        <span class="separator">/</span>
+        <a href="../other.html">Other</a>
+        <span class="separator">/</span>
+        <span class="current">details-module-page.test.ts</span>
+      </nav>
+
+      <div class="page-header">
+        <h1>details-module-page.test.ts</h1>
+        <p class="file-desc">details-module-page のテスト</p>
+        
+      </div>
+
+      <div class="test-groups">
+        
+        <div class="test-group" id="buildModuleTestsList">
+          <h2 class="group-header">
+            <span class="group-name">buildModuleTestsList</span>
+            <span class="group-count">4 tests</span>
+          </h2>
+          
+          <div class="test-list">
+            
+            <div class="test-item">
+              <div class="test-header">
+                <span class="test-name">テストケースが空の場合「関連するテストが見つかりませんでした」を返す</span>
+                <span class="test-line">L107</span>
+              </div>
+              <p class="test-original">EN: should return empty message when testCases is empty</p>
+              
+              <div class="test-category"><span class="test-category-badge" style="background: #3b82f620; color: #3b82f6" title="バリデーション">📋 1</span></div>
+            </div>
+          
+
+            <div class="test-item">
+              <div class="test-header">
+                <span class="test-name">テストケースをファイル別にグループ化して表示する</span>
+                <span class="test-line">L115</span>
+              </div>
+              <p class="test-original">EN: should group test cases by file</p>
+              
+              <div class="test-category"><span class="test-category-badge" style="background: #22c55e20; color: #22c55e" title="正常系">✅ 1</span></div>
+            </div>
+          
+
+            <div class="test-item">
+              <div class="test-header">
+                <span class="test-name">5件以上のテストケースがある場合に「+N more tests」リンクを表示する</span>
+                <span class="test-line">L130</span>
+              </div>
+              <p class="test-original">EN: should show more link when file has more than 5 test cases</p>
+              
+              <div class="test-category"><span class="test-category-badge" style="background: #22c55e20; color: #22c55e" title="正常系">✅ 1</span></div>
+            </div>
+          
+
+            <div class="test-item">
+              <div class="test-header">
+                <span class="test-name">テストケースの件数を表示する</span>
+                <span class="test-line">L141</span>
+              </div>
+              <p class="test-original">EN: should show test count per file</p>
+              
+              <div class="test-category"><span class="test-category-badge" style="background: #22c55e20; color: #22c55e" title="正常系">✅ 1</span></div>
+            </div>
+          
+          </div>
+        </div>
+      
+
+        <div class="test-group" id="getItemMeta">
+          <h2 class="group-header">
+            <span class="group-name">getItemMeta</span>
+            <span class="group-count">6 tests</span>
+          </h2>
+          
+          <div class="test-list">
+            
+            <div class="test-item">
+              <div class="test-header">
+                <span class="test-name">screen タイプでルート情報がある場合にルートスパンを返す</span>
+                <span class="test-line">L160</span>
+              </div>
+              <p class="test-original">EN: should return route span for screen with route</p>
+              
+              <div class="test-category"><span class="test-category-badge" style="background: #22c55e20; color: #22c55e" title="正常系">✅ 1</span></div>
+            </div>
+          
+
+            <div class="test-item">
+              <div class="test-header">
+                <span class="test-name">screen タイプでルートがない場合に空文字を返す</span>
+                <span class="test-line">L170</span>
+              </div>
+              <p class="test-original">EN: should return empty string for screen without route</p>
+              
+              <div class="test-category"><span class="test-category-badge" style="background: #3b82f620; color: #3b82f6" title="バリデーション">📋 1</span></div>
+            </div>
+          
+
+            <div class="test-item">
+              <div class="test-header">
+                <span class="test-name">component タイプで使用画面がある場合に画面数を返す</span>
+                <span class="test-line">L179</span>
+              </div>
+              <p class="test-original">EN: should return screens count for component with usedInScreens</p>
+              
+              <div class="test-category"><span class="test-category-badge" style="background: #22c55e20; color: #22c55e" title="正常系">✅ 1</span></div>
+            </div>
+          
+
+            <div class="test-item">
+              <div class="test-header">
+                <span class="test-name">action タイプで DB テーブルがある場合にテーブル数を返す</span>
+                <span class="test-line">L188</span>
+              </div>
+              <p class="test-original">EN: should return tables count for action with dbTables</p>
+              
+              <div class="test-category"><span class="test-category-badge" style="background: #22c55e20; color: #22c55e" title="正常系">✅ 1</span></div>
+            </div>
+          
+
+            <div class="test-item">
+              <div class="test-header">
+                <span class="test-name">table タイプで使用アクションがある場合にアクション数を返す</span>
+                <span class="test-line">L197</span>
+              </div>
+              <p class="test-original">EN: should return actions count for table with usedInActions</p>
+              
+              <div class="test-category"><span class="test-category-badge" style="background: #22c55e20; color: #22c55e" title="正常系">✅ 1</span></div>
+            </div>
+          
+
+            <div class="test-item">
+              <div class="test-header">
+                <span class="test-name">未知のタイプは空文字を返す</span>
+                <span class="test-line">L206</span>
+              </div>
+              <p class="test-original">EN: should return empty string for unknown type</p>
+              
+              <div class="test-category"><span class="test-category-badge" style="background: #3b82f620; color: #3b82f6" title="バリデーション">📋 1</span></div>
+            </div>
+          
+          </div>
+        </div>
+      
+
+        <div class="test-group" id="getModuleStats">
+          <h2 class="group-header">
+            <span class="group-name">getModuleStats</span>
+            <span class="group-count">4 tests</span>
+          </h2>
+          
+          <div class="test-list">
+            
+            <div class="test-item">
+              <div class="test-header">
+                <span class="test-name">action タイプで DB テーブルの統計を返す</span>
+                <span class="test-line">L220</span>
+              </div>
+              <p class="test-original">EN: should return DB Tables stat for action type</p>
+              
+              <div class="test-category"><span class="test-category-badge" style="background: #22c55e20; color: #22c55e" title="正常系">✅ 1</span></div>
+            </div>
+          
+
+            <div class="test-item">
+              <div class="test-header">
+                <span class="test-name">component タイプで使用画面の統計を返す</span>
+                <span class="test-line">L234</span>
+              </div>
+              <p class="test-original">EN: should return Used in Screens stat for component type</p>
+              
+              <div class="test-category"><span class="test-category-badge" style="background: #22c55e20; color: #22c55e" title="正常系">✅ 1</span></div>
+            </div>
+          
+
+            <div class="test-item">
+              <div class="test-header">
+                <span class="test-name">screen タイプでは空文字を返す</span>
+                <span class="test-line">L247</span>
+              </div>
+              <p class="test-original">EN: should return empty string for screen type</p>
+              
+              <div class="test-category"><span class="test-category-badge" style="background: #3b82f620; color: #3b82f6" title="バリデーション">📋 1</span></div>
+            </div>
+          
+
+            <div class="test-item">
+              <div class="test-header">
+                <span class="test-name">action タイプで DB テーブルがない場合は空文字を返す</span>
+                <span class="test-line">L256</span>
+              </div>
+              <p class="test-original">EN: should return empty string for action type with no dbTables</p>
+              
+              <div class="test-category"><span class="test-category-badge" style="background: #3b82f620; color: #3b82f6" title="バリデーション">📋 1</span></div>
+            </div>
+          
+          </div>
+        </div>
+      
+
+        <div class="test-group" id="buildTypeItem">
+          <h2 class="group-header">
+            <span class="group-name">buildTypeItem</span>
+            <span class="group-count">4 tests</span>
+          </h2>
+          
+          <div class="test-list">
+            
+            <div class="test-item">
+              <div class="test-header">
+                <span class="test-name">interface タイプに青色バッジを付与する</span>
+                <span class="test-line">L271</span>
+              </div>
+              <p class="test-original">EN: should render interface with blue badge</p>
+              
+              <div class="test-category"><span class="test-category-badge" style="background: #22c55e20; color: #22c55e" title="正常系">✅ 1</span></div>
+            </div>
+          
+
+            <div class="test-item">
+              <div class="test-header">
+                <span class="test-name">enum タイプに値リストを表示する</span>
+                <span class="test-line">L286</span>
+              </div>
+              <p class="test-original">EN: should render enum with values list</p>
+              
+              <div class="test-category"><span class="test-category-badge" style="background: #22c55e20; color: #22c55e" title="正常系">✅ 1</span></div>
+            </div>
+          
+
+            <div class="test-item">
+              <div class="test-header">
+                <span class="test-name">ソースコードがある場合にコードブロックを表示する</span>
+                <span class="test-line">L303</span>
+              </div>
+              <p class="test-original">EN: should render code block when sourceCode is present</p>
+              
+              <div class="test-category"><span class="test-category-badge" style="background: #22c55e20; color: #22c55e" title="正常系">✅ 1</span></div>
+            </div>
+          
+
+            <div class="test-item">
+              <div class="test-header">
+                <span class="test-name">フィールドが8件を超える場合に「+N more fields」を表示する</span>
+                <span class="test-line">L317</span>
+              </div>
+              <p class="test-original">EN: should show more fields indicator when fields exceed 8</p>
+              
+              <div class="test-category"><span class="test-category-badge" style="background: #22c55e20; color: #22c55e" title="正常系">✅ 1</span></div>
+            </div>
+          
+          </div>
+        </div>
+      
+
+        <div class="test-group" id="buildUtilityItem">
+          <h2 class="group-header">
+            <span class="group-name">buildUtilityItem</span>
+            <span class="group-count">4 tests</span>
+          </h2>
+          
+          <div class="test-list">
+            
+            <div class="test-item">
+              <div class="test-header">
+                <span class="test-name">constant に黄色バッジと値を表示する</span>
+                <span class="test-line">L340</span>
+              </div>
+              <p class="test-original">EN: should render constant with yellow badge and value</p>
+              
+              <div class="test-category"><span class="test-category-badge" style="background: #22c55e20; color: #22c55e" title="正常系">✅ 1</span></div>
+            </div>
+          
+
+            <div class="test-item">
+              <div class="test-header">
+                <span class="test-name">function にシアンバッジとパラメータを表示する</span>
+                <span class="test-line">L356</span>
+              </div>
+              <p class="test-original">EN: should render function with cyan badge and params</p>
+              
+              <div class="test-category"><span class="test-category-badge" style="background: #22c55e20; color: #22c55e" title="正常系">✅ 1</span></div>
+            </div>
+          
+
+            <div class="test-item">
+              <div class="test-header">
+                <span class="test-name">戻り値の型情報を表示する</span>
+                <span class="test-line">L377</span>
+              </div>
+              <p class="test-original">EN: should render return type when present</p>
+              
+              <div class="test-category"><span class="test-category-badge" style="background: #22c55e20; color: #22c55e" title="正常系">✅ 1</span></div>
+            </div>
+          
+
+            <div class="test-item">
+              <div class="test-header">
+                <span class="test-name">説明文がある場合に表示する</span>
+                <span class="test-line">L390</span>
+              </div>
+              <p class="test-original">EN: should render description when present</p>
+              
+              <div class="test-category"><span class="test-category-badge" style="background: #22c55e20; color: #22c55e" title="正常系">✅ 1</span></div>
+            </div>
+          
+          </div>
+        </div>
+      
+
+        <div class="test-group" id="generateModuleDetailPage">
+          <h2 class="group-header">
+            <span class="group-name">generateModuleDetailPage</span>
+            <span class="group-count">7 tests</span>
+          </h2>
+          
+          <div class="test-list">
+            
+            <div class="test-item">
+              <div class="test-header">
+                <span class="test-name">正しいパスに writeFile を呼び出す</span>
+                <span class="test-line">L413</span>
+              </div>
+              <p class="test-original">EN: should call writeFile with correct output path</p>
+              
+              <div class="test-category"><span class="test-category-badge" style="background: #22c55e20; color: #22c55e" title="正常系">✅ 1</span></div>
+            </div>
+          
+
+            <div class="test-item">
+              <div class="test-header">
+                <span class="test-name">生成された HTML にモジュール名とタイプバッジを含む</span>
+                <span class="test-line">L429</span>
+              </div>
+              <p class="test-original">EN: should generate HTML with module name and type badge</p>
+              
+              <div class="test-category"><span class="test-category-badge" style="background: #22c55e20; color: #22c55e" title="正常系">✅ 1</span></div>
+            </div>
+          
+
+            <div class="test-item">
+              <div class="test-header">
+                <span class="test-name">Types タブがある場合にタブとコンテンツを含む</span>
+                <span class="test-line">L445</span>
+              </div>
+              <p class="test-original">EN: should include Types tab when types are provided</p>
+              
+              <div class="test-category"><span class="test-category-badge" style="background: #22c55e20; color: #22c55e" title="正常系">✅ 1</span></div>
+            </div>
+          
+
+            <div class="test-item">
+              <div class="test-header">
+                <span class="test-name">Utilities タブがある場合にタブとコンテンツを含む</span>
+                <span class="test-line">L462</span>
+              </div>
+              <p class="test-original">EN: should include Utilities tab when utilities are provided</p>
+              
+              <div class="test-category"><span class="test-category-badge" style="background: #22c55e20; color: #22c55e" title="正常系">✅ 1</span></div>
+            </div>
+          
+
+            <div class="test-item">
+              <div class="test-header">
+                <span class="test-name">アイテムがない場合「アイテムがありません」を表示する</span>
+                <span class="test-line">L479</span>
+              </div>
+              <p class="test-original">EN: should show empty message when items is empty</p>
+              
+              <div class="test-category"><span class="test-category-badge" style="background: #3b82f620; color: #3b82f6" title="バリデーション">📋 1</span></div>
+            </div>
+          
+
+            <div class="test-item">
+              <div class="test-header">
+                <span class="test-name">統計情報セクションにアイテム数を表示する</span>
+                <span class="test-line">L494</span>
+              </div>
+              <p class="test-original">EN: should show item count in stats section</p>
+              
+              <div class="test-category"><span class="test-category-badge" style="background: #22c55e20; color: #22c55e" title="正常系">✅ 1</span></div>
+            </div>
+          
+
+            <div class="test-item">
+              <div class="test-header">
+                <span class="test-name">title タグにモジュール名とプロジェクト名を含む</span>
+                <span class="test-line">L511</span>
+              </div>
+              <p class="test-original">EN: should include module name and project name in title tag</p>
+              
+              <div class="test-category"><span class="test-category-badge" style="background: #22c55e20; color: #22c55e" title="正常系">✅ 1</span></div>
+            </div>
+          
+          </div>
+        </div>
+      
+      </div>
+    </div>
+  
+
+<script src="../../global-nav.js"></script>
+</body>
+</html>

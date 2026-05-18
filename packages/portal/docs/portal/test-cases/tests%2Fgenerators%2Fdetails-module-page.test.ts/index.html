@@ -1,0 +1,381 @@
+<!DOCTYPE html>
+<html lang="ja" class="h-full">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>テスト: details-module-page.test.ts | Project</title>
+  <script src="https://cdn.tailwindcss.com/3.4.19"></script>
+  <script>
+    tailwind.config = {
+      darkMode: 'class',
+      theme: {
+        extend: {
+          colors: {
+            accent: '#6366f1',
+          }
+        }
+      }
+    }
+  </script>
+  <link rel="stylesheet" href="/assets/portal.css" />
+</head>
+<body class="h-full bg-gray-50 text-gray-900 ">
+
+  <!-- モバイルオーバーレイ -->
+  <div id="sidebar-overlay" class="fixed inset-0 bg-black bg-opacity-50 z-20 hidden lg:hidden" onclick="toggleSidebar()"></div>
+
+  <div class="flex h-full">
+    <!-- サイドバー -->
+    <aside id="sidebar" class="fixed inset-y-0 left-0 w-64 bg-white border-r border-gray-200 z-30 transform -translate-x-full lg:translate-x-0 lg:static lg:inset-0 transition-transform duration-200">
+      <div class="flex items-center h-16 px-4 border-b border-gray-200">
+        <a href="/" class="flex items-center gap-2 font-bold text-gray-900 truncate">
+          <span class="text-indigo-600">&#9632;</span>
+          <span class="truncate">Project</span>
+        </a>
+      </div>
+      <nav class="overflow-y-auto h-[calc(100%-4rem)] py-4">
+        <div class="px-3 mb-4">
+          <div class="text-xs font-semibold text-gray-400 uppercase tracking-wider mb-1 px-3">メイン</div>
+          <ul class="space-y-0.5">
+            <li>
+              <a
+                href="/"
+                class="flex items-center justify-between gap-2 px-3 py-1.5 text-sm rounded-md transition-colors
+                  false"
+              >
+                <span class="truncate">ダッシュボード</span>
+              </a>
+            </li>
+          </ul>
+        </div>
+        <div class="px-3 mb-4">
+          <div class="text-xs font-semibold text-gray-400 uppercase tracking-wider mb-1 px-3">プロジェクト</div>
+          <ul class="space-y-0.5">
+            <li>
+              <a
+                href="/overview"
+                class="flex items-center justify-between gap-2 px-3 py-1.5 text-sm rounded-md transition-colors
+                  false"
+              >
+                <span class="truncate">概要</span>
+              </a>
+            </li>
+            <li>
+              <a
+                href="/test-cases"
+                class="flex items-center justify-between gap-2 px-3 py-1.5 text-sm rounded-md transition-colors
+                  false"
+              >
+                <span class="truncate">テストケース</span>
+                <span class="text-xs text-gray-400 flex-shrink-0">737</span>
+              </a>
+            </li>
+          </ul>
+        </div>
+      </nav>
+    </aside>
+
+    <!-- メインコンテンツ -->
+    <div class="flex-1 flex flex-col min-w-0 overflow-hidden">
+      <!-- トップバー -->
+      <header class="h-16 bg-white border-b border-gray-200 flex items-center px-4 gap-4">
+        <button
+          onclick="toggleSidebar()"
+          class="lg:hidden p-2 rounded-md text-gray-500 hover:text-gray-700 hover:bg-gray-100"
+        >
+          <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6h16M4 12h16M4 18h16"/>
+          </svg>
+        </button>
+
+        <nav class="flex items-center gap-1 text-sm text-gray-500 min-w-0">
+          <a href="/" class="hover:text-gray-700">ホーム</a>
+          <span>/</span>
+          <a href="/test-cases" class="hover:text-gray-700 truncate">テストケース</a>
+          <span>/</span>
+          <span class="text-gray-900 truncate">details-module-page.test.ts</span>
+        </nav>
+
+        <div class="ml-auto">
+          <button
+            onclick="openSearch()"
+            class="flex items-center gap-2 px-3 py-1.5 text-sm text-gray-500 bg-gray-100 hover:bg-gray-200 rounded-md transition-colors"
+          >
+            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"/>
+            </svg>
+            <span>検索...</span>
+            <kbd class="text-xs bg-white border border-gray-200 rounded px-1">⌘K</kbd>
+          </button>
+        </div>
+      </header>
+
+      <!-- ページコンテンツ -->
+      <main class="flex-1 overflow-y-auto p-6">
+        <div class="max-w-4xl">
+  <div class="mb-6">
+    <a href="/test-cases" class="text-sm text-indigo-600 hover:underline">&larr; テストケース一覧</a>
+    <h1 class="text-xl font-bold text-gray-900 mt-2 font-mono">tests/generators/details-module-page.test.ts</h1>
+    <p class="text-gray-500 text-sm mt-1">
+      <span class="false">jest</span>
+      &middot; 29 件
+    </p>
+  </div>
+
+  <div class="space-y-4">
+    <div class="bg-white rounded-lg border border-gray-200">
+      <div class="px-4 py-3 border-b border-gray-100 bg-gray-50 rounded-t-lg">
+        <h3 class="text-sm font-medium text-gray-900">buildModuleTestsList</h3>
+      </div>
+      <ul class="divide-y divide-gray-100">
+        <li class="px-4 py-2 hover:bg-gray-50">
+          <a href="/test-cases/tests%2Fgenerators%2Fdetails-module-page.test.ts/107" class="text-sm text-gray-700 hover:text-indigo-600 block">
+            should return empty message when testCases is empty
+          </a>
+          <span class="text-xs text-gray-400">validation</span>
+        </li>
+        <li class="px-4 py-2 hover:bg-gray-50">
+          <a href="/test-cases/tests%2Fgenerators%2Fdetails-module-page.test.ts/115" class="text-sm text-gray-700 hover:text-indigo-600 block">
+            should group test cases by file
+          </a>
+          <span class="text-xs text-gray-400">happy-path</span>
+        </li>
+        <li class="px-4 py-2 hover:bg-gray-50">
+          <a href="/test-cases/tests%2Fgenerators%2Fdetails-module-page.test.ts/130" class="text-sm text-gray-700 hover:text-indigo-600 block">
+            should show more link when file has more than 5 test cases
+          </a>
+          <span class="text-xs text-gray-400">happy-path</span>
+        </li>
+        <li class="px-4 py-2 hover:bg-gray-50">
+          <a href="/test-cases/tests%2Fgenerators%2Fdetails-module-page.test.ts/141" class="text-sm text-gray-700 hover:text-indigo-600 block">
+            should show test count per file
+          </a>
+          <span class="text-xs text-gray-400">happy-path</span>
+        </li>
+      </ul>
+    </div>
+    <div class="bg-white rounded-lg border border-gray-200">
+      <div class="px-4 py-3 border-b border-gray-100 bg-gray-50 rounded-t-lg">
+        <h3 class="text-sm font-medium text-gray-900">getItemMeta</h3>
+      </div>
+      <ul class="divide-y divide-gray-100">
+        <li class="px-4 py-2 hover:bg-gray-50">
+          <a href="/test-cases/tests%2Fgenerators%2Fdetails-module-page.test.ts/160" class="text-sm text-gray-700 hover:text-indigo-600 block">
+            should return route span for screen with route
+          </a>
+          <span class="text-xs text-gray-400">happy-path</span>
+        </li>
+        <li class="px-4 py-2 hover:bg-gray-50">
+          <a href="/test-cases/tests%2Fgenerators%2Fdetails-module-page.test.ts/170" class="text-sm text-gray-700 hover:text-indigo-600 block">
+            should return empty string for screen without route
+          </a>
+          <span class="text-xs text-gray-400">validation</span>
+        </li>
+        <li class="px-4 py-2 hover:bg-gray-50">
+          <a href="/test-cases/tests%2Fgenerators%2Fdetails-module-page.test.ts/179" class="text-sm text-gray-700 hover:text-indigo-600 block">
+            should return screens count for component with usedInScreens
+          </a>
+          <span class="text-xs text-gray-400">happy-path</span>
+        </li>
+        <li class="px-4 py-2 hover:bg-gray-50">
+          <a href="/test-cases/tests%2Fgenerators%2Fdetails-module-page.test.ts/188" class="text-sm text-gray-700 hover:text-indigo-600 block">
+            should return tables count for action with dbTables
+          </a>
+          <span class="text-xs text-gray-400">happy-path</span>
+        </li>
+        <li class="px-4 py-2 hover:bg-gray-50">
+          <a href="/test-cases/tests%2Fgenerators%2Fdetails-module-page.test.ts/197" class="text-sm text-gray-700 hover:text-indigo-600 block">
+            should return actions count for table with usedInActions
+          </a>
+          <span class="text-xs text-gray-400">happy-path</span>
+        </li>
+        <li class="px-4 py-2 hover:bg-gray-50">
+          <a href="/test-cases/tests%2Fgenerators%2Fdetails-module-page.test.ts/206" class="text-sm text-gray-700 hover:text-indigo-600 block">
+            should return empty string for unknown type
+          </a>
+          <span class="text-xs text-gray-400">validation</span>
+        </li>
+      </ul>
+    </div>
+    <div class="bg-white rounded-lg border border-gray-200">
+      <div class="px-4 py-3 border-b border-gray-100 bg-gray-50 rounded-t-lg">
+        <h3 class="text-sm font-medium text-gray-900">getModuleStats</h3>
+      </div>
+      <ul class="divide-y divide-gray-100">
+        <li class="px-4 py-2 hover:bg-gray-50">
+          <a href="/test-cases/tests%2Fgenerators%2Fdetails-module-page.test.ts/220" class="text-sm text-gray-700 hover:text-indigo-600 block">
+            should return DB Tables stat for action type
+          </a>
+          <span class="text-xs text-gray-400">happy-path</span>
+        </li>
+        <li class="px-4 py-2 hover:bg-gray-50">
+          <a href="/test-cases/tests%2Fgenerators%2Fdetails-module-page.test.ts/234" class="text-sm text-gray-700 hover:text-indigo-600 block">
+            should return Used in Screens stat for component type
+          </a>
+          <span class="text-xs text-gray-400">happy-path</span>
+        </li>
+        <li class="px-4 py-2 hover:bg-gray-50">
+          <a href="/test-cases/tests%2Fgenerators%2Fdetails-module-page.test.ts/247" class="text-sm text-gray-700 hover:text-indigo-600 block">
+            should return empty string for screen type
+          </a>
+          <span class="text-xs text-gray-400">validation</span>
+        </li>
+        <li class="px-4 py-2 hover:bg-gray-50">
+          <a href="/test-cases/tests%2Fgenerators%2Fdetails-module-page.test.ts/256" class="text-sm text-gray-700 hover:text-indigo-600 block">
+            should return empty string for action type with no dbTables
+          </a>
+          <span class="text-xs text-gray-400">validation</span>
+        </li>
+      </ul>
+    </div>
+    <div class="bg-white rounded-lg border border-gray-200">
+      <div class="px-4 py-3 border-b border-gray-100 bg-gray-50 rounded-t-lg">
+        <h3 class="text-sm font-medium text-gray-900">buildTypeItem</h3>
+      </div>
+      <ul class="divide-y divide-gray-100">
+        <li class="px-4 py-2 hover:bg-gray-50">
+          <a href="/test-cases/tests%2Fgenerators%2Fdetails-module-page.test.ts/271" class="text-sm text-gray-700 hover:text-indigo-600 block">
+            should render interface with blue badge
+          </a>
+          <span class="text-xs text-gray-400">happy-path</span>
+        </li>
+        <li class="px-4 py-2 hover:bg-gray-50">
+          <a href="/test-cases/tests%2Fgenerators%2Fdetails-module-page.test.ts/286" class="text-sm text-gray-700 hover:text-indigo-600 block">
+            should render enum with values list
+          </a>
+          <span class="text-xs text-gray-400">happy-path</span>
+        </li>
+        <li class="px-4 py-2 hover:bg-gray-50">
+          <a href="/test-cases/tests%2Fgenerators%2Fdetails-module-page.test.ts/303" class="text-sm text-gray-700 hover:text-indigo-600 block">
+            should render code block when sourceCode is present
+          </a>
+          <span class="text-xs text-gray-400">happy-path</span>
+        </li>
+        <li class="px-4 py-2 hover:bg-gray-50">
+          <a href="/test-cases/tests%2Fgenerators%2Fdetails-module-page.test.ts/317" class="text-sm text-gray-700 hover:text-indigo-600 block">
+            should show more fields indicator when fields exceed 8
+          </a>
+          <span class="text-xs text-gray-400">happy-path</span>
+        </li>
+      </ul>
+    </div>
+    <div class="bg-white rounded-lg border border-gray-200">
+      <div class="px-4 py-3 border-b border-gray-100 bg-gray-50 rounded-t-lg">
+        <h3 class="text-sm font-medium text-gray-900">buildUtilityItem</h3>
+      </div>
+      <ul class="divide-y divide-gray-100">
+        <li class="px-4 py-2 hover:bg-gray-50">
+          <a href="/test-cases/tests%2Fgenerators%2Fdetails-module-page.test.ts/340" class="text-sm text-gray-700 hover:text-indigo-600 block">
+            should render constant with yellow badge and value
+          </a>
+          <span class="text-xs text-gray-400">happy-path</span>
+        </li>
+        <li class="px-4 py-2 hover:bg-gray-50">
+          <a href="/test-cases/tests%2Fgenerators%2Fdetails-module-page.test.ts/356" class="text-sm text-gray-700 hover:text-indigo-600 block">
+            should render function with cyan badge and params
+          </a>
+          <span class="text-xs text-gray-400">happy-path</span>
+        </li>
+        <li class="px-4 py-2 hover:bg-gray-50">
+          <a href="/test-cases/tests%2Fgenerators%2Fdetails-module-page.test.ts/377" class="text-sm text-gray-700 hover:text-indigo-600 block">
+            should render return type when present
+          </a>
+          <span class="text-xs text-gray-400">happy-path</span>
+        </li>
+        <li class="px-4 py-2 hover:bg-gray-50">
+          <a href="/test-cases/tests%2Fgenerators%2Fdetails-module-page.test.ts/390" class="text-sm text-gray-700 hover:text-indigo-600 block">
+            should render description when present
+          </a>
+          <span class="text-xs text-gray-400">happy-path</span>
+        </li>
+      </ul>
+    </div>
+    <div class="bg-white rounded-lg border border-gray-200">
+      <div class="px-4 py-3 border-b border-gray-100 bg-gray-50 rounded-t-lg">
+        <h3 class="text-sm font-medium text-gray-900">generateModuleDetailPage</h3>
+      </div>
+      <ul class="divide-y divide-gray-100">
+        <li class="px-4 py-2 hover:bg-gray-50">
+          <a href="/test-cases/tests%2Fgenerators%2Fdetails-module-page.test.ts/413" class="text-sm text-gray-700 hover:text-indigo-600 block">
+            should call writeFile with correct output path
+          </a>
+          <span class="text-xs text-gray-400">happy-path</span>
+        </li>
+        <li class="px-4 py-2 hover:bg-gray-50">
+          <a href="/test-cases/tests%2Fgenerators%2Fdetails-module-page.test.ts/429" class="text-sm text-gray-700 hover:text-indigo-600 block">
+            should generate HTML with module name and type badge
+          </a>
+          <span class="text-xs text-gray-400">happy-path</span>
+        </li>
+        <li class="px-4 py-2 hover:bg-gray-50">
+          <a href="/test-cases/tests%2Fgenerators%2Fdetails-module-page.test.ts/445" class="text-sm text-gray-700 hover:text-indigo-600 block">
+            should include Types tab when types are provided
+          </a>
+          <span class="text-xs text-gray-400">happy-path</span>
+        </li>
+        <li class="px-4 py-2 hover:bg-gray-50">
+          <a href="/test-cases/tests%2Fgenerators%2Fdetails-module-page.test.ts/462" class="text-sm text-gray-700 hover:text-indigo-600 block">
+            should include Utilities tab when utilities are provided
+          </a>
+          <span class="text-xs text-gray-400">happy-path</span>
+        </li>
+        <li class="px-4 py-2 hover:bg-gray-50">
+          <a href="/test-cases/tests%2Fgenerators%2Fdetails-module-page.test.ts/479" class="text-sm text-gray-700 hover:text-indigo-600 block">
+            should show empty message when items is empty
+          </a>
+          <span class="text-xs text-gray-400">validation</span>
+        </li>
+        <li class="px-4 py-2 hover:bg-gray-50">
+          <a href="/test-cases/tests%2Fgenerators%2Fdetails-module-page.test.ts/494" class="text-sm text-gray-700 hover:text-indigo-600 block">
+            should show item count in stats section
+          </a>
+          <span class="text-xs text-gray-400">happy-path</span>
+        </li>
+        <li class="px-4 py-2 hover:bg-gray-50">
+          <a href="/test-cases/tests%2Fgenerators%2Fdetails-module-page.test.ts/511" class="text-sm text-gray-700 hover:text-indigo-600 block">
+            should include module name and project name in title tag
+          </a>
+          <span class="text-xs text-gray-400">happy-path</span>
+        </li>
+      </ul>
+    </div>
+  </div>
+</div>
+
+      </main>
+
+      <!-- フッター -->
+      <footer class="border-t border-gray-200 px-6 py-3 text-xs text-gray-500 bg-white">
+        <span>Project ドキュメントポータル &copy; 2026</span>
+      </footer>
+    </div>
+  </div>
+
+  <!-- 検索モーダル -->
+  <div id="search-modal" class="fixed inset-0 z-50 hidden">
+    <div class="fixed inset-0 bg-black bg-opacity-50" onclick="closeSearch()"></div>
+    <div class="fixed top-1/4 left-1/2 -translate-x-1/2 w-full max-w-xl bg-white rounded-xl shadow-2xl overflow-hidden">
+      <div class="flex items-center border-b border-gray-200 px-4">
+        <svg class="w-5 h-5 text-gray-400 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"/>
+        </svg>
+        <input
+          id="search-input"
+          type="text"
+          placeholder="検索..."
+          class="flex-1 px-3 py-4 text-sm outline-none"
+          oninput="onSearchInput(this.value)"
+          onkeydown="onSearchKeydown(event)"
+        />
+        <button onclick="closeSearch()" class="text-gray-400 hover:text-gray-600 text-sm">ESC</button>
+      </div>
+      <div id="search-results" class="max-h-96 overflow-y-auto py-2">
+        <div class="px-4 py-8 text-center text-gray-400 text-sm">キーワードを入力してください</div>
+      </div>
+    </div>
+  </div>
+
+  <script src="/assets/portal.js"></script>
+  
+</body>
+</html>

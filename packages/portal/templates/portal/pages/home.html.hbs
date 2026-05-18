@@ -1,0 +1,210 @@
+<div class="max-w-4xl">
+  <div class="mb-8">
+    <h1 class="text-2xl font-bold text-gray-900">{{projectName}}</h1>
+    <p class="text-gray-500 mt-1">ドキュメントポータル</p>
+  </div>
+
+  <!-- 統計カード -->
+  {{#ifNotEmpty stats}}
+  <div class="grid grid-cols-2 md:grid-cols-4 gap-4 mb-8">
+    {{#each stats}}
+    <a href="{{this.href}}" class="bg-white rounded-lg border border-gray-200 p-4 hover:border-indigo-300 hover:shadow-sm transition-all">
+      <div class="text-2xl font-bold text-gray-900">{{this.value}}{{this.unit}}</div>
+      <div class="text-sm text-gray-500 mt-1">{{this.label}}</div>
+    </a>
+    {{/each}}
+  </div>
+  {{/ifNotEmpty}}
+
+  <!-- データセクション -->
+  <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+
+    {{#if available.hasFeatureMap}}
+    <div class="bg-white rounded-lg border border-gray-200 p-5">
+      <h2 class="text-base font-semibold text-gray-900 mb-3">機能マップ</h2>
+      {{#if featureMap}}
+      <dl class="grid grid-cols-2 gap-2 text-sm">
+        <div>
+          <dt class="text-gray-500">モジュール</dt>
+          <dd class="font-medium text-gray-900">{{featureMap.moduleCount}}</dd>
+        </div>
+        <div>
+          <dt class="text-gray-500">画面</dt>
+          <dd class="font-medium text-gray-900">{{featureMap.screenCount}}</dd>
+        </div>
+        <div>
+          <dt class="text-gray-500">コンポーネント</dt>
+          <dd class="font-medium text-gray-900">{{featureMap.componentCount}}</dd>
+        </div>
+        <div>
+          <dt class="text-gray-500">アクション</dt>
+          <dd class="font-medium text-gray-900">{{featureMap.actionCount}}</dd>
+        </div>
+      </dl>
+      {{/if}}
+      <a href="/feature-map" class="mt-3 text-sm text-indigo-600 hover:underline block">機能マップを見る →</a>
+    </div>
+    {{/if}}
+
+    {{#if available.hasTestCases}}
+    <div class="bg-white rounded-lg border border-gray-200 p-5">
+      <h2 class="text-base font-semibold text-gray-900 mb-3">テストケース</h2>
+      {{#if testCases}}
+      <dl class="grid grid-cols-2 gap-2 text-sm">
+        <div>
+          <dt class="text-gray-500">合計</dt>
+          <dd class="font-medium text-gray-900">{{testCases.totalTests}} 件</dd>
+        </div>
+        <div>
+          <dt class="text-gray-500">Jest</dt>
+          <dd class="font-medium text-gray-900">{{testCases.jestTests}} 件</dd>
+        </div>
+        <div>
+          <dt class="text-gray-500">Playwright</dt>
+          <dd class="font-medium text-gray-900">{{testCases.playwrightTests}} 件</dd>
+        </div>
+      </dl>
+      {{/if}}
+      <a href="/test-cases" class="mt-3 text-sm text-indigo-600 hover:underline block">テストケースを見る →</a>
+    </div>
+    {{/if}}
+
+    {{#if available.hasDbSchema}}
+    <div class="bg-white rounded-lg border border-gray-200 p-5">
+      <h2 class="text-base font-semibold text-gray-900 mb-3">DB スキーマ</h2>
+      {{#if dbSchema}}
+      <dl class="grid grid-cols-2 gap-2 text-sm">
+        <div>
+          <dt class="text-gray-500">テーブル数</dt>
+          <dd class="font-medium text-gray-900">{{dbSchema.tableCount}}</dd>
+        </div>
+        {{#if dbSchema.databaseCount}}
+        <div>
+          <dt class="text-gray-500">DB 数</dt>
+          <dd class="font-medium text-gray-900">{{dbSchema.databaseCount}}</dd>
+        </div>
+        {{/if}}
+      </dl>
+      {{/if}}
+      <a href="/db-schema" class="mt-3 text-sm text-indigo-600 hover:underline block">DB スキーマを見る →</a>
+    </div>
+    {{/if}}
+
+    {{#if coverage}}
+    <div class="bg-white rounded-lg border border-gray-200 p-5">
+      <h2 class="text-base font-semibold text-gray-900 mb-3">テストカバレッジ</h2>
+      <div class="text-3xl font-bold text-gray-900 mb-2">{{coverage.percent}}%</div>
+      <div class="w-full bg-gray-100 rounded-full h-2 mb-2">
+        <div class="bg-green-500 h-2 rounded-full" style="width: {{coverage.percent}}%"></div>
+      </div>
+      <p class="text-xs text-gray-500">{{coverage.covered}} / {{coverage.total}} ソースファイル</p>
+    </div>
+    {{/if}}
+
+    {{#if available.hasI18n}}
+    <div class="bg-white rounded-lg border border-gray-200 p-5">
+      <h2 class="text-base font-semibold text-gray-900 mb-3">i18n</h2>
+      {{#if i18n}}
+      <dl class="grid grid-cols-2 gap-2 text-sm">
+        <div>
+          <dt class="text-gray-500">名前空間</dt>
+          <dd class="font-medium text-gray-900">{{i18n.namespaceCount}}</dd>
+        </div>
+        <div>
+          <dt class="text-gray-500">キー</dt>
+          <dd class="font-medium text-gray-900">{{i18n.keyCount}}</dd>
+        </div>
+        <div>
+          <dt class="text-gray-500">翻訳率</dt>
+          <dd class="font-medium text-gray-900">{{round i18n.coveragePercent}}%</dd>
+        </div>
+        <div>
+          <dt class="text-gray-500">ロケール</dt>
+          <dd class="font-medium text-gray-900">{{length i18n.locales}}</dd>
+        </div>
+      </dl>
+      {{/if}}
+      <a href="/i18n" class="mt-3 text-sm text-indigo-600 hover:underline block">i18n を見る →</a>
+    </div>
+    {{/if}}
+
+    {{#if available.hasPackages}}
+    <div class="bg-white rounded-lg border border-gray-200 p-5">
+      <h2 class="text-base font-semibold text-gray-900 mb-3">パッケージ</h2>
+      {{#if packages}}
+      <dl class="grid grid-cols-2 gap-2 text-sm">
+        <div>
+          <dt class="text-gray-500">パッケージ数</dt>
+          <dd class="font-medium text-gray-900">{{packages.packageCount}}</dd>
+        </div>
+        <div>
+          <dt class="text-gray-500">モジュール数</dt>
+          <dd class="font-medium text-gray-900">{{packages.moduleCount}}</dd>
+        </div>
+        <div>
+          <dt class="text-gray-500">エクスポート数</dt>
+          <dd class="font-medium text-gray-900">{{packages.exportCount}}</dd>
+        </div>
+      </dl>
+      {{/if}}
+      <a href="/packages" class="mt-3 text-sm text-indigo-600 hover:underline block">パッケージを見る →</a>
+    </div>
+    {{/if}}
+
+    {{#if available.hasApiTools}}
+    <div class="bg-white rounded-lg border border-gray-200 p-5">
+      <h2 class="text-base font-semibold text-gray-900 mb-3">API ツール</h2>
+      {{#if apiTools}}
+      <dl class="grid grid-cols-2 gap-2 text-sm">
+        <div>
+          <dt class="text-gray-500">ツール数</dt>
+          <dd class="font-medium text-gray-900">{{apiTools.toolCount}}</dd>
+        </div>
+        <div>
+          <dt class="text-gray-500">カテゴリ数</dt>
+          <dd class="font-medium text-gray-900">{{apiTools.categoryCount}}</dd>
+        </div>
+      </dl>
+      {{/if}}
+      <a href="/api-tools" class="mt-3 text-sm text-indigo-600 hover:underline block">API ツールを見る →</a>
+    </div>
+    {{/if}}
+
+  </div>
+
+  <!-- アプリケーション一覧 -->
+  {{#if applications}}
+  {{#ifNotEmpty applications.apps}}
+  <div class="mt-8">
+    <h2 class="text-lg font-semibold text-gray-900 mb-4">アプリケーション</h2>
+    <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+      {{#each applications.apps}}
+      <a
+        href="/apps/{{urlEncode this.id}}"
+        class="bg-white rounded-lg border border-gray-200 p-4 hover:border-indigo-300 hover:shadow-sm transition-all"
+      >
+        <div class="font-medium text-gray-900">{{this.name}}</div>
+        {{#if this.description}}
+        <div class="text-sm text-gray-500 mt-1 line-clamp-2">{{this.description}}</div>
+        {{/if}}
+        {{#if this.stats}}
+        <div class="flex flex-wrap gap-2 mt-3">
+          {{#if this.stats.screens}}
+          <span class="text-xs bg-blue-50 text-blue-700 px-2 py-0.5 rounded">画面: {{this.stats.screens}}</span>
+          {{/if}}
+          {{#if this.stats.tests}}
+          <span class="text-xs bg-green-50 text-green-700 px-2 py-0.5 rounded">テスト: {{this.stats.tests}}</span>
+          {{/if}}
+          {{#if this.stats.tools}}
+          <span class="text-xs bg-purple-50 text-purple-700 px-2 py-0.5 rounded">ツール: {{this.stats.tools}}</span>
+          {{/if}}
+        </div>
+        {{/if}}
+      </a>
+      {{/each}}
+    </div>
+  </div>
+  {{/ifNotEmpty}}
+  {{/if}}
+
+</div>

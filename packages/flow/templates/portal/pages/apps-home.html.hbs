@@ -1,0 +1,73 @@
+<div class="max-w-4xl">
+  <div class="mb-6">
+    <h1 class="text-2xl font-bold text-gray-900">{{app.name}}</h1>
+    {{#if app.description}}
+    <p class="text-gray-500 mt-1">{{app.description}}</p>
+    {{/if}}
+    {{#if app.type}}
+    <span class="text-xs bg-gray-100 text-gray-600 px-2 py-0.5 rounded mt-2 inline-block">{{app.type}}</span>
+    {{/if}}
+  </div>
+
+  <!-- 統計 -->
+  {{#if app.stats}}
+  <div class="grid grid-cols-2 md:grid-cols-4 gap-4 mb-6">
+    {{#if app.stats.screens}}
+    <div class="bg-white rounded-lg border border-gray-200 p-3 text-center">
+      <div class="text-xl font-bold text-gray-900">{{app.stats.screens}}</div>
+      <div class="text-xs text-gray-500">画面</div>
+    </div>
+    {{/if}}
+    {{#if app.stats.components}}
+    <div class="bg-white rounded-lg border border-gray-200 p-3 text-center">
+      <div class="text-xl font-bold text-gray-900">{{app.stats.components}}</div>
+      <div class="text-xs text-gray-500">コンポーネント</div>
+    </div>
+    {{/if}}
+    {{#if app.stats.actions}}
+    <div class="bg-white rounded-lg border border-gray-200 p-3 text-center">
+      <div class="text-xl font-bold text-gray-900">{{app.stats.actions}}</div>
+      <div class="text-xs text-gray-500">アクション</div>
+    </div>
+    {{/if}}
+    {{#if app.stats.tools}}
+    <div class="bg-white rounded-lg border border-gray-200 p-3 text-center">
+      <div class="text-xl font-bold text-gray-900">{{app.stats.tools}}</div>
+      <div class="text-xs text-gray-500">ツール</div>
+    </div>
+    {{/if}}
+    {{#if app.stats.tests}}
+    <div class="bg-white rounded-lg border border-gray-200 p-3 text-center">
+      <div class="text-xl font-bold text-gray-900">{{app.stats.tests}}</div>
+      <div class="text-xs text-gray-500">テスト</div>
+    </div>
+    {{/if}}
+  </div>
+  {{/if}}
+
+  <!-- セクション一覧 -->
+  <div class="grid grid-cols-2 md:grid-cols-3 gap-4">
+    {{#each sections}}
+    {{#if this.available}}
+    <a
+      href="/apps/{{../appId}}/{{this.type}}"
+      class="bg-white rounded-lg border border-gray-200 p-4 hover:border-indigo-300 hover:shadow-sm transition-all"
+    >
+      <div class="font-medium text-gray-900">{{this.label}}</div>
+      {{#ifExists this.count}}
+      <div class="text-sm text-gray-500 mt-1">{{this.count}} 件</div>
+      {{/ifExists}}
+    </a>
+    {{/if}}
+    {{/each}}
+
+    {{#if available.hasFeatureMap}}
+    <a
+      href="/apps/{{appId}}/feature-map"
+      class="bg-white rounded-lg border border-gray-200 p-4 hover:border-indigo-300 hover:shadow-sm transition-all"
+    >
+      <div class="font-medium text-gray-900">機能マップ</div>
+    </a>
+    {{/if}}
+  </div>
+</div>

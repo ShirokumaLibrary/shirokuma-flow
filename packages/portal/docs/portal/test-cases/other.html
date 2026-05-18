@@ -1,0 +1,911 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Other - テストケース - Project</title>
+  <style>
+
+:root {
+  --bg-color: #0a0a0a;
+  --card-bg: #141414;
+  --border-color: #262626;
+  --text-primary: #fafafa;
+  --text-secondary: #a1a1aa;
+  --accent-blue: #3b82f6;
+  --accent-green: #22c55e;
+  --accent-purple: #a855f7;
+  --accent-orange: #f97316;
+  --accent-pink: #ec4899;
+  --code-bg: #1e1e1e;
+  --sidebar-width: 280px;
+}
+
+
+* {
+  margin: 0;
+  padding: 0;
+  box-sizing: border-box;
+}
+
+body {
+  font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;
+  background: var(--bg-color);
+  color: var(--text-primary);
+  min-height: 100vh;
+  line-height: 1.6;
+}
+
+a {
+  color: var(--accent-blue);
+  text-decoration: none;
+}
+
+a:hover {
+  text-decoration: underline;
+}
+
+
+.container {
+  max-width: 1200px;
+  margin: 0 auto;
+  padding: 2rem;
+}
+
+.grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(350px, 1fr));
+  gap: 1.5rem;
+  margin-bottom: 3rem;
+}
+
+
+.card {
+  background: var(--card-bg);
+  border: 1px solid var(--border-color);
+  border-radius: 12px;
+  padding: 1.5rem;
+  transition: border-color 0.2s, transform 0.2s;
+}
+
+.card:hover {
+  border-color: var(--text-secondary);
+  transform: translateY(-2px);
+}
+
+.card-header {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  margin-bottom: 1rem;
+}
+
+.card-icon {
+  width: 40px;
+  height: 40px;
+  border-radius: 8px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 1.25rem;
+}
+
+.icon-blue { background: rgba(59, 130, 246, 0.2); color: var(--accent-blue); }
+.icon-green { background: rgba(34, 197, 94, 0.2); color: var(--accent-green); }
+.icon-purple { background: rgba(168, 85, 247, 0.2); color: var(--accent-purple); }
+.icon-orange { background: rgba(249, 115, 22, 0.2); color: var(--accent-orange); }
+.icon-pink { background: rgba(236, 72, 153, 0.2); color: var(--accent-pink); }
+
+.card h2 {
+  font-size: 1.25rem;
+  font-weight: 600;
+}
+
+.card p {
+  color: var(--text-secondary);
+  font-size: 0.9rem;
+  line-height: 1.6;
+  margin-bottom: 1rem;
+}
+
+
+.links {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.5rem;
+}
+
+.link {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.25rem;
+  padding: 0.5rem 0.75rem;
+  background: var(--bg-color);
+  border: 1px solid var(--border-color);
+  border-radius: 6px;
+  color: var(--text-primary);
+  text-decoration: none;
+  font-size: 0.85rem;
+  transition: background 0.2s, border-color 0.2s;
+}
+
+.link:hover {
+  background: var(--border-color);
+  border-color: var(--text-secondary);
+  text-decoration: none;
+}
+
+.link svg {
+  width: 14px;
+  height: 14px;
+}
+
+
+header:not(.global-header):not(.hero) {
+  text-align: center;
+  margin-bottom: 3rem;
+  padding-bottom: 2rem;
+  border-bottom: 1px solid var(--border-color);
+}
+
+header:not(.global-header):not(.hero) h1 {
+  font-size: 2.5rem;
+  font-weight: 700;
+  margin-bottom: 0.5rem;
+}
+
+header:not(.global-header):not(.hero) .subtitle {
+  color: var(--text-secondary);
+  font-size: 1.1rem;
+}
+
+
+footer {
+  text-align: center;
+  margin-top: 3rem;
+  padding-top: 2rem;
+  border-top: 1px solid var(--border-color);
+  color: var(--text-secondary);
+  font-size: 0.9rem;
+}
+
+
+.section-title {
+  font-size: 1.1rem;
+  font-weight: 600;
+  margin-bottom: 1rem;
+  color: var(--text-secondary);
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+}
+
+
+.page-header {
+  margin-bottom: 2rem;
+  text-align: center;
+}
+
+.page-title {
+  font-size: 2rem;
+  font-weight: 800;
+  margin-bottom: 0.5rem;
+}
+
+.page-description {
+  font-size: 1rem;
+  color: var(--text-secondary);
+  max-width: 600px;
+  margin: 0 auto;
+}
+
+.page-meta {
+  font-size: 0.875rem;
+  color: var(--text-secondary);
+  margin-top: 0.5rem;
+}
+
+.page-badge {
+  display: inline-block;
+  padding: 0.25rem 0.75rem;
+  border-radius: 9999px;
+  font-size: 0.75rem;
+  font-weight: 600;
+  margin-left: 0.5rem;
+  vertical-align: middle;
+}
+
+.page-badge.badge-action { background: rgba(59, 130, 246, 0.2); color: var(--accent-blue); }
+.page-badge.badge-screen { background: rgba(34, 197, 94, 0.2); color: var(--accent-green); }
+.page-badge.badge-component { background: rgba(168, 85, 247, 0.2); color: var(--accent-purple); }
+.page-badge.badge-table { background: rgba(249, 115, 22, 0.2); color: var(--accent-orange); }
+
+.page-module-prefix {
+  color: var(--text-secondary);
+  font-weight: 400;
+}
+
+
+    .container {
+      max-width: 900px;
+      margin: 0 auto;
+      padding: 2rem;
+    }
+
+    .header {
+      background: var(--card-bg);
+      border-bottom: 1px solid var(--border-color);
+      padding: 1rem 2rem;
+    }
+
+    .back-link {
+      display: inline-flex;
+      align-items: center;
+      gap: 0.5rem;
+      color: var(--text-secondary);
+      text-decoration: none;
+      padding: 0.5rem 1rem;
+      border-radius: 6px;
+      transition: background 0.2s;
+    }
+
+    .back-link:hover {
+      background: var(--border-color);
+      color: var(--text-primary);
+      text-decoration: none;
+    }
+
+    .breadcrumb {
+      display: flex;
+      align-items: center;
+      gap: 0.5rem;
+      font-size: 0.9rem;
+      margin-bottom: 1.5rem;
+    }
+
+    .breadcrumb a {
+      color: var(--accent-blue);
+      text-decoration: none;
+    }
+
+    .breadcrumb a:hover {
+      text-decoration: underline;
+    }
+
+    .breadcrumb .separator {
+      color: var(--text-secondary);
+    }
+
+    .breadcrumb .current {
+      color: var(--text-primary);
+    }
+
+    .page-header {
+      margin-bottom: 2rem;
+    }
+
+    .page-header h1 {
+      font-size: 2rem;
+      font-weight: 700;
+      margin-bottom: 0.5rem;
+    }
+
+    .page-stats {
+      color: var(--text-secondary);
+    }
+
+    .file-list {
+      display: flex;
+      flex-direction: column;
+      gap: 1rem;
+    }
+
+    .file-card {
+      display: block;
+      background: var(--card-bg);
+      border: 1px solid var(--border-color);
+      border-radius: 8px;
+      padding: 1rem 1.25rem;
+      text-decoration: none;
+      transition: all 0.2s;
+    }
+
+    .file-card:hover {
+      border-color: var(--accent-blue);
+      text-decoration: none;
+    }
+
+    .file-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 0.5rem;
+    }
+
+    .file-name {
+      font-weight: 600;
+      color: var(--text-primary);
+      font-family: monospace;
+    }
+
+    .test-count {
+      font-size: 0.8rem;
+      color: var(--text-secondary);
+    }
+
+    .file-desc {
+      font-size: 0.9rem;
+      color: var(--text-secondary);
+      margin-bottom: 0.75rem;
+    }
+
+    .file-meta {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      gap: 1rem;
+    }
+
+    .module-link {
+      font-size: 0.8rem;
+      color: var(--accent-blue);
+      text-decoration: none;
+    }
+
+    .module-link:hover {
+      text-decoration: underline;
+    }
+
+    .category-badges {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 0.375rem;
+    }
+
+    .test-category-badge {
+      display: inline-flex;
+      align-items: center;
+      gap: 0.25rem;
+      padding: 0.125rem 0.5rem;
+      border-radius: 4px;
+      font-size: 0.75rem;
+      font-weight: 500;
+    }
+  
+  </style>
+<link rel="stylesheet" href="../global-nav.css">
+</head>
+<body>
+
+    <div class="header">
+      <a href="../test-cases.html" class="back-link">
+        <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M19 12H5M12 19l-7-7 7-7"/></svg>
+        カテゴリ一覧に戻る
+      </a>
+    </div>
+    <div class="container">
+      <nav class="breadcrumb">
+        <a href="../test-cases.html">テストケース</a>
+        <span class="separator">/</span>
+        <span class="current">Other</span>
+      </nav>
+
+      <div class="page-header">
+        <h1>📄 Other</h1>
+        <p class="page-stats">39 ファイル / 737 テスト</p>
+      </div>
+
+      <div class="file-list">
+        
+        <a href="other/cli.html" class="file-card">
+          <div class="file-header">
+            <span class="file-name">cli.test.ts</span>
+            <span class="test-count">3 tests</span>
+          </div>
+          <p class="file-desc">cli のテスト</p>
+          <div class="file-meta">
+            
+            <div class="category-badges"><span class="test-category-badge" style="background: #22c55e20; color: #22c55e" title="正常系">✅ 2</span><span class="test-category-badge" style="background: #6b728020; color: #6b7280" title="その他">📝 1</span></div>
+          </div>
+        </a>
+      
+
+        <a href="other/test-categorization.html" class="file-card">
+          <div class="file-header">
+            <span class="file-name">test-categorization.test.ts</span>
+            <span class="test-count">21 tests</span>
+          </div>
+          <p class="file-desc">test-categorization のテスト</p>
+          <div class="file-meta">
+            
+            <div class="category-badges"><span class="test-category-badge" style="background: #22c55e20; color: #22c55e" title="正常系">✅ 13</span><span class="test-category-badge" style="background: #f59e0b20; color: #f59e0b" title="認証">🔐 2</span><span class="test-category-badge" style="background: #ef444420; color: #ef4444" title="エラー処理">❌ 2</span><span class="test-category-badge" style="background: #3b82f620; color: #3b82f6" title="バリデーション">📋 3</span><span class="test-category-badge" style="background: #8b5cf620; color: #8b5cf6" title="境界値">🔍 1</span></div>
+          </div>
+        </a>
+      
+
+        <a href="other/test-annotations.html" class="file-card">
+          <div class="file-header">
+            <span class="file-name">test-annotations.test.ts</span>
+            <span class="test-count">43 tests</span>
+          </div>
+          <p class="file-desc">test-annotations のテスト</p>
+          <div class="file-meta">
+            
+            <div class="category-badges"><span class="test-category-badge" style="background: #22c55e20; color: #22c55e" title="正常系">✅ 33</span><span class="test-category-badge" style="background: #f59e0b20; color: #f59e0b" title="認証">🔐 1</span><span class="test-category-badge" style="background: #ef444420; color: #ef4444" title="エラー処理">❌ 1</span><span class="test-category-badge" style="background: #3b82f620; color: #3b82f6" title="バリデーション">📋 2</span><span class="test-category-badge" style="background: #8b5cf620; color: #8b5cf6" title="境界値">🔍 1</span><span class="test-category-badge" style="background: #6b728020; color: #6b7280" title="その他">📝 5</span></div>
+          </div>
+        </a>
+      
+
+        <a href="other/screenshot-annotations.html" class="file-card">
+          <div class="file-header">
+            <span class="file-name">screenshot-annotations.test.ts</span>
+            <span class="test-count">15 tests</span>
+          </div>
+          <p class="file-desc">screenshot-annotations のテスト</p>
+          <div class="file-meta">
+            
+            <div class="category-badges"><span class="test-category-badge" style="background: #22c55e20; color: #22c55e" title="正常系">✅ 10</span><span class="test-category-badge" style="background: #f59e0b20; color: #f59e0b" title="認証">🔐 1</span><span class="test-category-badge" style="background: #3b82f620; color: #3b82f6" title="バリデーション">📋 4</span></div>
+          </div>
+        </a>
+      
+
+        <a href="other/feature-map-utils.html" class="file-card">
+          <div class="file-header">
+            <span class="file-name">feature-map-utils.test.ts</span>
+            <span class="test-count">25 tests</span>
+          </div>
+          <p class="file-desc">feature-map-utils のテスト</p>
+          <div class="file-meta">
+            
+            <div class="category-badges"><span class="test-category-badge" style="background: #22c55e20; color: #22c55e" title="正常系">✅ 21</span><span class="test-category-badge" style="background: #3b82f620; color: #3b82f6" title="バリデーション">📋 4</span></div>
+          </div>
+        </a>
+      
+
+        <a href="other/feature-map-type-extraction.html" class="file-card">
+          <div class="file-header">
+            <span class="file-name">feature-map-type-extraction.test.ts</span>
+            <span class="test-count">39 tests</span>
+          </div>
+          <p class="file-desc">feature-map-type-extraction のテスト</p>
+          <div class="file-meta">
+            
+            <div class="category-badges"><span class="test-category-badge" style="background: #22c55e20; color: #22c55e" title="正常系">✅ 36</span><span class="test-category-badge" style="background: #3b82f620; color: #3b82f6" title="バリデーション">📋 3</span></div>
+          </div>
+        </a>
+      
+
+        <a href="other/feature-map-tags.html" class="file-card">
+          <div class="file-header">
+            <span class="file-name">feature-map-tags.test.ts</span>
+            <span class="test-count">30 tests</span>
+          </div>
+          <p class="file-desc">feature-map-tags のテスト</p>
+          <div class="file-meta">
+            
+            <div class="category-badges"><span class="test-category-badge" style="background: #22c55e20; color: #22c55e" title="正常系">✅ 28</span><span class="test-category-badge" style="background: #3b82f620; color: #3b82f6" title="バリデーション">📋 2</span></div>
+          </div>
+        </a>
+      
+
+        <a href="other/drizzle-schema.html" class="file-card">
+          <div class="file-header">
+            <span class="file-name">drizzle-schema.test.ts</span>
+            <span class="test-count">19 tests</span>
+          </div>
+          <p class="file-desc">drizzle-schema のテスト</p>
+          <div class="file-meta">
+            
+            <div class="category-badges"><span class="test-category-badge" style="background: #22c55e20; color: #22c55e" title="正常系">✅ 17</span><span class="test-category-badge" style="background: #3b82f620; color: #3b82f6" title="バリデーション">📋 2</span></div>
+          </div>
+        </a>
+      
+
+        <a href="other/details-zod.html" class="file-card">
+          <div class="file-header">
+            <span class="file-name">details-zod.test.ts</span>
+            <span class="test-count">13 tests</span>
+          </div>
+          <p class="file-desc">details-zod のテスト</p>
+          <div class="file-meta">
+            
+            <div class="category-badges"><span class="test-category-badge" style="background: #22c55e20; color: #22c55e" title="正常系">✅ 8</span><span class="test-category-badge" style="background: #3b82f620; color: #3b82f6" title="バリデーション">📋 3</span><span class="test-category-badge" style="background: #8b5cf620; color: #8b5cf6" title="境界値">🔍 2</span></div>
+          </div>
+        </a>
+      
+
+        <a href="other/details-jsdoc.html" class="file-card">
+          <div class="file-header">
+            <span class="file-name">details-jsdoc.test.ts</span>
+            <span class="test-count">27 tests</span>
+          </div>
+          <p class="file-desc">details-jsdoc のテスト</p>
+          <div class="file-meta">
+            
+            <div class="category-badges"><span class="test-category-badge" style="background: #22c55e20; color: #22c55e" title="正常系">✅ 21</span><span class="test-category-badge" style="background: #ef444420; color: #ef4444" title="エラー処理">❌ 3</span><span class="test-category-badge" style="background: #3b82f620; color: #3b82f6" title="バリデーション">📋 2</span><span class="test-category-badge" style="background: #8b5cf620; color: #8b5cf6" title="境界値">🔍 1</span></div>
+          </div>
+        </a>
+      
+
+        <a href="other/test-cases-styles.html" class="file-card">
+          <div class="file-header">
+            <span class="file-name">test-cases-styles.test.ts</span>
+            <span class="test-count">41 tests</span>
+          </div>
+          <p class="file-desc">test-cases-styles のテスト</p>
+          <div class="file-meta">
+            
+            <div class="category-badges"><span class="test-category-badge" style="background: #22c55e20; color: #22c55e" title="正常系">✅ 38</span><span class="test-category-badge" style="background: #ef444420; color: #ef4444" title="エラー処理">❌ 1</span><span class="test-category-badge" style="background: #3b82f620; color: #3b82f6" title="バリデーション">📋 2</span></div>
+          </div>
+        </a>
+      
+
+        <a href="other/test-cases-main.html" class="file-card">
+          <div class="file-header">
+            <span class="file-name">test-cases-main.test.ts</span>
+            <span class="test-count">17 tests</span>
+          </div>
+          <p class="file-desc">test-cases-main のテスト</p>
+          <div class="file-meta">
+            
+            <div class="category-badges"><span class="test-category-badge" style="background: #22c55e20; color: #22c55e" title="正常系">✅ 16</span><span class="test-category-badge" style="background: #3b82f620; color: #3b82f6" title="バリデーション">📋 1</span></div>
+          </div>
+        </a>
+      
+
+        <a href="other/test-cases-hierarchy.html" class="file-card">
+          <div class="file-header">
+            <span class="file-name">test-cases-hierarchy.test.ts</span>
+            <span class="test-count">14 tests</span>
+          </div>
+          <p class="file-desc">test-cases-hierarchy のテスト</p>
+          <div class="file-meta">
+            
+            <div class="category-badges"><span class="test-category-badge" style="background: #22c55e20; color: #22c55e" title="正常系">✅ 12</span><span class="test-category-badge" style="background: #3b82f620; color: #3b82f6" title="バリデーション">📋 2</span></div>
+          </div>
+        </a>
+      
+
+        <a href="other/portal-generator.html" class="file-card">
+          <div class="file-header">
+            <span class="file-name">portal-generator.test.ts</span>
+            <span class="test-count">16 tests</span>
+          </div>
+          <p class="file-desc">portal-generator のテスト</p>
+          <div class="file-meta">
+            
+            <div class="category-badges"><span class="test-category-badge" style="background: #22c55e20; color: #22c55e" title="正常系">✅ 14</span><span class="test-category-badge" style="background: #ef444420; color: #ef4444" title="エラー処理">❌ 1</span><span class="test-category-badge" style="background: #8b5cf620; color: #8b5cf6" title="境界値">🔍 1</span></div>
+          </div>
+        </a>
+      
+
+        <a href="other/helpers.html" class="file-card">
+          <div class="file-header">
+            <span class="file-name">helpers.test.ts</span>
+            <span class="test-count">56 tests</span>
+          </div>
+          <p class="file-desc">helpers のテスト</p>
+          <div class="file-meta">
+            
+            <div class="category-badges"><span class="test-category-badge" style="background: #22c55e20; color: #22c55e" title="正常系">✅ 44</span><span class="test-category-badge" style="background: #3b82f620; color: #3b82f6" title="バリデーション">📋 11</span><span class="test-category-badge" style="background: #8b5cf620; color: #8b5cf6" title="境界値">🔍 1</span></div>
+          </div>
+        </a>
+      
+
+        <a href="other/feature-map-styles.html" class="file-card">
+          <div class="file-header">
+            <span class="file-name">feature-map-styles.test.ts</span>
+            <span class="test-count">23 tests</span>
+          </div>
+          <p class="file-desc">feature-map-styles のテスト</p>
+          <div class="file-meta">
+            
+            <div class="category-badges"><span class="test-category-badge" style="background: #22c55e20; color: #22c55e" title="正常系">✅ 21</span><span class="test-category-badge" style="background: #3b82f620; color: #3b82f6" title="バリデーション">📋 2</span></div>
+          </div>
+        </a>
+      
+
+        <a href="other/feature-map-html.html" class="file-card">
+          <div class="file-header">
+            <span class="file-name">feature-map-html.test.ts</span>
+            <span class="test-count">34 tests</span>
+          </div>
+          <p class="file-desc">feature-map-html のテスト</p>
+          <div class="file-meta">
+            
+            <div class="category-badges"><span class="test-category-badge" style="background: #22c55e20; color: #22c55e" title="正常系">✅ 30</span><span class="test-category-badge" style="background: #3b82f620; color: #3b82f6" title="バリデーション">📋 4</span></div>
+          </div>
+        </a>
+      
+
+        <a href="other/details-styles.html" class="file-card">
+          <div class="file-header">
+            <span class="file-name">details-styles.test.ts</span>
+            <span class="test-count">34 tests</span>
+          </div>
+          <p class="file-desc">details-styles のテスト</p>
+          <div class="file-meta">
+            
+            <div class="category-badges"><span class="test-category-badge" style="background: #22c55e20; color: #22c55e" title="正常系">✅ 34</span></div>
+          </div>
+        </a>
+      
+
+        <a href="other/details-module-page.html" class="file-card">
+          <div class="file-header">
+            <span class="file-name">details-module-page.test.ts</span>
+            <span class="test-count">29 tests</span>
+          </div>
+          <p class="file-desc">details-module-page のテスト</p>
+          <div class="file-meta">
+            
+            <div class="category-badges"><span class="test-category-badge" style="background: #22c55e20; color: #22c55e" title="正常系">✅ 23</span><span class="test-category-badge" style="background: #3b82f620; color: #3b82f6" title="バリデーション">📋 6</span></div>
+          </div>
+        </a>
+      
+
+        <a href="other/details-html.html" class="file-card">
+          <div class="file-header">
+            <span class="file-name">details-html.test.ts</span>
+            <span class="test-count">24 tests</span>
+          </div>
+          <p class="file-desc">details-html のテスト</p>
+          <div class="file-meta">
+            
+            <div class="category-badges"><span class="test-category-badge" style="background: #22c55e20; color: #22c55e" title="正常系">✅ 20</span><span class="test-category-badge" style="background: #ef444420; color: #ef4444" title="エラー処理">❌ 1</span><span class="test-category-badge" style="background: #3b82f620; color: #3b82f6" title="バリデーション">📋 3</span></div>
+          </div>
+        </a>
+      
+
+        <a href="other/details-entity-pages.html" class="file-card">
+          <div class="file-header">
+            <span class="file-name">details-entity-pages.test.ts</span>
+            <span class="test-count">19 tests</span>
+          </div>
+          <p class="file-desc">details-entity-pages のテスト</p>
+          <div class="file-meta">
+            
+            <div class="category-badges"><span class="test-category-badge" style="background: #22c55e20; color: #22c55e" title="正常系">✅ 16</span><span class="test-category-badge" style="background: #f59e0b20; color: #f59e0b" title="認証">🔐 2</span><span class="test-category-badge" style="background: #ef444420; color: #ef4444" title="エラー処理">❌ 1</span></div>
+          </div>
+        </a>
+      
+
+        <a href="other/data-processor.html" class="file-card">
+          <div class="file-header">
+            <span class="file-name">data-processor.test.ts</span>
+            <span class="test-count">18 tests</span>
+          </div>
+          <p class="file-desc">data-processor のテスト</p>
+          <div class="file-meta">
+            
+            <div class="category-badges"><span class="test-category-badge" style="background: #22c55e20; color: #22c55e" title="正常系">✅ 16</span><span class="test-category-badge" style="background: #ef444420; color: #ef4444" title="エラー処理">❌ 1</span><span class="test-category-badge" style="background: #3b82f620; color: #3b82f6" title="バリデーション">📋 1</span></div>
+          </div>
+        </a>
+      
+
+        <a href="other/feature-map-references.html" class="file-card">
+          <div class="file-header">
+            <span class="file-name">feature-map-references.test.ts</span>
+            <span class="test-count">16 tests</span>
+          </div>
+          <p class="file-desc">feature-map-references のテスト</p>
+          <div class="file-meta">
+            
+            <div class="category-badges"><span class="test-category-badge" style="background: #22c55e20; color: #22c55e" title="正常系">✅ 12</span><span class="test-category-badge" style="background: #ef444420; color: #ef4444" title="エラー処理">❌ 2</span><span class="test-category-badge" style="background: #3b82f620; color: #3b82f6" title="バリデーション">📋 2</span></div>
+          </div>
+        </a>
+      
+
+        <a href="other/details-test-analysis.html" class="file-card">
+          <div class="file-header">
+            <span class="file-name">details-test-analysis.test.ts</span>
+            <span class="test-count">24 tests</span>
+          </div>
+          <p class="file-desc">details-test-analysis のテスト</p>
+          <div class="file-meta">
+            
+            <div class="category-badges"><span class="test-category-badge" style="background: #22c55e20; color: #22c55e" title="正常系">✅ 13</span><span class="test-category-badge" style="background: #f59e0b20; color: #f59e0b" title="認証">🔐 4</span><span class="test-category-badge" style="background: #ef444420; color: #ef4444" title="エラー処理">❌ 1</span><span class="test-category-badge" style="background: #3b82f620; color: #3b82f6" title="バリデーション">📋 4</span><span class="test-category-badge" style="background: #8b5cf620; color: #8b5cf6" title="境界値">🔍 2</span></div>
+          </div>
+        </a>
+      
+
+        <a href="other/typedoc.html" class="file-card">
+          <div class="file-header">
+            <span class="file-name">typedoc.test.ts</span>
+            <span class="test-count">6 tests</span>
+          </div>
+          <p class="file-desc">typedoc のテスト</p>
+          <div class="file-meta">
+            
+            <div class="category-badges"><span class="test-category-badge" style="background: #22c55e20; color: #22c55e" title="正常系">✅ 4</span><span class="test-category-badge" style="background: #ef444420; color: #ef4444" title="エラー処理">❌ 1</span><span class="test-category-badge" style="background: #3b82f620; color: #3b82f6" title="バリデーション">📋 1</span></div>
+          </div>
+        </a>
+      
+
+        <a href="other/search-index.html" class="file-card">
+          <div class="file-header">
+            <span class="file-name">search-index.test.ts</span>
+            <span class="test-count">16 tests</span>
+          </div>
+          <p class="file-desc">search-index のテスト</p>
+          <div class="file-meta">
+            
+            <div class="category-badges"><span class="test-category-badge" style="background: #22c55e20; color: #22c55e" title="正常系">✅ 14</span><span class="test-category-badge" style="background: #3b82f620; color: #3b82f6" title="バリデーション">📋 2</span></div>
+          </div>
+        </a>
+      
+
+        <a href="other/screenshots.html" class="file-card">
+          <div class="file-header">
+            <span class="file-name">screenshots.test.ts</span>
+            <span class="test-count">4 tests</span>
+          </div>
+          <p class="file-desc">screenshots のテスト</p>
+          <div class="file-meta">
+            
+            <div class="category-badges"><span class="test-category-badge" style="background: #22c55e20; color: #22c55e" title="正常系">✅ 4</span></div>
+          </div>
+        </a>
+      
+
+        <a href="other/portal.html" class="file-card">
+          <div class="file-header">
+            <span class="file-name">portal.test.ts</span>
+            <span class="test-count">6 tests</span>
+          </div>
+          <p class="file-desc">portal のテスト</p>
+          <div class="file-meta">
+            
+            <div class="category-badges"><span class="test-category-badge" style="background: #22c55e20; color: #22c55e" title="正常系">✅ 4</span><span class="test-category-badge" style="background: #ef444420; color: #ef4444" title="エラー処理">❌ 2</span></div>
+          </div>
+        </a>
+      
+
+        <a href="other/packages.html" class="file-card">
+          <div class="file-header">
+            <span class="file-name">packages.test.ts</span>
+            <span class="test-count">8 tests</span>
+          </div>
+          <p class="file-desc">packages のテスト</p>
+          <div class="file-meta">
+            
+            <div class="category-badges"><span class="test-category-badge" style="background: #22c55e20; color: #22c55e" title="正常系">✅ 7</span><span class="test-category-badge" style="background: #3b82f620; color: #3b82f6" title="バリデーション">📋 1</span></div>
+          </div>
+        </a>
+      
+
+        <a href="other/overview.html" class="file-card">
+          <div class="file-header">
+            <span class="file-name">overview.test.ts</span>
+            <span class="test-count">4 tests</span>
+          </div>
+          <p class="file-desc">overview のテスト</p>
+          <div class="file-meta">
+            
+            <div class="category-badges"><span class="test-category-badge" style="background: #22c55e20; color: #22c55e" title="正常系">✅ 3</span><span class="test-category-badge" style="background: #ef444420; color: #ef4444" title="エラー処理">❌ 1</span></div>
+          </div>
+        </a>
+      
+
+        <a href="other/link-docs.html" class="file-card">
+          <div class="file-header">
+            <span class="file-name">link-docs.test.ts</span>
+            <span class="test-count">4 tests</span>
+          </div>
+          <p class="file-desc">link-docs のテスト</p>
+          <div class="file-meta">
+            
+            <div class="category-badges"><span class="test-category-badge" style="background: #22c55e20; color: #22c55e" title="正常系">✅ 3</span><span class="test-category-badge" style="background: #3b82f620; color: #3b82f6" title="バリデーション">📋 1</span></div>
+          </div>
+        </a>
+      
+
+        <a href="other/impact.html" class="file-card">
+          <div class="file-header">
+            <span class="file-name">impact.test.ts</span>
+            <span class="test-count">7 tests</span>
+          </div>
+          <p class="file-desc">impact のテスト</p>
+          <div class="file-meta">
+            
+            <div class="category-badges"><span class="test-category-badge" style="background: #22c55e20; color: #22c55e" title="正常系">✅ 6</span><span class="test-category-badge" style="background: #3b82f620; color: #3b82f6" title="バリデーション">📋 1</span></div>
+          </div>
+        </a>
+      
+
+        <a href="other/i18n.html" class="file-card">
+          <div class="file-header">
+            <span class="file-name">i18n.test.ts</span>
+            <span class="test-count">4 tests</span>
+          </div>
+          <p class="file-desc">i18n のテスト</p>
+          <div class="file-meta">
+            
+            <div class="category-badges"><span class="test-category-badge" style="background: #22c55e20; color: #22c55e" title="正常系">✅ 4</span></div>
+          </div>
+        </a>
+      
+
+        <a href="other/feature-map.html" class="file-card">
+          <div class="file-header">
+            <span class="file-name">feature-map.test.ts</span>
+            <span class="test-count">23 tests</span>
+          </div>
+          <p class="file-desc">feature-map のテスト</p>
+          <div class="file-meta">
+            
+            <div class="category-badges"><span class="test-category-badge" style="background: #22c55e20; color: #22c55e" title="正常系">✅ 20</span><span class="test-category-badge" style="background: #3b82f620; color: #3b82f6" title="バリデーション">📋 3</span></div>
+          </div>
+        </a>
+      
+
+        <a href="other/details.html" class="file-card">
+          <div class="file-header">
+            <span class="file-name">details.test.ts</span>
+            <span class="test-count">3 tests</span>
+          </div>
+          <p class="file-desc">details のテスト</p>
+          <div class="file-meta">
+            
+            <div class="category-badges"><span class="test-category-badge" style="background: #22c55e20; color: #22c55e" title="正常系">✅ 2</span><span class="test-category-badge" style="background: #3b82f620; color: #3b82f6" title="バリデーション">📋 1</span></div>
+          </div>
+        </a>
+      
+
+        <a href="other/details-context.html" class="file-card">
+          <div class="file-header">
+            <span class="file-name">details-context.test.ts</span>
+            <span class="test-count">24 tests</span>
+          </div>
+          <p class="file-desc">details-context のテスト</p>
+          <div class="file-meta">
+            
+            <div class="category-badges"><span class="test-category-badge" style="background: #22c55e20; color: #22c55e" title="正常系">✅ 21</span><span class="test-category-badge" style="background: #3b82f620; color: #3b82f6" title="バリデーション">📋 2</span><span class="test-category-badge" style="background: #8b5cf620; color: #8b5cf6" title="境界値">🔍 1</span></div>
+          </div>
+        </a>
+      
+
+        <a href="other/deps.html" class="file-card">
+          <div class="file-header">
+            <span class="file-name">deps.test.ts</span>
+            <span class="test-count">4 tests</span>
+          </div>
+          <p class="file-desc">deps のテスト</p>
+          <div class="file-meta">
+            
+            <div class="category-badges"><span class="test-category-badge" style="background: #22c55e20; color: #22c55e" title="正常系">✅ 3</span><span class="test-category-badge" style="background: #ef444420; color: #ef4444" title="エラー処理">❌ 1</span></div>
+          </div>
+        </a>
+      
+
+        <a href="other/coverage.html" class="file-card">
+          <div class="file-header">
+            <span class="file-name">coverage.test.ts</span>
+            <span class="test-count">19 tests</span>
+          </div>
+          <p class="file-desc">coverage のテスト</p>
+          <div class="file-meta">
+            
+            <div class="category-badges"><span class="test-category-badge" style="background: #22c55e20; color: #22c55e" title="正常系">✅ 13</span><span class="test-category-badge" style="background: #ef444420; color: #ef4444" title="エラー処理">❌ 2</span><span class="test-category-badge" style="background: #3b82f620; color: #3b82f6" title="バリデーション">📋 4</span></div>
+          </div>
+        </a>
+      
+
+        <a href="other/bdd-annotations.html" class="file-card">
+          <div class="file-header">
+            <span class="file-name">bdd-annotations.test.ts</span>
+            <span class="test-count">5 tests</span>
+          </div>
+          <p class="file-desc">bdd-annotations のテスト</p>
+          <div class="file-meta">
+            
+            <div class="category-badges"><span class="test-category-badge" style="background: #22c55e20; color: #22c55e" title="正常系">✅ 5</span></div>
+          </div>
+        </a>
+      
+      </div>
+    </div>
+  
+
+<script src="../global-nav.js"></script>
+</body>
+</html>

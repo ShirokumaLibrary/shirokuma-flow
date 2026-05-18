@@ -1,0 +1,387 @@
+<!DOCTYPE html>
+<html lang="ja" class="h-full">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>テスト: feature-map-tags.test.ts | Project</title>
+  <script src="https://cdn.tailwindcss.com/3.4.19"></script>
+  <script>
+    tailwind.config = {
+      darkMode: 'class',
+      theme: {
+        extend: {
+          colors: {
+            accent: '#6366f1',
+          }
+        }
+      }
+    }
+  </script>
+  <link rel="stylesheet" href="/assets/portal.css" />
+</head>
+<body class="h-full bg-gray-50 text-gray-900 ">
+
+  <!-- モバイルオーバーレイ -->
+  <div id="sidebar-overlay" class="fixed inset-0 bg-black bg-opacity-50 z-20 hidden lg:hidden" onclick="toggleSidebar()"></div>
+
+  <div class="flex h-full">
+    <!-- サイドバー -->
+    <aside id="sidebar" class="fixed inset-y-0 left-0 w-64 bg-white border-r border-gray-200 z-30 transform -translate-x-full lg:translate-x-0 lg:static lg:inset-0 transition-transform duration-200">
+      <div class="flex items-center h-16 px-4 border-b border-gray-200">
+        <a href="/" class="flex items-center gap-2 font-bold text-gray-900 truncate">
+          <span class="text-indigo-600">&#9632;</span>
+          <span class="truncate">Project</span>
+        </a>
+      </div>
+      <nav class="overflow-y-auto h-[calc(100%-4rem)] py-4">
+        <div class="px-3 mb-4">
+          <div class="text-xs font-semibold text-gray-400 uppercase tracking-wider mb-1 px-3">メイン</div>
+          <ul class="space-y-0.5">
+            <li>
+              <a
+                href="/"
+                class="flex items-center justify-between gap-2 px-3 py-1.5 text-sm rounded-md transition-colors
+                  false"
+              >
+                <span class="truncate">ダッシュボード</span>
+              </a>
+            </li>
+          </ul>
+        </div>
+        <div class="px-3 mb-4">
+          <div class="text-xs font-semibold text-gray-400 uppercase tracking-wider mb-1 px-3">プロジェクト</div>
+          <ul class="space-y-0.5">
+            <li>
+              <a
+                href="/overview"
+                class="flex items-center justify-between gap-2 px-3 py-1.5 text-sm rounded-md transition-colors
+                  false"
+              >
+                <span class="truncate">概要</span>
+              </a>
+            </li>
+            <li>
+              <a
+                href="/test-cases"
+                class="flex items-center justify-between gap-2 px-3 py-1.5 text-sm rounded-md transition-colors
+                  false"
+              >
+                <span class="truncate">テストケース</span>
+                <span class="text-xs text-gray-400 flex-shrink-0">737</span>
+              </a>
+            </li>
+          </ul>
+        </div>
+      </nav>
+    </aside>
+
+    <!-- メインコンテンツ -->
+    <div class="flex-1 flex flex-col min-w-0 overflow-hidden">
+      <!-- トップバー -->
+      <header class="h-16 bg-white border-b border-gray-200 flex items-center px-4 gap-4">
+        <button
+          onclick="toggleSidebar()"
+          class="lg:hidden p-2 rounded-md text-gray-500 hover:text-gray-700 hover:bg-gray-100"
+        >
+          <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6h16M4 12h16M4 18h16"/>
+          </svg>
+        </button>
+
+        <nav class="flex items-center gap-1 text-sm text-gray-500 min-w-0">
+          <a href="/" class="hover:text-gray-700">ホーム</a>
+          <span>/</span>
+          <a href="/test-cases" class="hover:text-gray-700 truncate">テストケース</a>
+          <span>/</span>
+          <span class="text-gray-900 truncate">feature-map-tags.test.ts</span>
+        </nav>
+
+        <div class="ml-auto">
+          <button
+            onclick="openSearch()"
+            class="flex items-center gap-2 px-3 py-1.5 text-sm text-gray-500 bg-gray-100 hover:bg-gray-200 rounded-md transition-colors"
+          >
+            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"/>
+            </svg>
+            <span>検索...</span>
+            <kbd class="text-xs bg-white border border-gray-200 rounded px-1">⌘K</kbd>
+          </button>
+        </div>
+      </header>
+
+      <!-- ページコンテンツ -->
+      <main class="flex-1 overflow-y-auto p-6">
+        <div class="max-w-4xl">
+  <div class="mb-6">
+    <a href="/test-cases" class="text-sm text-indigo-600 hover:underline">&larr; テストケース一覧</a>
+    <h1 class="text-xl font-bold text-gray-900 mt-2 font-mono">tests/parsers/feature-map-tags.test.ts</h1>
+    <p class="text-gray-500 text-sm mt-1">
+      <span class="false">jest</span>
+      &middot; 30 件
+    </p>
+  </div>
+
+  <div class="space-y-4">
+    <div class="bg-white rounded-lg border border-gray-200">
+      <div class="px-4 py-3 border-b border-gray-100 bg-gray-50 rounded-t-lg">
+        <h3 class="text-sm font-medium text-gray-900">feature-map-tags &gt; findCodeStartIndex</h3>
+      </div>
+      <ul class="divide-y divide-gray-100">
+        <li class="px-4 py-2 hover:bg-gray-50">
+          <a href="/test-cases/tests%2Fparsers%2Ffeature-map-tags.test.ts/98" class="text-sm text-gray-700 hover:text-indigo-600 block">
+            should return index of first import statement
+          </a>
+          <span class="text-xs text-gray-400">happy-path</span>
+        </li>
+        <li class="px-4 py-2 hover:bg-gray-50">
+          <a href="/test-cases/tests%2Fparsers%2Ffeature-map-tags.test.ts/107" class="text-sm text-gray-700 hover:text-indigo-600 block">
+            should return index of export when no import
+          </a>
+          <span class="text-xs text-gray-400">happy-path</span>
+        </li>
+        <li class="px-4 py-2 hover:bg-gray-50">
+          <a href="/test-cases/tests%2Fparsers%2Ffeature-map-tags.test.ts/116" class="text-sm text-gray-700 hover:text-indigo-600 block">
+            should return index of declaration when no import/export
+          </a>
+          <span class="text-xs text-gray-400">happy-path</span>
+        </li>
+        <li class="px-4 py-2 hover:bg-gray-50">
+          <a href="/test-cases/tests%2Fparsers%2Ffeature-map-tags.test.ts/125" class="text-sm text-gray-700 hover:text-indigo-600 block">
+            should return 0 when no code found
+          </a>
+          <span class="text-xs text-gray-400">happy-path</span>
+        </li>
+        <li class="px-4 py-2 hover:bg-gray-50">
+          <a href="/test-cases/tests%2Fparsers%2Ffeature-map-tags.test.ts/134" class="text-sm text-gray-700 hover:text-indigo-600 block">
+            should handle files with leading whitespace
+          </a>
+          <span class="text-xs text-gray-400">happy-path</span>
+        </li>
+      </ul>
+    </div>
+    <div class="bg-white rounded-lg border border-gray-200">
+      <div class="px-4 py-3 border-b border-gray-100 bg-gray-50 rounded-t-lg">
+        <h3 class="text-sm font-medium text-gray-900">feature-map-tags &gt; extractFileMetadata</h3>
+      </div>
+      <ul class="divide-y divide-gray-100">
+        <li class="px-4 py-2 hover:bg-gray-50">
+          <a href="/test-cases/tests%2Fparsers%2Ffeature-map-tags.test.ts/145" class="text-sm text-gray-700 hover:text-indigo-600 block">
+            should extract feature tag from header JSDoc
+          </a>
+          <span class="text-xs text-gray-400">happy-path</span>
+        </li>
+        <li class="px-4 py-2 hover:bg-gray-50">
+          <a href="/test-cases/tests%2Fparsers%2Ffeature-map-tags.test.ts/155" class="text-sm text-gray-700 hover:text-indigo-600 block">
+            should return empty metadata when no header JSDoc
+          </a>
+          <span class="text-xs text-gray-400">validation</span>
+        </li>
+        <li class="px-4 py-2 hover:bg-gray-50">
+          <a href="/test-cases/tests%2Fparsers%2Ffeature-map-tags.test.ts/164" class="text-sm text-gray-700 hover:text-indigo-600 block">
+            should extract module tag
+          </a>
+          <span class="text-xs text-gray-400">happy-path</span>
+        </li>
+      </ul>
+    </div>
+    <div class="bg-white rounded-lg border border-gray-200">
+      <div class="px-4 py-3 border-b border-gray-100 bg-gray-50 rounded-t-lg">
+        <h3 class="text-sm font-medium text-gray-900">feature-map-tags &gt; extractItemName</h3>
+      </div>
+      <ul class="divide-y divide-gray-100">
+        <li class="px-4 py-2 hover:bg-gray-50">
+          <a href="/test-cases/tests%2Fparsers%2Ffeature-map-tags.test.ts/176" class="text-sm text-gray-700 hover:text-indigo-600 block">
+            should extract name from export function
+          </a>
+          <span class="text-xs text-gray-400">happy-path</span>
+        </li>
+        <li class="px-4 py-2 hover:bg-gray-50">
+          <a href="/test-cases/tests%2Fparsers%2Ffeature-map-tags.test.ts/183" class="text-sm text-gray-700 hover:text-indigo-600 block">
+            should extract name from export async function
+          </a>
+          <span class="text-xs text-gray-400">happy-path</span>
+        </li>
+        <li class="px-4 py-2 hover:bg-gray-50">
+          <a href="/test-cases/tests%2Fparsers%2Ffeature-map-tags.test.ts/190" class="text-sm text-gray-700 hover:text-indigo-600 block">
+            should extract name from export default function
+          </a>
+          <span class="text-xs text-gray-400">happy-path</span>
+        </li>
+        <li class="px-4 py-2 hover:bg-gray-50">
+          <a href="/test-cases/tests%2Fparsers%2Ffeature-map-tags.test.ts/197" class="text-sm text-gray-700 hover:text-indigo-600 block">
+            should extract name from export const
+          </a>
+          <span class="text-xs text-gray-400">happy-path</span>
+        </li>
+        <li class="px-4 py-2 hover:bg-gray-50">
+          <a href="/test-cases/tests%2Fparsers%2Ffeature-map-tags.test.ts/204" class="text-sm text-gray-700 hover:text-indigo-600 block">
+            should extract name from regular function
+          </a>
+          <span class="text-xs text-gray-400">happy-path</span>
+        </li>
+        <li class="px-4 py-2 hover:bg-gray-50">
+          <a href="/test-cases/tests%2Fparsers%2Ffeature-map-tags.test.ts/211" class="text-sm text-gray-700 hover:text-indigo-600 block">
+            should extract name from const assignment
+          </a>
+          <span class="text-xs text-gray-400">happy-path</span>
+        </li>
+        <li class="px-4 py-2 hover:bg-gray-50">
+          <a href="/test-cases/tests%2Fparsers%2Ffeature-map-tags.test.ts/218" class="text-sm text-gray-700 hover:text-indigo-600 block">
+            should return undefined for no match
+          </a>
+          <span class="text-xs text-gray-400">happy-path</span>
+        </li>
+      </ul>
+    </div>
+    <div class="bg-white rounded-lg border border-gray-200">
+      <div class="px-4 py-3 border-b border-gray-100 bg-gray-50 rounded-t-lg">
+        <h3 class="text-sm font-medium text-gray-900">feature-map-tags &gt; parseJSDocBlock</h3>
+      </div>
+      <ul class="divide-y divide-gray-100">
+        <li class="px-4 py-2 hover:bg-gray-50">
+          <a href="/test-cases/tests%2Fparsers%2Ffeature-map-tags.test.ts/227" class="text-sm text-gray-700 hover:text-indigo-600 block">
+            should create screen item from @screen tag
+          </a>
+          <span class="text-xs text-gray-400">happy-path</span>
+        </li>
+        <li class="px-4 py-2 hover:bg-gray-50">
+          <a href="/test-cases/tests%2Fparsers%2Ffeature-map-tags.test.ts/241" class="text-sm text-gray-700 hover:text-indigo-600 block">
+            should create component item from @component tag
+          </a>
+          <span class="text-xs text-gray-400">happy-path</span>
+        </li>
+        <li class="px-4 py-2 hover:bg-gray-50">
+          <a href="/test-cases/tests%2Fparsers%2Ffeature-map-tags.test.ts/253" class="text-sm text-gray-700 hover:text-indigo-600 block">
+            should create action item from @serverAction tag
+          </a>
+          <span class="text-xs text-gray-400">happy-path</span>
+        </li>
+        <li class="px-4 py-2 hover:bg-gray-50">
+          <a href="/test-cases/tests%2Fparsers%2Ffeature-map-tags.test.ts/268" class="text-sm text-gray-700 hover:text-indigo-600 block">
+            should use file metadata usedInScreens for action with usedInScreen tag
+          </a>
+          <span class="text-xs text-gray-400">happy-path</span>
+        </li>
+        <li class="px-4 py-2 hover:bg-gray-50">
+          <a href="/test-cases/tests%2Fparsers%2Ffeature-map-tags.test.ts/284" class="text-sm text-gray-700 hover:text-indigo-600 block">
+            should fallback to file metadata usedInScreens when function-level is empty
+          </a>
+          <span class="text-xs text-gray-400">validation</span>
+        </li>
+        <li class="px-4 py-2 hover:bg-gray-50">
+          <a href="/test-cases/tests%2Fparsers%2Ffeature-map-tags.test.ts/296" class="text-sm text-gray-700 hover:text-indigo-600 block">
+            should create module item from @module tag
+          </a>
+          <span class="text-xs text-gray-400">happy-path</span>
+        </li>
+        <li class="px-4 py-2 hover:bg-gray-50">
+          <a href="/test-cases/tests%2Fparsers%2Ffeature-map-tags.test.ts/309" class="text-sm text-gray-700 hover:text-indigo-600 block">
+            should create table item from @dbTable tag
+          </a>
+          <span class="text-xs text-gray-400">happy-path</span>
+        </li>
+        <li class="px-4 py-2 hover:bg-gray-50">
+          <a href="/test-cases/tests%2Fparsers%2Ffeature-map-tags.test.ts/322" class="text-sm text-gray-700 hover:text-indigo-600 block">
+            should return null when type is unknown
+          </a>
+          <span class="text-xs text-gray-400">happy-path</span>
+        </li>
+        <li class="px-4 py-2 hover:bg-gray-50">
+          <a href="/test-cases/tests%2Fparsers%2Ffeature-map-tags.test.ts/331" class="text-sm text-gray-700 hover:text-indigo-600 block">
+            should inherit feature from file metadata
+          </a>
+          <span class="text-xs text-gray-400">happy-path</span>
+        </li>
+        <li class="px-4 py-2 hover:bg-gray-50">
+          <a href="/test-cases/tests%2Fparsers%2Ffeature-map-tags.test.ts/342" class="text-sm text-gray-700 hover:text-indigo-600 block">
+            should prefer item-level feature over file metadata
+          </a>
+          <span class="text-xs text-gray-400">happy-path</span>
+        </li>
+      </ul>
+    </div>
+    <div class="bg-white rounded-lg border border-gray-200">
+      <div class="px-4 py-3 border-b border-gray-100 bg-gray-50 rounded-t-lg">
+        <h3 class="text-sm font-medium text-gray-900">feature-map-tags &gt; parseFeatureMapTags</h3>
+      </div>
+      <ul class="divide-y divide-gray-100">
+        <li class="px-4 py-2 hover:bg-gray-50">
+          <a href="/test-cases/tests%2Fparsers%2Ffeature-map-tags.test.ts/355" class="text-sm text-gray-700 hover:text-indigo-600 block">
+            should return only items without metadata
+          </a>
+          <span class="text-xs text-gray-400">happy-path</span>
+        </li>
+      </ul>
+    </div>
+    <div class="bg-white rounded-lg border border-gray-200">
+      <div class="px-4 py-3 border-b border-gray-100 bg-gray-50 rounded-t-lg">
+        <h3 class="text-sm font-medium text-gray-900">feature-map-tags &gt; parseFeatureMapTagsWithMetadata</h3>
+      </div>
+      <ul class="divide-y divide-gray-100">
+        <li class="px-4 py-2 hover:bg-gray-50">
+          <a href="/test-cases/tests%2Fparsers%2Ffeature-map-tags.test.ts/377" class="text-sm text-gray-700 hover:text-indigo-600 block">
+            should create item from header @screen tag
+          </a>
+          <span class="text-xs text-gray-400">happy-path</span>
+        </li>
+        <li class="px-4 py-2 hover:bg-gray-50">
+          <a href="/test-cases/tests%2Fparsers%2Ffeature-map-tags.test.ts/394" class="text-sm text-gray-700 hover:text-indigo-600 block">
+            should extract items from inline JSDoc blocks
+          </a>
+          <span class="text-xs text-gray-400">happy-path</span>
+        </li>
+        <li class="px-4 py-2 hover:bg-gray-50">
+          <a href="/test-cases/tests%2Fparsers%2Ffeature-map-tags.test.ts/418" class="text-sm text-gray-700 hover:text-indigo-600 block">
+            should inherit file metadata feature to inline items
+          </a>
+          <span class="text-xs text-gray-400">happy-path</span>
+        </li>
+        <li class="px-4 py-2 hover:bg-gray-50">
+          <a href="/test-cases/tests%2Fparsers%2Ffeature-map-tags.test.ts/438" class="text-sm text-gray-700 hover:text-indigo-600 block">
+            should include types and utilities in result
+          </a>
+          <span class="text-xs text-gray-400">happy-path</span>
+        </li>
+      </ul>
+    </div>
+  </div>
+</div>
+
+      </main>
+
+      <!-- フッター -->
+      <footer class="border-t border-gray-200 px-6 py-3 text-xs text-gray-500 bg-white">
+        <span>Project ドキュメントポータル &copy; 2026</span>
+      </footer>
+    </div>
+  </div>
+
+  <!-- 検索モーダル -->
+  <div id="search-modal" class="fixed inset-0 z-50 hidden">
+    <div class="fixed inset-0 bg-black bg-opacity-50" onclick="closeSearch()"></div>
+    <div class="fixed top-1/4 left-1/2 -translate-x-1/2 w-full max-w-xl bg-white rounded-xl shadow-2xl overflow-hidden">
+      <div class="flex items-center border-b border-gray-200 px-4">
+        <svg class="w-5 h-5 text-gray-400 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"/>
+        </svg>
+        <input
+          id="search-input"
+          type="text"
+          placeholder="検索..."
+          class="flex-1 px-3 py-4 text-sm outline-none"
+          oninput="onSearchInput(this.value)"
+          onkeydown="onSearchKeydown(event)"
+        />
+        <button onclick="closeSearch()" class="text-gray-400 hover:text-gray-600 text-sm">ESC</button>
+      </div>
+      <div id="search-results" class="max-h-96 overflow-y-auto py-2">
+        <div class="px-4 py-8 text-center text-gray-400 text-sm">キーワードを入力してください</div>
+      </div>
+    </div>
+  </div>
+
+  <script src="/assets/portal.js"></script>
+  
+</body>
+</html>
