@@ -154,7 +154,7 @@ export async function cmdUpdateStatus(
         const prFallback = prFallbackMap.get(num);
         if (prFallback) {
           const fields = fieldsCache[prFallback.projectId] ?? await getProjectFields(prFallback.projectId);
-          if (await updateIssueStatus(prFallback.projectId, prFallback.projectItemId, STATUS_VALUES.DONE, fields, logger, prFallback.status ?? undefined)) {
+          if (await updateIssueStatus(prFallback.projectId, prFallback.projectItemId, STATUS_VALUES.DONE, fields, logger)) {
             updatedIssues.push({ number: num, status: STATUS_VALUES.DONE });
             updatedPrNumbers.add(num);
             logger.success(`PR #${num} → Done`);
@@ -183,7 +183,7 @@ export async function cmdUpdateStatus(
       }
 
       const fields = fieldsCache[issue.projectId] ?? {};
-      if (await updateIssueStatus(issue.projectId, issue.projectItemId, STATUS_VALUES.DONE, fields, logger, issue.status ?? undefined)) {
+      if (await updateIssueStatus(issue.projectId, issue.projectItemId, STATUS_VALUES.DONE, fields, logger)) {
         updatedIssues.push({ number: num, status: STATUS_VALUES.DONE });
         logger.success(`Issue #${num} → Done`);
 
@@ -209,7 +209,7 @@ export async function cmdUpdateStatus(
         if (prFallback) {
           const fields = fieldsCache[prFallback.projectId] ?? await getProjectFields(prFallback.projectId);
           // PR 経路では findMergedPrForIssue は意味を持たない（PR を Closes する別 PR はほぼ存在しない）ため Review 固定
-          if (await updateIssueStatus(prFallback.projectId, prFallback.projectItemId, STATUS_VALUES.REVIEW, fields, logger, prFallback.status ?? undefined)) {
+          if (await updateIssueStatus(prFallback.projectId, prFallback.projectItemId, STATUS_VALUES.REVIEW, fields, logger)) {
             updatedIssues.push({ number: num, status: STATUS_VALUES.REVIEW });
             updatedPrNumbers.add(num);
             logger.success(`PR #${num} → Review`);
@@ -229,7 +229,7 @@ export async function cmdUpdateStatus(
       const mergedPr = await findMergedPrForIssue(owner, repo, num, logger);
       const targetStatus = mergedPr ? STATUS_VALUES.DONE : STATUS_VALUES.REVIEW;
 
-      if (await updateIssueStatus(issue.projectId, issue.projectItemId, targetStatus, fields, logger, issue.status ?? undefined)) {
+      if (await updateIssueStatus(issue.projectId, issue.projectItemId, targetStatus, fields, logger)) {
         updatedIssues.push({ number: num, status: targetStatus });
         if (mergedPr) {
           logger.success(`Issue #${num} → Done (PR #${mergedPr} merged)`);

@@ -1,0 +1,9 @@
+{
+  "number": 2536,
+  "type": "issue",
+  "title": "chore(lifecycle): migrate-v3-018 系コードの削除（6 値モデル下での破壊的動作回避）",
+  "body": "",
+  "status": "Done",
+  "labels": [],
+  "assignees": []
+}

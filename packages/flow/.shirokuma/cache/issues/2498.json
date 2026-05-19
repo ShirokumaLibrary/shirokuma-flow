@@ -1,0 +1,14 @@
+{
+  "number": 2498,
+  "type": "issue",
+  "title": "feat(lint): SKILL.md 行数ガイドライン (skill-md-size) 追加と肥大化スキルの reference/ 分割",
+  "body": "## 目的\n\nSKILL.md が際限なく肥大化することを防ぐため、行数ガイドライン（目安 250 行）を `lint workflow` のルールとして導入し、肥大化スキルの `reference/*.md` 分割を進める。\n\n## 起点\n\n- Discussion #2378 軸 D\n\n## 検討事項\n\n- `lint workflow` の新規ルール: `skill-md-size`（warn: 250 行、error: 400 行など）\n- 現状の肥大化スキル（行数は時期により変動するため目安）:\n  - `implement-flow/SKILL.md`\n  - `review-issue/SKILL.md`\n  - `prepare-flow/SKILL.md`\n- 分割方針: 詳細手順・テーブル類を `reference/*.md` に切り出し、SKILL.md からは見出しレベルで参照する\n- 既に運用されている `reference/` パターン（implement-flow など）との一貫性\n\n## 受け入れ基準\n\n- [ ] `lint workflow` で `skill-md-size` が動作する\n- [ ] ★ 肥大化スキルが目安行数以下に収まる\n- [ ] 既存の動作テスト（スキル本体の挙動）が壊れない",
+  "status": "Review",
+  "labels": [
+    "area:plugin",
+    "area:lint"
+  ],
+  "assignees": [
+    "particles7"
+  ]
+}

@@ -1,0 +1,22 @@
+/**
+ * coreui-bootstrap-5 プリセット
+ *
+ * CoreUI Bootstrap 5 互換版向け fetch プリセット。
+ * coreui/coreui リポジトリの docs/content/ 配下に Markdown ドキュメントを配置している。
+ */
+import type { DocsSourceConfig } from "../../../utils/config.js";
+import type { Logger } from "../../../utils/logger.js";
+import type { DocsFetchOptions } from "../fetch.js";
+import { type FetchStats } from "./shared.js";
+import type { StrategyMeta } from "./shared.js";
+/**
+ * coreui-bootstrap-5 プリセットのメタ情報。
+ * `resolvePresetMeta("coreui-bootstrap-5")` が動的 import でこれを取得する。
+ */
+export declare const meta: StrategyMeta;
+/**
+ * プリセットエントリーポイント。
+ * fetchSource() から動的 import で呼び出される。
+ */
+export declare function execute(src: DocsSourceConfig, outDir: string, options: DocsFetchOptions, stats: FetchStats, logger: Logger): Promise<FetchStats>;
+//# sourceMappingURL=coreui-bootstrap-5.d.ts.map

@@ -1,0 +1,1 @@
+{"version":3,"file":"app-inference.d.ts","sourceRoot":"","sources":["../../src/utils/app-inference.ts"],"names":[],"mappings":"AAAA;;;;;;;GAOG;AAEH;;GAEG;AACH,MAAM,MAAM,gBAAgB,GAAG,OAAO,GAAG,QAAQ,GAAG,KAAK,GAAG,KAAK,GAAG,QAAQ,GAAG,SAAS,CAAC;AAEzF;;GAEG;AACH,MAAM,MAAM,OAAO,GAAG,MAAM,CAAC;AAS7B;;;;;;;;;;;;GAYG;AACH,wBAAgB,gBAAgB,CAAC,QAAQ,EAAE,MAAM,GAAG,OAAO,CAe1D"}

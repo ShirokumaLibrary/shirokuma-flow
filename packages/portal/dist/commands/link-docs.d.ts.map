@@ -1,0 +1,1 @@
+{"version":3,"file":"link-docs.d.ts","sourceRoot":"","sources":["../../src/commands/link-docs.ts"],"names":[],"mappings":"AAAA;;;;;GAKG;AAyBH;;GAEG;AACH,UAAU,eAAe;IACvB,OAAO,EAAE,MAAM,CAAC;IAChB,MAAM,EAAE,MAAM,CAAC;IACf,MAAM,CAAC,EAAE,MAAM,CAAC;IAChB,OAAO,CAAC,EAAE,OAAO,CAAC;CACnB;AAkDD;;GAEG;AACH,wBAAsB,eAAe,CAAC,OAAO,EAAE,eAAe,GAAG,OAAO,CAAC,MAAM,CAAC,CAkF/E"}

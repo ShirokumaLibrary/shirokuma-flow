@@ -132,7 +132,8 @@ export function createPrCommand(): Command {
     .option("--no-delete-branch", "マージ後にブランチを削除しない")
     .option("--checkout", "マージ後にベースブランチをチェックアウト (デフォルト: true)", true)
     .option("--no-checkout", "マージ後にベースブランチをチェックアウトしない")
-    .option("--delete-local", "マージ済みローカルブランチを削除")
+    .option("--delete-local", "マージ済みローカルブランチを削除 (デフォルト: true)", true)
+    .option("--no-delete-local", "マージ済みローカルブランチを削除しない")
     .option("--head <branch>", "ソースブランチ")
     .option("--skip-link-check", "N:N リンクグラフ検証をスキップ")
     .action(async (number, localOpts, command: Command) => {

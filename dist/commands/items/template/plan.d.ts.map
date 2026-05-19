@@ -1,0 +1,1 @@
+{"version":3,"file":"plan.d.ts","sourceRoot":"","sources":["../../../../src/commands/items/template/plan.ts"],"names":[],"mappings":"AAAA;;;;GAIG;AAEH,OAAO,KAAK,EAAE,MAAM,EAAE,MAAM,wBAAwB,CAAC;AAErD,YAAY;AACZ,MAAM,MAAM,SAAS,GAAG,OAAO,GAAG,UAAU,GAAG,UAAU,GAAG,MAAM,CAAC;AAgNnE;;;;;GAKG;AACH,wBAAgB,oBAAoB,CAAC,IAAI,EAAE,MAAM,EAAE,KAAK,GAAE,SAAsB,GAAG,MAAM,CAGxF"}

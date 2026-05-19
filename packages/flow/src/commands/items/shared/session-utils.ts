@@ -284,7 +284,6 @@ export async function updateIssueStatus(
   statusValue: string,
   projectFields: Record<string, ProjectField>,
   logger: Logger,
-  previousStatus?: string
 ): Promise<boolean> {
   const result = await updateProjectStatus({
     projectId,
@@ -292,7 +291,6 @@ export async function updateIssueStatus(
     statusValue,
     projectFields,
     logger,
-    previousStatus,
   });
   return result.success;
 }

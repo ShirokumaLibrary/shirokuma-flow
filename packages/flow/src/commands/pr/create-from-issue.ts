@@ -253,8 +253,7 @@ export async function cmdPrCreateFromIssue(
     if (projectId) {
       const projectItemId = await addItemToProject(projectId, data.node_id, logger);
       if (projectItemId) {
-        // ADR-v3-014 FIX-1 (#2155): autoSetTimestamps を発動させるため updateProjectStatus 経由で設定。
-        // PR 新規追加時は遷移前ステータスなし（previousStatus: undefined）。
+        // ADR-v3-014 FIX-1 (#2155): Status は updateProjectStatus 経由で設定（#2207 型レベル強制）。
         const projectFields = await getProjectFields(projectId);
         await updateProjectStatus({
           projectId,
@@ -262,7 +261,6 @@ export async function cmdPrCreateFromIssue(
           statusValue: STATUS_VALUES.REVIEW,
           projectFields,
           logger,
-          previousStatus: undefined,
         });
         logger.success("プロジェクトに追加しました（Review）");
       }

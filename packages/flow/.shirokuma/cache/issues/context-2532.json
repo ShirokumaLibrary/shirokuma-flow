@@ -1,0 +1,23 @@
+{
+  "target": {
+    "number": 2532,
+    "type": "issue",
+    "title": "feat(lifecycle): 動的ルーティング実装（submit / reject の Backlog 対応）",
+    "body": "## 目的\n\nADR-v3-022 第二改訂版に基づく **CLI コマンドの動的ルーティング + `approve` 意味変更 + `--rollback` フラグ必須化** を実装する。\n\n## 親 Issue / 計画\n\n- **親 Issue**: #2529\n- **計画 Issue**: #2530\n- **ADR**: Discussion #2527 第二改訂版\n- **仕様**: Discussion #2528 第二改訂版\n\n## スコープ\n\n担当 AC: **AC5, AC6, AC7**（動的ルーティング）。詳細は計画 Issue #2530 のフェーズ 2（並列）を参照。\n\n### 主な変更ファイル\n\n`packages/flow/src/commands/status/transition.ts`:\n- `--rollback` フラグ追加\n- `--from <status>` フラグ追加（itemType 自動判定の補助）\n- `itemType` 自動判定ロジック追加（issue / pr）\n- ロールバック遷移は警告付きで履歴に `[ROLLBACK]` マーク\n\n`packages/flow/src/commands/status/submit.ts`:\n- 動的ルーティング:\n  - 計画 Issue (子): `Backlog → Review`\n  - PR: `In progress → Review`\n- 実装 Issue (親) の `In progress → Review` 経路は **削除**（PR 経由のみ）\n\n`packages/flow/src/commands/status/approve.ts`:\n- 意味変更: `Review → ToDo`（旧）→ `Review → Done`（新）\n- 副作用: 計画 Issue (子) の approve 時、親 Issue を `Backlog → ToDo` に自動同期（`syncParentStatus` 呼び出し）\n\n`packages/flow/src/commands/status/reject.ts`:\n- `--rollback` フラグ必須化\n- itemType で動的に遷移先決定:\n  - Issue: `Review → Backlog` (計画 Issue 子の差し戻し)\n  - PR: `Review → In progress` (PR コードレビュー差し戻し)\n- 旧 `previousStatus` 参照ロジックは不要（itemType で完全決定）\n\n`packages/flow/src/utils/cli-status-update-policy.ts`（または該当箇所）:\n- `setItemFields` 呼び出し時に `itemType` を必須化\n\n## 完了条件\n\n- [ ] `submit` が `itemType` で動的ルーティングされる（AC5）\n  - 計画 Issue 子の `Backlog → Review`\n  - PR の `In progress → Review`\n- [ ] `reject` が `itemType` で動的ルーティングされ、`--rollback` 必須（AC5, AC7）\n- [ ] `approve` が `Review → Done` に変更され、親 Issue を `Backlog → ToDo` に自動同期（AC6）\n- [ ] `--rollback` フラグなしで rollback 遷移先を指定するとエラー（`{from} → {to} は rollback 遷移です。--rollback フラグが必要です`）（AC7）\n- [ ] `status transition` が `itemType` を自動判定する\n- [ ] ビルド・型チェック通過\n\n## 依存\n\n- sub1 (#2531): 4 テーブル + `getAllowedTransitions` / `validateStatusTransition(itemType, ...)` シグネチャが必要\n\n## サイズ\n\nXL（旧 L から第二改訂で拡大）— 動的ルーティング + 意味変更 + フラグ追加 + 親同期トリガー。\n",
+    "status": "In progress",
+    "labels": [
+      "area:cli",
+      "area:workflow"
+    ],
+    "assignees": []
+  },
+  "parent": {
+    "number": 2529,
+    "title": "feat(lifecycle): 6値ステータスモデル実装（Backlog 復活、ADR-v3-022）",
+    "status": "In progress"
+  },
+  "children": [],
+  "discussions": [],
+  "pull_requests": [],
+  "recent_comments": []
+}

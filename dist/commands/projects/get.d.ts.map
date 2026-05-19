@@ -1,0 +1,1 @@
+{"version":3,"file":"get.d.ts","sourceRoot":"","sources":["../../../src/commands/projects/get.ts"],"names":[],"mappings":"AAAA;;;;GAIG;AAEH,OAAO,EAAE,MAAM,EAAE,MAAM,uBAAuB,CAAC;AAC/C,OAAO,EACL,eAAe,EAQhB,MAAM,cAAc,CAAC;AAEtB;;GAEG;AACH,wBAAsB,MAAM,CAC1B,cAAc,EAAE,MAAM,EACtB,OAAO,EAAE,eAAe,EACxB,MAAM,EAAE,MAAM,GACb,OAAO,CAAC,MAAM,CAAC,CAoDjB"}

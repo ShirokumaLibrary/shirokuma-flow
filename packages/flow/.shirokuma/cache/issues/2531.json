@@ -1,0 +1,9 @@
+{
+  "number": 2531,
+  "type": "issue",
+  "title": "feat(lifecycle): CLI コア改修（STATUS_VALUES / STATUS_TRANSITIONS / INITIAL_STATUSES）",
+  "body": "",
+  "status": "Done",
+  "labels": [],
+  "assignees": []
+}

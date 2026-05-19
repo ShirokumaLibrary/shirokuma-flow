@@ -1,0 +1,1 @@
+{"version":3,"file":"impact.d.ts","sourceRoot":"","sources":["../../src/commands/impact.ts"],"names":[],"mappings":"AAAA;;;;;GAKG;AAwDH,MAAM,WAAW,aAAa;IAC5B,MAAM,CAAC,EAAE,MAAM,CAAC;IAChB,MAAM,CAAC,EAAE,MAAM,CAAC;IAChB,QAAQ,CAAC,EAAE,MAAM,CAAC;IAClB,MAAM,CAAC,EAAE,MAAM,GAAG,MAAM,GAAG,OAAO,CAAC;CACpC;AAED,wBAAgB,aAAa,CAAC,OAAO,GAAE,aAAkB,GAAG,MAAM,CAoEjE"}

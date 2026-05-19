@@ -88,9 +88,7 @@ export async function cmdUpdate(
   // Build fields dict from options
   const fields = buildFieldsDict(options);
 
-  // ADR-v3-014 / FIX-2 (#2156): `projects update` は Project Item ID ベースで Issue 番号が不明のため
-  // `previousStatus: undefined` を明示的に渡す（G12 後退クリアの対象外）。
-  // Status 遷移バリデーションは本経路では作動しない（手動操作ツールの責務外）。
+  // Status 遷移バリデーションは本経路では作動しない（手動操作ツールの責務外、ADR-v3-014 FIX-2 #2156）。
   const { Status: statusValue, ...nonStatusFields } = fields;
   const { fieldsUpdated, statusUpdated } = await setFieldsWithStatusRouting({
     projectId,
@@ -98,7 +96,6 @@ export async function cmdUpdate(
     nonStatusFields,
     statusValue,
     logger,
-    previousStatus: undefined,
   });
   let updated = fieldsUpdated || statusUpdated;
 

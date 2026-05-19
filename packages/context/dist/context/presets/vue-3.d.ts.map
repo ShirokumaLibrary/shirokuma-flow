@@ -1,0 +1,1 @@
+{"version":3,"file":"vue-3.d.ts","sourceRoot":"","sources":["../../../src/context/presets/vue-3.ts"],"names":[],"mappings":"AAAA,2CAA2C;AAO3C,OAAO,KAAK,EAAE,UAAU,EAAE,MAAM,aAAa,CAAC;AAC9C,OAAO,KAAK,EAAE,mBAAmB,EAAE,MAAM,YAAY,CAAC;AAItD,wBAAsB,OAAO,CAAC,MAAM,EAAE,mBAAmB,GAAG,OAAO,CAAC,UAAU,CAAC,CAyC9E"}

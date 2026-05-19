@@ -1,0 +1,9 @@
+{
+  "number": 2532,
+  "type": "issue",
+  "title": "feat(lifecycle): 動的ルーティング実装（submit / reject の Backlog 対応）",
+  "body": "",
+  "status": "Done",
+  "labels": [],
+  "assignees": []
+}

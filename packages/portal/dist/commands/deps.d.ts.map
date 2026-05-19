@@ -1,0 +1,1 @@
+{"version":3,"file":"deps.d.ts","sourceRoot":"","sources":["../../src/commands/deps.ts"],"names":[],"mappings":"AAAA;;;;;;;;;GASG;AAeH,UAAU,WAAW;IACnB,OAAO,EAAE,MAAM,CAAC;IAChB,MAAM,EAAE,MAAM,CAAC;IACf,MAAM,CAAC,EAAE,MAAM,CAAC;IAChB,OAAO,CAAC,EAAE,OAAO,CAAC;CACnB;AAkJD;;;;GAIG;AACH,wBAAsB,WAAW,CAAC,OAAO,EAAE,WAAW,GAAG,OAAO,CAAC,MAAM,CAAC,CA4GvE"}

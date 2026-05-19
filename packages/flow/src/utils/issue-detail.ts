@@ -17,7 +17,6 @@ import { Logger } from "./logger.js";
 import {
   getProjectFields,
   setItemFields,
-  autoSetTimestamps,
   type ProjectField,
   type NonStatusFields,
 } from "./project-fields.js";
@@ -126,8 +125,7 @@ export interface ResolvedProjectItem {
   projectId: string;
   projectItemId: string;
   fields: Record<string, ProjectField>;
-  /** #1936 G12 後退クリアを `updateProjectStatus` 経由の全コマンドで有効化するため、`previousStatus` として渡す値を保持する。
-   * @see ADR-v3-014 (#2151), REFACTOR-1 (#2154) */
+  /** 既存ステータス値。`resolveAndUpdateStatus` の `already-at-target` 判定に使う。 */
   currentStatus?: string;
 }
 
@@ -169,7 +167,7 @@ export interface SetFieldsWithStatusRoutingResult {
 
 /**
  * 非 Status フィールドと Status を一括設定する共通ヘルパー。
- * Status は `autoSetTimestamps` を発動させるため `updateProjectStatus` 経由でルーティングする。
+ * Status は `updateProjectStatus` 経由でルーティングする（型レベル制約のため #2207）。
  * `projectFields` の GraphQL 呼び出しは内部で条件取得し、両経路で共有する。
  *
  * ADR-v3-014 FIX-3/4/5 の重複パターンを集約する (#2173)。
@@ -183,7 +181,6 @@ export interface SetFieldsWithStatusRoutingResult {
  * @param options.nonStatusFields - Status を除いた設定フィールド（Priority, Size 等）
  * @param options.statusValue - 設定する Status 値（undefined の場合は Status 更新をスキップ）
  * @param options.logger - ロガー
- * @param options.previousStatus - 遷移前のステータス（省略時はクリア処理をスキップ）
  * @returns `fieldsUpdated` / `statusUpdated` の更新フラグ。スキップまたは失敗時は false
  */
 export async function setFieldsWithStatusRouting(options: {
@@ -192,9 +189,8 @@ export async function setFieldsWithStatusRouting(options: {
   nonStatusFields: Record<string, string>;
   statusValue: string | undefined;
   logger: Logger;
-  previousStatus?: string;
 }): Promise<SetFieldsWithStatusRoutingResult> {
-  const { projectId, itemId, nonStatusFields, statusValue, logger, previousStatus } = options;
+  const { projectId, itemId, nonStatusFields, statusValue, logger } = options;
 
   // `projectFields` は両経路で共有し GraphQL 呼び出しを 1 回に削減する。
   // Status がない場合は取得しない（getProjectFields の GraphQL を節約）。
@@ -214,7 +210,6 @@ export async function setFieldsWithStatusRouting(options: {
       statusValue,
       projectFields,
       logger,
-      previousStatus,
     });
     statusUpdated = result.success;
   }
@@ -284,14 +279,12 @@ export async function getIssueDetail(
 
 /**
  * projectId/itemId が既知の場合に Status を更新する。
- * autoSetTimestamps も一貫して呼び出す。
  *
  * @param options.projectId - Project の GraphQL ID
  * @param options.itemId - Project Item の GraphQL ID
  * @param options.statusValue - 設定する Status 値
  * @param options.projectFields - キャッシュ済みフィールド定義
  * @param options.logger - ロガー
- * @param options.previousStatus - 遷移前のステータス（省略時はクリア処理をスキップ）
  *
  * 遷移バリデーションはこの関数では行わない（#2544: 二重バリデーション廃止）。
  * ロールバックガードは各 CLI 入口（status transition / pushIssueBody）で実施する。
@@ -302,9 +295,8 @@ export async function updateProjectStatus(options: {
   statusValue: string;
   projectFields: Record<string, ProjectField>;
   logger: Logger;
-  previousStatus?: string;
 }): Promise<UpdateProjectStatusResult> {
-  const { projectId, itemId, statusValue, projectFields, logger, previousStatus } = options;
+  const { projectId, itemId, statusValue, projectFields, logger } = options;
 
   // updateProjectStatus は Status 更新の唯一の正規内部経路であり、
   // setItemFields の NonStatusFields 型制約を意図的に回避する。
@@ -317,8 +309,6 @@ export async function updateProjectStatus(options: {
   );
 
   if (count > 0) {
-    // 常に autoSetTimestamps を呼び出す（mapping なしなら silent skip）
-    await autoSetTimestamps(projectId, itemId, statusValue, projectFields, logger, undefined, previousStatus);
     return { success: true };
   }
 
@@ -404,7 +394,6 @@ export async function resolveAndUpdateStatus(
     statusValue,
     projectFields: resolved.fields,
     logger,
-    previousStatus: resolved.currentStatus,
   });
 
   // 成功かつ終了ステータスの場合は open-issues から除去
@@ -547,7 +536,6 @@ export async function resolvePrAndUpdateStatus(
     statusValue,
     projectFields: resolved.fields,
     logger,
-    previousStatus: resolved.currentStatus,
   });
 
   return result;

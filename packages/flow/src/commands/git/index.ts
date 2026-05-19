@@ -20,7 +20,7 @@ import { createActionLogger, setExitCode, mergeCommanderOpts as mergeOpts } from
 
 export function createGitCommand(): Command {
   const git = new Command("git")
-    .description("Git 状態管理 (check, commit-push)");
+    .description("Git 状態管理 (check, commit-push, prune-merged)");
 
   // Common parent options
   git.option("-v, --verbose", "詳細ログ出力");
@@ -52,6 +52,22 @@ export function createGitCommand(): Command {
       const { cmdGitCommitPush } = await import("./commit-push.js");
       const logger = createActionLogger(options);
       setExitCode(await cmdGitCommitPush(options, logger));
+    });
+
+  // ---------------------------------------------------------------------------
+  // prune-merged
+  // ---------------------------------------------------------------------------
+  git
+    .command("prune-merged")
+    .description("ベースブランチにマージ済みのローカルブランチを一括削除")
+    .option("--base <branch>", "ベースブランチ（デフォルト: develop）")
+    .option("--dry-run", "削除対象一覧を表示するのみ", false)
+    .option("--force", "squash merge 後の detached commit にも対応（git branch -D 相当）", false)
+    .action(async (localOpts, command: Command) => {
+      const options = mergeOpts(command, localOpts);
+      const { cmdGitPruneMerged } = await import("./prune-merged.js");
+      const logger = createActionLogger(options);
+      setExitCode(await cmdGitPruneMerged(options, logger));
     });
 
   return git;

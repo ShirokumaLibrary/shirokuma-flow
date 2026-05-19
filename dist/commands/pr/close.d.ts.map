@@ -1,0 +1,1 @@
+{"version":3,"file":"close.d.ts","sourceRoot":"","sources":["../../../src/commands/pr/close.ts"],"names":[],"mappings":"AAAA;;;;;GAKG;AAEH,OAAO,EAAE,MAAM,EAAE,MAAM,uBAAuB,CAAC;AAW/C,OAAO,KAAK,EAAE,eAAe,EAAE,MAAM,YAAY,CAAC;AAMlD,wBAAsB,UAAU,CAC9B,WAAW,EAAE,MAAM,GAAG,SAAS,EAC/B,OAAO,EAAE,eAAe,EACxB,MAAM,EAAE,MAAM,GACb,OAAO,CAAC,MAAM,CAAC,CAuLjB"}

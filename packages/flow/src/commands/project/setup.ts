@@ -45,9 +45,6 @@ const FIELD_COLORS: Record<string, Record<string, string>> = {
   },
 };
 
-/** ライフサイクル日時フィールド（TEXT 型 — ISO 8601 日時文字列を保存） */
-const LIFECYCLE_FIELDS = ["Start at", "Review at", "End at"];
-
 /** ロケール辞書 */
 const SETUP_LOCALES: Record<string, Record<string, Record<string, string>>> = {
   ja: {
@@ -239,27 +236,6 @@ export async function cmdSetup(
       }
     }
 
-    // TEXT フィールド作成（既存検出付き）
-    const createFieldQuery = `mutation($projectId: ID!, $name: String!, $dataType: ProjectV2CustomFieldType!) { createProjectV2Field(input: { projectId: $projectId, dataType: $dataType, name: $name }) { projectV2Field { ... on ProjectV2Field { name } } } }`;
-    const textFields = LIFECYCLE_FIELDS;
-    for (const fieldName of textFields) {
-      const existingField = resolveFieldName(fieldName, allFields);
-      if (existingField) {
-        logger.info(`\n[${fieldName}] Already exists, skipped`);
-        continue;
-      }
-      if (dryRun) {
-        logger.info(`\n[${fieldName}] [DRY RUN] ${locale.fieldType.text}フィールドを作成します`);
-      } else {
-        logger.info(`\n[${fieldName}] Creating text field...`);
-        const result = await runGraphQL(createFieldQuery, { projectId, name: fieldName, dataType: "TEXT" });
-        if (result.success) {
-          logger.success(`  ${fieldName} created`);
-        } else {
-          logger.warn(`  ${fieldName} creation failed`);
-        }
-      }
-    }
   }
 
   logger.info("\nTip: Rename the default View \"View 1\" in GitHub UI:");

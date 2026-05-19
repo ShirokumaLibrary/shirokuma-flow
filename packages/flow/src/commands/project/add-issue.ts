@@ -96,9 +96,8 @@ export async function cmdAddIssue(
   }
 
   // Set project fields
-  // ADR-v3-014 / FIX-3 (#2158): Status は `autoSetTimestamps` を発動させるため `updateProjectStatus` 経由で設定する。
-  // 新規追加のため `previousStatus: undefined`（Backlog / Pending 等のマッピング対象外ステータスは
-  // `autoSetTimestamps` 内でサイレントスキップされる）。重複パターンを setFieldsWithStatusRouting に集約 (#2173)。
+  // ADR-v3-014 / FIX-3 (#2158): Status は `updateProjectStatus` 経由で設定する（#2207 型レベル強制）。
+  // 重複パターンを setFieldsWithStatusRouting に集約 (#2173)。
   const fields = buildFieldsDict(options);
   const { Status: statusValue, ...nonStatusFields } = fields;
   await setFieldsWithStatusRouting({
@@ -107,7 +106,6 @@ export async function cmdAddIssue(
     nonStatusFields,
     statusValue,
     logger,
-    previousStatus: undefined,
   });
 
   const item = await fetchItem(itemId);

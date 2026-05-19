@@ -1,0 +1,9 @@
+{
+  "number": 2533,
+  "type": "issue",
+  "title": "feat(lifecycle): PR コマンド + integrity + parent-status を 6 値モデルに対応",
+  "body": "",
+  "status": "Done",
+  "labels": [],
+  "assignees": []
+}

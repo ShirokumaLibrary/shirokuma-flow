@@ -1,0 +1,9 @@
+{
+  "number": 2529,
+  "type": "issue",
+  "title": "feat(lifecycle): 6値ステータスモデル実装（Backlog 復活、ADR-v3-022）",
+  "body": "",
+  "status": "Done",
+  "labels": [],
+  "assignees": []
+}

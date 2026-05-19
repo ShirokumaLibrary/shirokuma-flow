@@ -1,0 +1,9 @@
+{
+  "number": 2484,
+  "type": "issue",
+  "title": "計画: feat(cli): issue/pr の body 受け渡し経路を positional file argument に統一しインライン --body を廃止",
+  "body": "",
+  "status": "Done",
+  "labels": [],
+  "assignees": []
+}

@@ -7,7 +7,6 @@
 import { existsSync, readFileSync } from "node:fs";
 import { join } from "node:path";
 import { parse as parseYaml } from "yaml";
-import { LEGACY_STATUS_VALUES } from "./status-workflow.js";
 
 /** Configuration file names (in order of preference) */
 const CONFIG_FILES = [
@@ -55,19 +54,12 @@ export interface MetricsConfig {
 
 /** Default metrics configuration.
  *
- * ADR-v3-013 (#2102) で `Completed` ステータスが廃止されたため、デフォルトマッピングから除外する
- * （`Ready` は以前からマッピング対象外）。カスタム設定で追加マッピングを定義した場合は `getMetricsConfig` でマージされる。
- *
- * マッピングキーは GitHub Project の Status field option 名と一致させる必要がある。既存 Project は
- * 旧表記 "In Progress"（大文字 P）のままのため `LEGACY_STATUS_VALUES.IN_PROGRESS_LEGACY` を使用する。
- * 新規 Project で小文字表記に揃える場合は `.shirokuma/config.yaml` でユーザー設定を上書きする。 */
+ * #2617 で `Start at` / `Review at` / `End at` の自動書き込み（`autoSetTimestamps`）は廃止された。
+ * 既定の `statusToDateMapping` は空。カスタムマッピングを `.shirokuma/config.yaml` の `metrics:`
+ * 配下で定義した場合のみ、`items integrity --fix` の backfill 経路で使用される（自動書き込みなし）。 */
 const DEFAULT_METRICS: MetricsConfig = {
   enabled: false,
-  statusToDateMapping: {
-    [LEGACY_STATUS_VALUES.IN_PROGRESS_LEGACY]: "Start at",
-    "Review": "Review at",
-    "Done": "End at",
-  },
+  statusToDateMapping: {},
   staleThresholdDays: 14,
 };
 

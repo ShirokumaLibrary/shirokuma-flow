@@ -1,0 +1,97 @@
+---
+number: 2547
+type: issue
+updated_at: "2026-05-12T15:21:43Z"
+title: "計画: feat(workflow): 親 Issue close 時に「計画 Issue 以外の子」を自動 close する逆方向連鎖"
+status: Review
+parent: 2502
+subIssuesSummary: "[object Object]"
+cached_at: "2026-05-13T00:47:20.616Z"
+---
+
+## 計画
+
+### 対象スコープ（トリガー別）
+
+| トリガー | 逆方向連鎖の発火 | 変更要否 |
+|---------|---------------|---------|
+| `issue close`（`cmdItemClose` 経由） | 発火する（既存の `syncChildCloseOnParentClose` 呼び出しを拡張） | フィルタ拡張のみ |
+| `issue cancel`（`cancel.ts` → `cmdItemClose` 経由） | 発火する（上と同様） | フィルタ拡張のみ |
+| `issue rollback --action cancel`（`rollback/index.ts:397`） | **現状は発火しない**（`closeIssueById` 直呼びで `syncChildCloseOnParentClose` を経由しない） | 明示フック追加が必要 |
+| `pr merge`（`pr/merge.ts:243` → 実作業 Issue の子に呼ぶ） | **スコープ外**（実作業 Issue の直下に子がいるケースは想定外。`syncParentStatus` → `closeDoneParent` ルートも `syncChildCloseOnParentClose` を呼ばないため「兄弟子の cascade」は発火しない） | スコープ外宣言 |
+
+**方針（方針 B 採用）:** `rollback/index.ts:397` で `closeIssueById` を呼ぶ直前に `syncChildCloseOnParentClose(owner, repo, number, logger, "NOT_PLANNED")` を追加する。`pr merge` 経由の「兄弟子 cascade」は本 Issue のスコープ外とし、別 Issue で対応する。
+
+### アプローチ
+
+`syncChildCloseOnParentClose()` を拡張し、現在の対象（計画 Issue の Open 子 + Done(Open) / Approved(Open) の全子）に加えて「実作業サブ Issue（計画/設計 Issue 以外の Open 状態の子）」を連動 close 対象に追加する。
+
+連動 close 対象の範囲は「Open 状態の実作業サブ Issue すべて（Backlog / ToDo / In Progress / Review / Blocked を含む）」とする。根拠: 親 Issue が cancel または close された場合、未完了・進行中の子を放置することは整合性上問題があり、要件 #2502 AC「実作業サブ Issue が自動 close される」は close/cancel 時点の全 Open 状態を対象と解釈する。`stateReason` の継承は現行の `parentStateReason` 伝搬パターン（#2329）を踏襲する。
+
+トリガーのカバレッジ:
+- `issue close` / `issue cancel`（`cmdItemClose` 経由）: `cascadeCloseTargets` フィルタ拡張のみで対応
+- `issue rollback --action cancel`: `rollback/index.ts:397` に `syncChildCloseOnParentClose` の明示フック追加
+
+### 設計判断
+
+**対象トリガー（方針 B での確定）**
+
+`issue rollback --action cancel` は `closeIssueById(issueId, "NOT_PLANNED")` を直接呼ぶだけで `syncChildCloseOnParentClose` を経由しない（`rollback/index.ts:397`）。ユーザー体感の一貫性を保つために、rollback/index.ts の `closeIssueById` 呼び出し直前に `syncChildCloseOnParentClose(owner, repo, number, logger, "NOT_PLANNED")` を追加する（方針 B: 親 close を実行するエントリから直接呼び出す）。
+
+`pr merge` 経由は「実作業 Issue が merge されたとき、その実作業 Issue 自身の子」に対して `syncChildCloseOnParentClose` を呼ぶが、実作業 Issue は通常子を持たないため実質的に空の連鎖となる。さらに「PR マージ → 親エピックが `syncParentStatus` 経由で Done → `closeDoneParent`」のルートは `syncChildCloseOnParentClose` を呼ばないため「兄弟子の cascade」は発火しない。本 Issue のスコープ外と明示する。
+
+**連動 close 対象の状態範囲（H1 対応）**
+
+既存ロジック（`parent-status.ts:787-804`）の `cascadeCloseTargets` は Done(Open) / Approved(Open) のみを対象としていた（「完了済みだが Open で残っている子をクリーンアップする」という意味論）。本拡張では未完了状態（Backlog / ToDo / In Progress / Review / Blocked）の実作業サブ Issue まで連動 close 対象に広げる（「親が close/cancel されたなら未完了の子も含めて閉じる」という意味論への質的拡張）。正当性: 親の close/cancel はそのエピック・親タスクの中止・完了を意味し、未完了の実作業を継続するユーザー意図は想定しない。
+
+**対象子 Issue の判定（H3 / M1 対応）**
+
+既存の `isPlanOrDesignIssue(n)` を使い、計画 Issue（`area:plan` ラベル優先、タイトル prefix `計画:`/`Plan:` がフォールバック）と設計 Issue（`area:design` ラベル優先、タイトル prefix `設計:`/`Design:` がフォールバック）を除外する。設計 Issue は現時点で `area:design` ラベル未運用のため、タイトル prefix が事実上の判定根拠となる。`Plan:` / `Design:` 始まりの実作業 Issue が誤判定されるリスクは運用上ないと判断。
+
+残る Open 子が「実作業サブ Issue」扱い。計画 Issue と設計 Issue は引き続き既存ブランチ（`isPlanIssue(n)` 条件）で処理する。
+
+**ループ防止（M2 対応）**
+
+- `syncChildCloseOnParentClose` は子を `closeIssueById` で close するが、`closeIssueById` は `syncParentStatus` を呼ばない。`syncChildCloseOnParentClose` は子 close 後に再帰しない（一方向 1 段のみ）。
+- `closeDoneParent`（`syncParentStatus` 内部）は `syncChildCloseOnParentClose` を呼ばない（`parent-status.ts:461-490` 参照）。
+- これにより「`syncChildCloseOnParentClose` → 子 close → `closeDoneParent` 経由で祖父 close → 再び `syncChildCloseOnParentClose`」という相互再帰は発生しない。追加ガードは不要。
+
+**子に PR/孫 Issue がある場合（M3 対応）**
+
+- PR がある場合: `syncChildCloseOnParentClose` は PR の有無を判定しない。子 Issue を `closeIssueById` で close するだけで、PR 側に対する操作は行わない（制限なし close、警告も出さない）。PR のクリーンアップは別途 `issue rollback --action cancel` で行う設計。
+- 孫 Issue がある場合: `syncChildCloseOnParentClose` は再帰呼び出しを行わないため、孫には到達しない（1 段のみの保証）。孫が残存する場合は既存の integrity check に委ねる。
+- best-effort 継続（既存方針と統一）。
+
+**対象範囲（Low 対応）**
+
+エピック・計画 Issue を含めた全ての「親」に対して適用する。親が close されると、Open 状態の実作業サブ Issue が連動 close される:
+- エピック親 close → 計画 Issue（既存対象）+ 実作業サブ Issue（新規拡張）を close
+- 計画 Issue close → 実作業サブ Issue（新規拡張）を close
+
+**close 理由の継承**
+
+親が NOT_PLANNED で close された場合、実作業サブ Issue も NOT_PLANNED で close する（`parentStateReason` 伝搬、#2329 パターン踏襲）。`pr merge` 経由では実作業サブ Issue まで cascade しないため（スコープ外宣言）、`pr/merge.ts:243` での `parentStateReason` 引数省略（デフォルト COMPLETED 固定）は本拡張の影響を受けない。
+
+### 変更対象ファイル
+
+- `packages/flow/src/utils/parent-status.ts` — `syncChildCloseOnParentClose` の `cascadeCloseTargets` フィルタに「計画/設計 Issue でない Open 子（実作業サブ Issue）」を追加
+- `packages/flow/src/commands/issue/rollback/index.ts` — `rollback --action cancel` 経路（line 397）の `closeIssueById` 呼び出し直前に `syncChildCloseOnParentClose(owner, repo, number, logger, "NOT_PLANNED")` を追加
+- `packages/flow/__tests__/utils/parent-status-child-close.test.ts` — 経路別シナリオ追加
+- `packages/flow/__tests__/commands/issue/rollback.test.ts` — `rollback --action cancel` 経路で逆方向連鎖が発火することを検証
+
+### タスク分解
+
+- [ ] `syncChildCloseOnParentClose` の `cascadeCloseTargets` フィルタを拡張し、「計画/設計 Issue でない Open 子（実作業サブ Issue）」を close 対象に追加する（`parent-status.ts`）
+- [ ] `stateReason` 伝搬: 実作業サブ Issue も既存の `parentStateReason` パラメータをそのまま使う（追加変更なし）
+- [ ] `rollback/index.ts:397` の `closeIssueById` 呼び出し直前に `syncChildCloseOnParentClose(owner, repo, number, logger, "NOT_PLANNED")` を追加する（方針 B: rollback cancel 経路でも逆方向連鎖を発火させる）
+- [ ] `parent-status-child-close.test.ts` に「実作業サブ Issue（計画/設計でない Open 子）が親 close 時に close される」シナリオを追加する（`cmdItemClose` 経由）
+- [ ] `parent-status-child-close.test.ts` に「`syncChildCloseOnParentClose` は再帰しないため孫に到達しない」ことを明示検証するシナリオを追加する
+- [ ] `rollback.test.ts`（または `__tests__/commands/issue/rollback.test.ts`）に「`rollback --action cancel` で実作業サブ Issue の逆方向連鎖が発火する」シナリオを追加する
+- [ ] `pr merge` 経由で「兄弟子 cascade」が発火しないことをスコープ外と明示したコメントを `pr/merge.ts` の `syncChildCloseOnParentClose` 呼び出し近傍に追記する（将来の誤実装防止）
+- [ ] `parent-status-child-close.test.ts` に「`pr merge` 経由の `syncChildCloseOnParentClose` は実作業 Issue 自身の子に対して呼ばれる（兄弟子には到達しない）」ことを確認するシナリオを追加する
+- [ ] 既存テスト（`parent-status.test.ts` / `sync-parent-status.test.ts`）が PASS することを確認する（`syncParentStatus` には変更を加えないため、正方向連鎖が壊れる根拠は乏しい。コードへの変更は行わず、テスト通過確認のみ）
+- [ ] 実装後に `pnpm test` でテストスイート全体が PASS することを確認する
+
+## 親 Issue
+
+#2502 の課題を参照。

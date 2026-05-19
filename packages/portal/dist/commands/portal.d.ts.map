@@ -1,0 +1,1 @@
+{"version":3,"file":"portal.d.ts","sourceRoot":"","sources":["../../src/commands/portal.ts"],"names":[],"mappings":"AAAA;;;;GAIG;AAUH,UAAU,aAAa;IACrB,OAAO,EAAE,MAAM,CAAC;IAChB,MAAM,EAAE,MAAM,CAAC;IACf,MAAM,CAAC,EAAE,MAAM,CAAC;IAChB,OAAO,CAAC,EAAE,OAAO,CAAC;CACnB;AAED;;GAEG;AACH,wBAAsB,aAAa,CAAC,OAAO,EAAE,aAAa,GAAG,OAAO,CAAC,MAAM,CAAC,CAsC3E"}

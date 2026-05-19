@@ -1,0 +1,20 @@
+[
+  {
+    "source": "#2482",
+    "author": "particles7",
+    "body": "## コミット完了\n\nsimplify による冗長コードの除去を実施した。`issue update` の二重ファイル解決解消、`AddCommentOptions`/`AddIssueOptions` の dead フィールド削除、`pr create` の排他チェック順序修正、不要コメント削除（4箇所）、テストの未使用 import/変数削除の計8ファイルを変更。\n\n**ブランチ:** feat/2482-positional-body-file\n**コミット:** 224d069 refactor(cli): simplify による冗長コード除去（#2482）\n**ファイル:** 8 ファイル変更\n**プッシュ:** yes",
+    "created_at": "2026-05-09T13:45:55Z"
+  },
+  {
+    "source": "#2482",
+    "author": "particles7",
+    "body": "## 実装完了\n\n`shirokuma-flow` CLI の Issue / PR body 受け渡し経路を **positional file argument に統一**し、`pr create --body <text>` インラインを物理的に廃止した。\n\n**ブランチ:** `feat/2482-positional-body-file`\n**PR:** #2485\n**計画:** #2484\n\n### 新 signature\n\n| コマンド | 旧 → 新 |\n|---------|--------|\n| `issue add` | `--file <file>` → `<file>` |\n| `issue comment <N>` | `--file <file>` → `<file>` |\n| `issue update <N>` | `--body <file>` → `[body-file]` |\n| `pr create [N]` | `--body-file <file>` / `--body <text>` → `[body-file]`（`--body` 廃止） |\n| `pr edit <N>` | `--body-file <file>` → `[body-file]` |\n| `pr reply <N>` | `--body-file <file>` → `<body-file>` |\n\n### 変更範囲\n\n- 実装: `packages/flow/src/commands/{issue,pr}/**`、`submit.ts` / `resume.ts` / `reject.ts` の追従\n- テスト: 既存テスト 37 件更新 + 新規 7 件追加（`positional-body-file.test.ts` に `--body` unknown option 検知含む）\n- プラグインスキル / ルール: ja / en 両プラグインで `commit-issue`, `plan-issue`, `prepare-flow`, `review-flow`, `evolving-rules` 等 ~80 ファイル\n- ユーザー向け docs: `docs/guide/workflows/*`, `docs/guide/reference/cli-quick-reference.md`, `docs/specs/cli/items-create.md`\n- Hook: `plugin/shirokuma-hooks/hooks/blocked-commands.json` のエラーメッセージを追従\n\n### Simplify の追加改善\n\n`finalize-changes` の `/simplify` レビューで以下の冗長を解消:\n\n- `issue update` の二重ファイル解決を解消（`issue/index.ts` の `resolveFileOption` 呼び出しを削除して `update/index.ts` 内ロジックに一本化、TOCTOU パターン除去）\n- `AddCommentOptions` / `AddIssueOptions` の dead な `body?: string` フィールド削除\n- `pr create` の `--from-file` + positional 排他チェック順序を修正（positional 注入を `resolveFromFileOption` の **前** に移動 — 同時指定で排他エラーが正しく発火）\n- WHAT を narrate するコメント・JSDoc 注記の削除\n\n### 検証\n\n- 168 スイート、2395 テスト全通過（2 skipped）\n- `/security-review`: 高信頼度の脆弱性なし",
+    "created_at": "2026-05-09T13:46:36Z"
+  },
+  {
+    "source": "#2482",
+    "author": "particles7",
+    "body": "## コミット完了\n\nPR #2485 のレビュー指摘 13 件（Critical 1 / High 3 / Medium 5 / Low 4）に対応。`issue update` の dual-path インライン受理を `resolveBodyFileOption` による構造的封鎖に変更し、ドキュメント・テスト・スキルリファレンス全体で positional `[body-file]` 表記に統一しました。\n\n**ブランチ:** feat/2482-positional-body-file\n**コミット:** f6d95b1 fix(cli): PR #2485 レビュー指摘 13 件に対応 — issue update インライン受理を構造的封鎖 (#2482)\n**ファイル:** 25 ファイル変更\n**プッシュ:** yes",
+    "created_at": "2026-05-09T14:16:18Z"
+  }
+]

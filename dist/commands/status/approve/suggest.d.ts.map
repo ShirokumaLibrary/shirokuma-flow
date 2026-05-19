@@ -1,0 +1,1 @@
+{"version":3,"file":"suggest.d.ts","sourceRoot":"","sources":["../../../../src/commands/status/approve/suggest.ts"],"names":[],"mappings":"AAAA;;;;;;;;;;;GAWG;AAEH,MAAM,MAAM,SAAS,GAAG,MAAM,GAAG,QAAQ,GAAG,QAAQ,CAAC;AAErD,MAAM,WAAW,YAAY;IAC3B,SAAS,EAAE,SAAS,CAAC;IACrB,YAAY,CAAC,EAAE,MAAM,CAAC;CACvB;AAED;;GAEG;AACH,wBAAgB,oBAAoB,CAAC,KAAK,EAAE,YAAY,GAAG,MAAM,EAAE,CAelE"}

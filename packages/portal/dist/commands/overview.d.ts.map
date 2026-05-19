@@ -1,0 +1,1 @@
+{"version":3,"file":"overview.d.ts","sourceRoot":"","sources":["../../src/commands/overview.ts"],"names":[],"mappings":"AAAA;;;;;GAKG;AAUH;;GAEG;AACH,UAAU,eAAe;IACvB,OAAO,EAAE,MAAM,CAAC;IAChB,MAAM,EAAE,MAAM,CAAC;IACf,MAAM,CAAC,EAAE,MAAM,CAAC;IAChB,OAAO,CAAC,EAAE,OAAO,CAAC;CACnB;AAwBD;;GAEG;AACH,wBAAgB,eAAe,CAAC,OAAO,EAAE,eAAe,GAAG,MAAM,CAkChE"}

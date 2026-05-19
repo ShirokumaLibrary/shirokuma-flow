@@ -378,7 +378,7 @@ export async function pushIssueBody(
         }
       }
 
-      // Status 更新（updateProjectStatus 経由で autoSetTimestamps）
+      // Status 更新（updateProjectStatus 経由）
       if (pendingStatusValue) {
         const result = await updateProjectStatus({
           projectId: pId,
@@ -386,7 +386,6 @@ export async function pushIssueBody(
           statusValue: pendingStatusValue,
           projectFields: pf,
           logger,
-          previousStatus: remoteStatus,
         });
         if (!result.success) {
           // バリデーション失敗でブロックされた場合
@@ -409,7 +408,6 @@ export async function pushIssueBody(
             }
           }
 
-          // 新規追加アイテムのため previousStatus は undefined（ロールバックガード不要）
           if (pendingStatusValue) {
             const result = await updateProjectStatus({
               projectId,
@@ -417,7 +415,6 @@ export async function pushIssueBody(
               statusValue: pendingStatusValue,
               projectFields: pf,
               logger,
-              previousStatus: undefined,
             });
             if (!result.success) {
               return 1;

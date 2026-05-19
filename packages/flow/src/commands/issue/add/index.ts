@@ -289,9 +289,8 @@ export async function cmdAddIssue(
     if (projectItemId) {
       logger.success("プロジェクトに追加しました");
 
-      // ADR-v3-014 / FIX-5 (#2161): Status は `autoSetTimestamps` を発動させるため `updateProjectStatus` 経由で設定する。
-      // 新規追加のため `previousStatus: undefined`（Backlog / Pending 等のマッピング対象外ステータスは
-      // `autoSetTimestamps` 内でサイレントスキップされる）。重複パターンを setFieldsWithStatusRouting に集約 (#2173)。
+      // ADR-v3-014 / FIX-5 (#2161): Status は `updateProjectStatus` 経由で設定する（#2207 型レベル強制）。
+      // 重複パターンを setFieldsWithStatusRouting に集約 (#2173)。
       const nonStatusFields: Record<string, string> = {};
       if (priorityValue) nonStatusFields["Priority"] = priorityValue;
       if (sizeValue) nonStatusFields["Size"] = sizeValue;
@@ -301,7 +300,6 @@ export async function cmdAddIssue(
         nonStatusFields,
         statusValue: createStatusValue,
         logger,
-        previousStatus: undefined,
       });
     }
   }

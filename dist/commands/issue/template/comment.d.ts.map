@@ -1,0 +1,1 @@
+{"version":3,"file":"comment.d.ts","sourceRoot":"","sources":["../../../../src/commands/issue/template/comment.ts"],"names":[],"mappings":"AAAA;;;;;GAKG;AAEH,OAAO,KAAK,EAAE,MAAM,EAAE,MAAM,wBAAwB,CAAC;AAErD,cAAc;AACd,MAAM,MAAM,WAAW,GAAG,eAAe,GAAG,iBAAiB,GAAG,mBAAmB,GAAG,UAAU,CAAC;AAoKjG;;;;;GAKG;AACH,wBAAgB,uBAAuB,CAAC,IAAI,EAAE,MAAM,EAAE,IAAI,EAAE,WAAW,GAAG,MAAM,CAG/E"}

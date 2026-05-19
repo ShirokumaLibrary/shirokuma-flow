@@ -157,9 +157,8 @@ export async function cmdImport(
     const itemId = await addItemToProject(projectId, privateIssue.id, logger);
     if (itemId) {
       logger.success("Added to project");
-      // ADR-v3-014 / FIX-4 (#2159): Status は `autoSetTimestamps` を発動させるため `updateProjectStatus` 経由で設定する。
-      // 新規追加のため `previousStatus: undefined`（Backlog / Pending 等のマッピング対象外ステータスは
-      // `autoSetTimestamps` 内でサイレントスキップされる）。重複パターンを setFieldsWithStatusRouting に集約 (#2173)。
+      // ADR-v3-014 / FIX-4 (#2159): Status は `updateProjectStatus` 経由で設定する（#2207 型レベル強制）。
+      // 重複パターンを setFieldsWithStatusRouting に集約 (#2173)。
       const nonStatusFields: Record<string, string> = {};
       if (options.priority) nonStatusFields["Priority"] = options.priority;
       if (options.size) nonStatusFields["Size"] = options.size;
@@ -169,7 +168,6 @@ export async function cmdImport(
         nonStatusFields,
         statusValue: importStatusValue,
         logger,
-        previousStatus: undefined,
       });
     }
   }

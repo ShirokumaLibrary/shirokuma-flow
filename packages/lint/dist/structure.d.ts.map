@@ -1,0 +1,1 @@
+{"version":3,"file":"structure.d.ts","sourceRoot":"","sources":["../src/structure.ts"],"names":[],"mappings":"AAGA,OAAO,KAAK,EACV,mBAAmB,EACnB,mBAAmB,EAEpB,MAAM,sBAAsB,CAAC;AAE9B,MAAM,WAAW,mBAAmB;IAClC,WAAW,EAAE,MAAM,CAAC;IACpB,MAAM,EAAE,mBAAmB,CAAC;CAC7B;AAED,wBAAgB,aAAa,CAAC,MAAM,EAAE,mBAAmB,GAAG,mBAAmB,CAiC9E"}

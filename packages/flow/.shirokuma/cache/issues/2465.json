@@ -1,0 +1,9 @@
+{
+  "number": 2465,
+  "type": "issue",
+  "title": "計画: improve: rules inject の bundled 不在時を明示エラー化",
+  "body": "",
+  "status": "Done",
+  "labels": [],
+  "assignees": []
+}

@@ -1,0 +1,9 @@
+{
+  "number": 2544,
+  "type": "issue",
+  "title": "fix(cli): status transition --rollback が setItemFields 内部の再バリデーションに伝わらない（6 値モデルリグレッション）",
+  "body": "",
+  "status": "In progress",
+  "labels": [],
+  "assignees": []
+}

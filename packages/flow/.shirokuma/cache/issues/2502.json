@@ -1,0 +1,9 @@
+{
+  "number": 2502,
+  "type": "issue",
+  "title": "feat(workflow): 親 Issue close 時に「計画 Issue 以外の子」を自動 close する逆方向連鎖",
+  "body": "",
+  "status": "In progress",
+  "labels": [],
+  "assignees": []
+}

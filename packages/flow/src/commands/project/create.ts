@@ -85,7 +85,6 @@ export async function cmdCreate(
 
   // Set fields if provided
   // Status は setFieldsWithStatusRouting 経由で updateProjectStatus を呼び出す（#2207）。
-  // 新規作成のため previousStatus は undefined。
   const fields = buildFieldsDict(options);
 
   if (Object.keys(fields).length > 0) {
@@ -96,7 +95,6 @@ export async function cmdCreate(
       nonStatusFields,
       statusValue,
       logger,
-      previousStatus: undefined,
     });
   }
 

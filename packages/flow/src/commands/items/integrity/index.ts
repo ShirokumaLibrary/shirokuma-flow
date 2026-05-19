@@ -21,8 +21,6 @@ import {
 } from "../../../utils/gh-config.js";
 import {
   getProjectFields,
-  updateTextField,
-  generateTimestamp,
   type ProjectField,
 } from "../../../utils/project-fields.js";
 import { deriveExpectedParentStatus, extractSubIssueStatuses, findPlanIssue, isPlanIssue, syncParentStatus, type SubIssueNode } from "../../../utils/parent-status.js";
@@ -320,86 +318,6 @@ export async function fetchItemTextFieldValues(
   }
 
   return itemMap;
-}
-
-// =============================================================================
-// fetchStatusTransitionTimestamp - Timeline API によるステータス遷移時刻取得
-// =============================================================================
-
-/**
- * GitHub GraphQL `timelineItems` API（`ProjectV2ItemStatusChangedEvent`）から
- * 特定ステータスへの遷移時刻を取得する（Projects V2 対応）。
- *
- * @param owner - リポジトリオーナー
- * @param repo - リポジトリ名
- * @param issueNumber - Issue 番号
- * @param targetStatus - 遷移先ステータス名（例: "In Progress", "Review"）
- * @param logger - ロガー
- * @returns ISO 8601 タイムスタンプ文字列、取得失敗時は null
- */
-export async function fetchStatusTransitionTimestamp(
-  owner: string,
-  repo: string,
-  issueNumber: number,
-  targetStatus: string,
-  logger: Logger
-): Promise<string | null> {
-  interface StatusEventNode {
-    createdAt?: string;
-    status?: string;
-  }
-  interface QueryResult {
-    data?: {
-      repository?: {
-        issue?: {
-          timelineItems?: {
-            nodes?: StatusEventNode[];
-          };
-        } | null;
-      } | null;
-    };
-  }
-
-  const query = `
-    query($owner: String!, $repo: String!, $number: Int!) {
-      repository(owner: $owner, name: $repo) {
-        issue(number: $number) {
-          timelineItems(first: 100, itemTypes: [PROJECT_V2_ITEM_STATUS_CHANGED_EVENT]) {
-            nodes {
-              ... on ProjectV2ItemStatusChangedEvent {
-                createdAt
-                status
-              }
-            }
-          }
-        }
-      }
-    }
-  `;
-
-  const result = await runGraphQL<QueryResult>(query, {
-    owner,
-    repo,
-    number: issueNumber,
-  });
-
-  if (!result.success) {
-    logger.debug(`Timeline GraphQL error for #${issueNumber}: ${result.error}`);
-    return null;
-  }
-
-  const nodes = result.data?.data?.repository?.issue?.timelineItems?.nodes ?? [];
-  for (const node of nodes) {
-    if (node.status === targetStatus && node.createdAt) {
-      logger.debug(
-        `Timeline: Found '${targetStatus}' transition at ${node.createdAt} for #${issueNumber}`
-      );
-      return node.createdAt;
-    }
-  }
-
-  logger.debug(`Timeline: No '${targetStatus}' transition found for #${issueNumber}`);
-  return null;
 }
 
 // =============================================================================
@@ -741,7 +659,6 @@ export async function cmdIntegrity(
           "Done",
           fields,
           logger,
-          issueData.status ?? undefined
         );
 
         fixes.push({
@@ -790,7 +707,6 @@ export async function cmdIntegrity(
         targetStatus,
         fields,
         logger,
-        prData.status ?? undefined
       );
 
       fixes.push({
@@ -826,7 +742,6 @@ export async function cmdIntegrity(
         targetStatus,
         fields,
         logger,
-        summary.currentStatus ?? undefined
       );
 
       fixes.push({
@@ -877,7 +792,6 @@ export async function cmdIntegrity(
         STATUS_VALUES.DONE,
         fields,
         logger,
-        issueData.status ?? undefined
       );
 
       fixes.push({
@@ -913,7 +827,7 @@ export async function cmdIntegrity(
           projectFieldsCache[issueData.projectId] = await getProjectFields(issueData.projectId);
         }
         const fields = projectFieldsCache[issueData.projectId];
-        const success = await updateIssueStatus(issueData.projectId, issueData.projectItemId, STATUS_VALUES.IN_PROGRESS, fields, logger, issueData.status ?? undefined);
+        const success = await updateIssueStatus(issueData.projectId, issueData.projectItemId, STATUS_VALUES.IN_PROGRESS, fields, logger);
         fixes.push({ number: item.number, action: "plan-to-in-progress", success, error: success ? undefined : "Failed to update plan issue status" });
         if (success) {
           logger.success(`P1 fix: 計画 Issue #${item.number} → In Progress`);
@@ -941,7 +855,7 @@ export async function cmdIntegrity(
           projectFieldsCache[issueData.projectId] = await getProjectFields(issueData.projectId);
         }
         const fields = projectFieldsCache[issueData.projectId];
-        const statusSuccess = await updateIssueStatus(issueData.projectId, issueData.projectItemId, STATUS_VALUES.DONE, fields, logger, issueData.status ?? undefined);
+        const statusSuccess = await updateIssueStatus(issueData.projectId, issueData.projectItemId, STATUS_VALUES.DONE, fields, logger);
         if (statusSuccess) {
           const issueId = await getIssueId(owner, repo, item.number);
           if (issueId) {
@@ -987,75 +901,9 @@ export async function cmdIntegrity(
     logger.debug(`Metrics inconsistencies: ${metricsIssues.length}`);
 
     inconsistencies.push(...metricsIssues);
-
-    if (options.fix && metricsIssues.length > 0) {
-      for (const item of metricsIssues) {
-        const missingField = item.metadata?.missingField;
-        if (!missingField) continue;
-
-        const issueData = allIssues.find((i) => i.number === item.number);
-        if (!issueData?.projectItemId || !issueData?.projectId) continue;
-
-        if (!projectFieldsCache[issueData.projectId]) {
-          projectFieldsCache[issueData.projectId] = await getProjectFields(issueData.projectId);
-        }
-        const pf = projectFieldsCache[issueData.projectId];
-        const fieldInfo = pf[missingField];
-        if (!fieldInfo || fieldInfo.type !== "TEXT") continue;
-
-        // タイムスタンプの決定（設計意図）:
-        // - warning（In Progress/Review の欠落）: Timeline API → 現在時刻フォールバック
-        //   ∵ ステータス遷移時刻が最も正確な補正値。Projects V2 では REST Timeline API が
-        //     機能しないため現在時刻がベストエフォートの近似値となる
-        // - info（Done の欠落）: closedAt → 現在時刻フォールバック
-        //   ∵ Done 遷移は Issue の close と同期するため closedAt が正確な近似値。
-        //   Timeline API を試行しない理由: closedAt のほうが確実かつ API 呼び出しを節約できる
-        let ts: string;
-        if (item.severity === "warning" && item.projectStatus) {
-          // Timeline API から遷移時刻を取得
-          const timelineTs = await fetchStatusTransitionTimestamp(
-            owner,
-            repo,
-            item.number,
-            item.projectStatus,
-            logger
-          );
-          if (timelineTs) {
-            ts = timelineTs;
-            logger.debug(
-              `Timeline: Using transition timestamp ${ts} for #${item.number} (${item.projectStatus})`
-            );
-          } else {
-            ts = generateTimestamp();
-            logger.warn(
-              `Timeline: Could not retrieve transition timestamp for #${item.number} (${item.projectStatus}), using current time`
-            );
-          }
-        } else {
-          ts = issueData.closedAt ?? generateTimestamp();
-        }
-
-        const success = await updateTextField(
-          issueData.projectId,
-          issueData.projectItemId,
-          fieldInfo.id,
-          ts
-        );
-
-        fixes.push({
-          number: item.number,
-          action: "backfill-timestamp",
-          success,
-          error: success ? undefined : "Failed to set Text field",
-        });
-
-        if (success) {
-          logger.success(`Backfilled ${missingField} for #${item.number} (${ts})`);
-        } else {
-          logger.error(`Failed to backfill ${missingField} for #${item.number}`);
-        }
-      }
-    }
+    // #2617: 欠落タイムスタンプの backfill 経路は削除（autoSetTimestamps 廃止に伴い、
+    // missingField を含む inconsistency が発生しなくなったため）。
+    // 残るのは stale 検出（info）のみで、これは fix 対象外（情報提供のみ）。
   }
 
   // 6. --fix 後に open-issues インデックスをリビルド

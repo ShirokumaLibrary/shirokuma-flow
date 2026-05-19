@@ -1,0 +1,1 @@
+{"version":3,"file":"merge.d.ts","sourceRoot":"","sources":["../../../src/commands/pr/merge.ts"],"names":[],"mappings":"AAAA;;;;;;;;;;;;GAYG;AAEH,OAAO,EAAE,MAAM,EAAE,MAAM,uBAAuB,CAAC;AAsC/C,OAAO,KAAK,EAAE,eAAe,EAAE,MAAM,YAAY,CAAC;AAMlD,wBAAsB,QAAQ,CAC5B,WAAW,EAAE,MAAM,GAAG,SAAS,EAC/B,OAAO,EAAE,eAAe,EACxB,MAAM,EAAE,MAAM,GACb,OAAO,CAAC,MAAM,CAAC,CAkXjB"}

@@ -1,0 +1,47 @@
+{
+  "target": {
+    "number": 2482,
+    "type": "issue",
+    "title": "feat(cli): issue/pr の body 受け渡し経路を positional file argument に統一しインライン --body を廃止",
+    "body": "## 目的\n\nIssue / PR の本文を受け取る CLI 経路を **positional file argument に統一**し、インライン `--body <text>` を物理的に塞ぐことで、multibyte 文字（日本語など）の mojibake を構造的に防ぐ。同時に「常に file が必要」なフラグを冗長な `--body-file` から positional に変えて、CLI を素直にする。\n\n## 概要\n\nshirokuma-flow の現状コマンド調査結果（`--help` 出力ベース）:\n\n| コマンド | 現状の body 渡し | mojibake 経路 | 提案 |\n|---------|---------------|--------------|------|\n| `issue add` | `--file <file>` (required) | なし（既に file 経由） | `issue add <file>` に positional 化 |\n| `issue update <N>` | `--body <file>` (file 受け取り、title/label のみ更新も可) | なし | `issue update <N> [body-file] --title ...` に positional 化（body は optional positional） |\n| `issue comment <N>` | `--file <file>` (required) | なし | `issue comment <N> <file>` に positional 化 |\n| `issue push <N>` | キャッシュから push（番号のみ） | なし | 変更なし |\n| `pr create [N]` | `--body-file <file>` / **`--body <body>` (インライン)** / `--from-file <file>` | **`--body <body>` がインライン → 主要な mojibake 経路** | `--body <body>` を **廃止**、`--body-file` を positional `<body-file>` に統一 |\n| `pr edit <N>` | `--body-file <file>` | なし | `pr edit <N> [body-file] --title ...` に positional 化 |\n| `pr reply <N>` | `--body-file <file>` + `--reply-to <id>` | なし | `pr reply <N> <body-file> --reply-to <id>` に positional 化 |\n\n**重要な発見**: 構造的に mojibake リスクが残っているのは `pr create --body <body>` インライン経路のみ。残りは既に file 経由なので、本 Issue は実質「`pr create` のインライン廃止 + 全コマンドの positional 化リファクタ」となる。\n\n## 背景\n\n- 当初は「`gh` 直接呼び出しで `--body \"...\"` を使うと mojibake が起きる」という観察から `--body-file` 強制ガードレールを想定していた\n- 実際には `gh issue/pr edit` の直接呼び出しは `plugin/shirokuma-hooks/blocked-commands.json` で既にブロック済みで、AI は `shirokuma-flow` 経由を強制されている\n- shirokuma-flow CLI 側の調査で、インライン body 経路が残っているのは `pr create --body <body>` のみと判明\n- 「常に file 必須」のフラグを `--body-file <file>` で渡すのは Commander.js 慣習として冗長（required value は positional が標準）\n- pre-release alpha のため、CLI signature の破壊変更は許容（CLAUDE.md「既存ユーザーへの移行パス・互換スタブ・段階的 deprecation は不要」方針）\n- ADR-v3-019（AI 一次利用前提の CLI ヘルプ設計）の流れに沿う: AI から見た CLI の素直さを上げる\n\n## 検討事項\n\n- **`pr create --body <body>` の廃止理由を help/doc に明記**: 単に消すだけでなく、AI 用ガイダンスとして「multibyte 安全のため `--body-file` 経由（positional）のみ」を CLI 出力でも示す\n- **`issue update` / `pr edit` の body は optional positional**: title/label のみ更新するケースを壊さない。Commander.js の `[body-file]` 角括弧記法で表現\n- **`gh` 内部呼び出し経路の確認**: shirokuma-flow が内部で `gh issue/pr create/edit/comment` を呼ぶ実装で `--body` インラインを使っていないか調査。使っていれば `--body-file <tmp>` 一本化（tmp file は内部で生成・削除）\n- **stdin サポートの維持**: 現状 `--body-file -` で stdin が使えるため、positional でも `<body-file>` に `-` を渡せる挙動を維持\n- **`pr create --from-file` との関係**: `--from-file` は frontmatter 付き md からメタデータごと読む経路で、本 Issue の対象外（既に file 経由 + 別目的）。ただし positional <body-file> と排他にする必要あり（同時指定はエラー）\n- **テスト影響**: `__tests__/commands/{issue,pr}/**` の既存呼び出し箇所を grep して positional 形式に書き換え。`runCli` ヘルパーの引数構築部分も含む\n- **既存ドキュメントの追従**: `.shirokuma/rules/shirokuma-flow/github-commands.md` の例を全て positional 形式に更新\n- **skill / agent からの呼び出し**: `plugin/shirokuma-skills-{en,ja}/skills/**/SKILL.md` 内の例示コマンドも positional に書き換え（特に `commit-issue` `open-pr-issue` `create-item-flow` 周辺）\n\n## 成果物\n\n- **`pr create` の `--body <body>` インライン経路削除**: 実装・テスト・ドキュメント全て\n- **positional 化対象コマンドの signature 変更**:\n  - `issue add <file>`（旧 `--file`）\n  - `issue comment <number> <file>`（旧 `--file`）\n  - `issue update <number> [body-file]`（旧 `--body`、optional）\n  - `pr create [number] [body-file]`（旧 `--body-file`、optional / `--from-file` と排他）\n  - `pr edit <number> [body-file]`（旧 `--body-file`、optional）\n  - `pr reply <number> <body-file>`（旧 `--body-file`、`--reply-to` は残す）\n- **`gh` 内部呼び出しが `--body` インラインを使っている箇所があれば `--body-file <tmp>` に修正**（要調査）\n- **既存テスト・スキル・ルール・ドキュメントの一括書き換え**:\n  - `__tests__/commands/{issue,pr}/**`\n  - `plugin/shirokuma-skills-{en,ja}/skills/**/SKILL.md`\n  - `.shirokuma/rules/shirokuma-flow/github-commands.md`\n  - `CLAUDE.md` の例示部分\n- **動作確認**:\n  - 日本語 body での pr create / issue comment / issue update round-trip テスト（push → fetch → 文字列一致）\n  - `pr create --body \"...\"` がエラーになることを assert するテスト\n  - `--body-file -`（stdin）が新 positional でも動くことの確認\n",
+    "status": "Done",
+    "labels": [
+      "area:cli",
+      "area:github",
+      "feature"
+    ],
+    "assignees": [
+      "particles7"
+    ]
+  },
+  "parent": null,
+  "children": [
+    {
+      "number": 2484,
+      "title": "計画: feat(cli): issue/pr の body 受け渡し経路を positional file argument に統一しインライン --body を廃止",
+      "status": "Done"
+    }
+  ],
+  "discussions": [],
+  "pull_requests": [],
+  "recent_comments": [
+    {
+      "source": "#2482",
+      "author": "particles7",
+      "body": "## コミット完了\n\nsimplify による冗長コードの除去を実施した。`issue update` の二重ファイル解決解消、`AddCommentOptions`/`AddIssueOptions` の dead フィールド削除、`pr create` の排他チェック順序修正、不要コメント削除（4箇所）、テストの未使用 import/変数削除の計8ファイルを変更。\n\n**ブランチ:** feat/2482-positional-body-file\n**コミット:** 224d069 refactor(cli): simplify による冗長コード除去（#2482）\n**ファイル:** 8 ファイル変更\n**プッシュ:** yes",
+      "created_at": "2026-05-09T13:45:55Z"
+    },
+    {
+      "source": "#2482",
+      "author": "particles7",
+      "body": "## 実装完了\n\n`shirokuma-flow` CLI の Issue / PR body 受け渡し経路を **positional file argument に統一**し、`pr create --body <text>` インラインを物理的に廃止した。\n\n**ブランチ:** `feat/2482-positional-body-file`\n**PR:** #2485\n**計画:** #2484\n\n### 新 signature\n\n| コマンド | 旧 → 新 |\n|---------|--------|\n| `issue add` | `--file <file>` → `<file>` |\n| `issue comment <N>` | `--file <file>` → `<file>` |\n| `issue update <N>` | `--body <file>` → `[body-file]` |\n| `pr create [N]` | `--body-file <file>` / `--body <text>` → `[body-file]`（`--body` 廃止） |\n| `pr edit <N>` | `--body-file <file>` → `[body-file]` |\n| `pr reply <N>` | `--body-file <file>` → `<body-file>` |\n\n### 変更範囲\n\n- 実装: `packages/flow/src/commands/{issue,pr}/**`、`submit.ts` / `resume.ts` / `reject.ts` の追従\n- テスト: 既存テスト 37 件更新 + 新規 7 件追加（`positional-body-file.test.ts` に `--body` unknown option 検知含む）\n- プラグインスキル / ルール: ja / en 両プラグインで `commit-issue`, `plan-issue`, `prepare-flow`, `review-flow`, `evolving-rules` 等 ~80 ファイル\n- ユーザー向け docs: `docs/guide/workflows/*`, `docs/guide/reference/cli-quick-reference.md`, `docs/specs/cli/items-create.md`\n- Hook: `plugin/shirokuma-hooks/hooks/blocked-commands.json` のエラーメッセージを追従\n\n### Simplify の追加改善\n\n`finalize-changes` の `/simplify` レビューで以下の冗長を解消:\n\n- `issue update` の二重ファイル解決を解消（`issue/index.ts` の `resolveFileOption` 呼び出しを削除して `update/index.ts` 内ロジックに一本化、TOCTOU パターン除去）\n- `AddCommentOptions` / `AddIssueOptions` の dead な `body?: string` フィールド削除\n- `pr create` の `--from-file` + positional 排他チェック順序を修正（positional 注入を `resolveFromFileOption` の **前** に移動 — 同時指定で排他エラーが正しく発火）\n- WHAT を narrate するコメント・JSDoc 注記の削除\n\n### 検証\n\n- 168 スイート、2395 テスト全通過（2 skipped）\n- `/security-review`: 高信頼度の脆弱性なし",
+      "created_at": "2026-05-09T13:46:36Z"
+    },
+    {
+      "source": "#2482",
+      "author": "particles7",
+      "body": "## コミット完了\n\nPR #2485 のレビュー指摘 13 件（Critical 1 / High 3 / Medium 5 / Low 4）に対応。`issue update` の dual-path インライン受理を `resolveBodyFileOption` による構造的封鎖に変更し、ドキュメント・テスト・スキルリファレンス全体で positional `[body-file]` 表記に統一しました。\n\n**ブランチ:** feat/2482-positional-body-file\n**コミット:** f6d95b1 fix(cli): PR #2485 レビュー指摘 13 件に対応 — issue update インライン受理を構造的封鎖 (#2482)\n**ファイル:** 25 ファイル変更\n**プッシュ:** yes",
+      "created_at": "2026-05-09T14:16:18Z"
+    }
+  ]
+}

@@ -1,0 +1,1 @@
+{"version":3,"file":"resolve.d.ts","sourceRoot":"","sources":["../../../src/commands/pr/resolve.ts"],"names":[],"mappings":"AAAA;;;;GAIG;AAEH,OAAO,EAAE,MAAM,EAAE,MAAM,uBAAuB,CAAC;AAM/C,OAAO,KAAK,EAAE,eAAe,EAAE,MAAM,YAAY,CAAC;AAkBlD,wBAAsB,UAAU,CAC9B,WAAW,EAAE,MAAM,EACnB,OAAO,EAAE,eAAe,EACxB,MAAM,EAAE,MAAM,GACb,OAAO,CAAC,MAAM,CAAC,CAoDjB"}

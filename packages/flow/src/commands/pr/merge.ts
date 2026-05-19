@@ -186,7 +186,7 @@ export async function cmdMerge(
 
   logger.success(`Merged PR #${prNumber} (${mergeMethod})`);
 
-  // Try to update linked issues to Done + autoSetTimestamps (best-effort, #676)
+  // Try to update linked issues to Done (best-effort, #676)
   const linkedIssuesUpdated: Array<{ number: number; status: string }> = [];
 
   if (linkedNumbers.length > 0) {
@@ -290,7 +290,7 @@ export async function cmdMerge(
       }
     }
 
-    if (options.deleteLocal && headRef) {
+    if (options.deleteLocal !== false && headRef) {
       const deleteResult = await execFileAsync("git", ["branch", "-d", headRef]);
       if (deleteResult.exitCode === 0) {
         localBranchDeleted = true;
@@ -412,7 +412,6 @@ export async function cmdMerge(
                 statusValue: STATUS_VALUES.REVIEW,
                 projectFields,
                 logger,
-                previousStatus: undefined,
               });
               logger.success("Integration PR をプロジェクトに追加しました（Review）");
             }

@@ -1,0 +1,20 @@
+[
+  {
+    "source": "#2462",
+    "author": "particles7",
+    "body": "## コミット完了\n\n`packages/flow/src/commands/rules/inject.ts` にバンドルプラグインの `rules/` ディレクトリ不在時の明示エラーを追加し、動作を検証する新規テスト 2 件を追加しました。\n\n**ブランチ:** fix/2462-rules-inject-bundled-missing-error\n**コミット:** cf4eaec fix(rules): bundled プラグインの rules/ 不在時に明示エラーを追加 (#2462)\n**ファイル:** 2 ファイル変更\n**プッシュ:** yes",
+    "created_at": "2026-05-09T00:18:37Z"
+  },
+  {
+    "source": "#2462",
+    "author": "particles7",
+    "body": "## コミット完了\n\n`inject.ts` の `process.stderr.write` を `console.error` に変更し、`cli-helpers.ts` のパターンに揃えました。あわせてテストヘルパーを `captureStderr` から `captureConsoleError`（jest.spyOn パターン）に変更しています。\n\n**ブランチ:** fix/2462-rules-inject-bundled-missing-error\n**コミット:** 3fa3627 refactor(rules): process.stderr.write を console.error に統一、テストを captureConsoleError に変更 (#2462)\n**ファイル:** 2 ファイル変更\n**プッシュ:** yes",
+    "created_at": "2026-05-09T00:26:53Z"
+  },
+  {
+    "source": "#2462",
+    "author": "particles7",
+    "body": "## 作業完了\n\n`rules inject` の bundled フォールバック経路において、bundled プラグインの `rules/` ディレクトリが存在しない場合のサイレント失敗を解消しました。\n\n**ブランチ:** `fix/2462-rules-inject-bundled-missing-error`\n**PR:** #2466\n**計画 Issue:** #2465\n\n### 変更内容\n\n| ファイル | 変更 |\n|---------|------|\n| `packages/flow/src/commands/rules/inject.ts` | `existsSync` チェック + `console.error` + `setExitCode(1)` を追加 |\n| `packages/flow/__tests__/commands/rules-inject-bundled-missing.test.ts` | 新規テストファイル: 2 ケース (lang=en / lang=ja の不在エラー) |\n\n### コミット履歴\n\n1. `cf4eaec` fix(rules): bundled プラグインの rules/ 不在時に明示エラーを追加\n2. `3fa3627` refactor(rules): `process.stderr.write` を `console.error` に統一（`cli-helpers.ts` のパターンに合わせる）\n\n### 検証\n\n- [x] 新規テスト 2 件 PASS\n- [x] 既存 `rules-inject.test.ts` 12 件 PASS（regression なし）\n- [x] `pnpm build` 成功\n- [x] セキュリティレビュー: 問題なし（内部リゾルバ経由のパスのみ、新規 attack surface なし）\n- [x] simplify レビュー: コードベース慣習との整合性を改善",
+    "created_at": "2026-05-09T00:27:26Z"
+  }
+]

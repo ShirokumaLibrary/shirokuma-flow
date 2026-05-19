@@ -58,7 +58,7 @@ export function classifyOrphanedPlanIssues(
 /**
  * statusToDateMapping の値を配列に正規化する。
  * 文字列の場合は単一要素の配列に、配列の場合はそのまま返す。
- * autoSetTimestamps が全要素に書き込むため、整合性チェックも全要素を対象にする。
+ * 整合性チェックは全要素を対象にする。
  */
 export function getAllMappingValues(value: string | string[] | undefined): string[] {
   if (!value) return [];
@@ -254,11 +254,9 @@ export function classifyPrInconsistencies(prs: PrData[]): Inconsistency[] {
  * メトリクス関連の不整合を分類する。
  * Pure function - API 呼び出しなし。
  *
- * 検出パターン:
- * 1. Done/Released Issue で End at タイムスタンプが欠落 → info
- * 2. In Progress が長期間続いている → info (ステイル)
- * 3. In Progress Issue で Start at タイムスタンプが欠落 → warning
- * 4. Review Issue で Review at タイムスタンプが欠落 → warning
+ * #2617 で `autoSetTimestamps` が廃止されたため、タイムスタンプ欠落の warning は出さない。
+ * カスタム `statusToDateMapping` を設定したユーザーは `items integrity --fix` で backfill 可能だが、
+ * 自動検出は In Progress ステイルチェック（info）のみに限定する。
  */
 export function classifyMetricsInconsistencies(
   issues: IssueData[],
@@ -272,38 +270,12 @@ export function classifyMetricsInconsistencies(
   const mapping = metricsConfig.statusToDateMapping ?? {};
   const staleThreshold = metricsConfig.staleThresholdDays ?? 14;
 
-  // ステータスごとのタイムスタンプ欠落チェック定義（ループ外で1回だけ生成）
-  const timestampChecks: ReadonlyArray<{ statusValue: string; mappingKey: string; severity: InconsistencySeverity }> = [
-    { statusValue: STATUS_VALUES.DONE, mappingKey: "Done", severity: "info" },
-    { statusValue: STATUS_VALUES.IN_PROGRESS, mappingKey: LEGACY_STATUS_VALUES.IN_PROGRESS_LEGACY, severity: "warning" },
-    { statusValue: STATUS_VALUES.REVIEW, mappingKey: "Review", severity: "warning" },
-  ];
-
   for (const issue of issues) {
     const status = issue.status ?? "";
     const itemId = issue.projectItemId;
     if (!itemId) continue;
 
     const textValues = textFieldValues[itemId] ?? {};
-
-    for (const check of timestampChecks) {
-      if (status !== check.statusValue) continue;
-      const fields = getAllMappingValues(mapping[check.mappingKey]);
-      for (const field of fields) {
-        if (!textValues[field]) {
-          inconsistencies.push({
-            number: issue.number,
-            title: issue.title,
-            url: issue.url,
-            issueState: issue.state,
-            projectStatus: issue.status,
-            severity: check.severity,
-            description: `Metrics: Missing '${field}' timestamp for ${status} issue`,
-            metadata: { missingField: field },
-          });
-        }
-      }
-    }
 
     // In Progress がステイル（配列内の最初に見つかったタイムスタンプで判定）
     if (status === STATUS_VALUES.IN_PROGRESS) {

@@ -1,0 +1,1 @@
+{"version":3,"file":"commit-format.d.ts","sourceRoot":"","sources":["../src/commit-format.ts"],"names":[],"mappings":"AAAA,OAAO,KAAK,EAGV,sBAAsB,EACtB,sBAAsB,EACvB,MAAM,0BAA0B,CAAC;AAElC,MAAM,WAAW,sBAAsB;IACrC,MAAM,EAAE,sBAAsB,CAAC;CAChC;AAOD,wBAAgB,gBAAgB,CAAC,MAAM,EAAE,sBAAsB,GAAG,sBAAsB,CAuDvF"}

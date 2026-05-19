@@ -1,0 +1,1 @@
+{"version":3,"file":"index.d.ts","sourceRoot":"","sources":["../../src/lint/index.ts"],"names":[],"mappings":"AAAA;;;;GAIG;AAEH,OAAO,KAAK,EACV,UAAU,EAGV,WAAW,EACX,eAAe,EAChB,MAAM,YAAY,CAAC;AAGpB;;;;;;GAMG;AACH,wBAAgB,OAAO,CACrB,SAAS,EAAE,eAAe,EAAE,EAC5B,OAAO,EAAE,WAAW,GACnB,UAAU,CA+DZ;AA6CD,cAAc,YAAY,CAAC;AAE3B,cAAc,kBAAkB,CAAC;AAEjC,cAAc,uBAAuB,CAAC"}

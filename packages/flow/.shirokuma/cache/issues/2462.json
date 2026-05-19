@@ -1,0 +1,9 @@
+{
+  "number": 2462,
+  "type": "issue",
+  "title": "improve: rules inject の bundled 不在時を明示エラー化",
+  "body": "## 概要\n\n`shirokuma-flow rules inject` の bundled プラグイン fallback 経路において、bundled ディレクトリが存在しない場合に**サイレントに 0 件出力**となる問題を解消する。\n\n## 背景\n\n#2459 で npm 同梱を廃止（A-2）した結果、`getBundledPluginPathFor()` は npm インストール環境では存在しないパスを返すようになった。これに伴い `rules inject` の以下の経路でサイレント失敗の可能性が生じた:\n\n`packages/flow/src/commands/rules/inject.ts:108-122`\n\n```ts\nif (existsSync(shirokumaRulesDir)) {\n  entries = loadRules(shirokumaRulesDir, true);\n} else {\n  // フォールバック: バンドルプラグインから読み込む\n  const bundledPluginPath = langDir === \"ja\" ? getBundledPluginPathJa() : getBundledPluginPath();\n  entries = loadRules(join(bundledPluginPath, \"rules\"), false);  // ← 不在時は空配列\n}\n```\n\n`.shirokuma/rules/` 不在 + bundled 不在の組み合わせで `rules inject` がエラーなしに 0 件出力する。実運用上は skill SKILL.md からの `! shirokuma-flow rules inject ...` 起動時に skill 自体が marketplace 経由でインストール済みであり init 完了が前提のため、この経路に到達することは稀。ただし手動実行や CI での誤呼び出しでは無音失敗する。\n\n## 受け入れ条件\n\n- bundled プラグインパス不在時に明示エラー（exit 1 + 説明的メッセージ）を出す\n- メッセージで `shirokuma-flow init` 実行を案内\n- 既存の正常系（`.shirokuma/rules/` 存在 / bundled 存在のいずれか）は挙動不変\n\n## 関連\n\n- #2459 (A-2 ピボット元 Issue)\n- PR #2461 のレビュー指摘 L1",
+  "status": "Done",
+  "labels": [],
+  "assignees": []
+}

@@ -1,0 +1,46 @@
+{
+  "target": {
+    "number": 2498,
+    "type": "issue",
+    "title": "feat(lint): SKILL.md 行数ガイドライン (skill-md-size) 追加と肥大化スキルの reference/ 分割",
+    "body": "## 目的\n\nSKILL.md が際限なく肥大化することを防ぐため、行数ガイドライン（目安 250 行）を `lint workflow` のルールとして導入し、肥大化スキルの `reference/*.md` 分割を進める。\n\n## 起点\n\n- Discussion #2378 軸 D\n\n## 検討事項\n\n- `lint workflow` の新規ルール: `skill-md-size`（warn: 250 行、error: 400 行など）\n- 現状の肥大化スキル（行数は時期により変動するため目安）:\n  - `implement-flow/SKILL.md`\n  - `review-issue/SKILL.md`\n  - `prepare-flow/SKILL.md`\n- 分割方針: 詳細手順・テーブル類を `reference/*.md` に切り出し、SKILL.md からは見出しレベルで参照する\n- 既に運用されている `reference/` パターン（implement-flow など）との一貫性\n\n## 受け入れ基準\n\n- [ ] `lint workflow` で `skill-md-size` が動作する\n- [ ] ★ 肥大化スキルが目安行数以下に収まる\n- [ ] 既存の動作テスト（スキル本体の挙動）が壊れない",
+    "status": "In progress",
+    "labels": [
+      "area:plugin",
+      "area:lint"
+    ],
+    "assignees": [
+      "particles7"
+    ]
+  },
+  "parent": null,
+  "children": [
+    {
+      "number": 2552,
+      "title": "計画: feat(lint): SKILL.md 行数ガイドライン (skill-md-size) 追加と肥大化スキルの reference/ 分割",
+      "status": "ToDo"
+    }
+  ],
+  "discussions": [],
+  "pull_requests": [],
+  "recent_comments": [
+    {
+      "source": "#2498",
+      "author": "particles7",
+      "body": "## コミット完了\n\n`lint workflow` に `skill-md-size` ルール（warn: 250行、error: 400行）を追加し、肥大化していた implement-flow / review-issue / prepare-flow スキルの ja/en を `reference/*.md` に分割して error 超過を解消した。あわせて `config-reference.md` を更新した。\n\n**ブランチ:** feat/2498-skill-md-size\n**コミット:** 823f307 feat(lint): skill-md-size ルール追加と肥大化スキルの reference 分割 (#2498)\n**ファイル:** 23 ファイル変更（687 挿入 / 594 削除）\n**プッシュ:** yes\n\n---\n\n補足: プッシュ前テストでバージョン不整合（packages/flow: .129 vs plugin.json: .128）が検出されたため、`chore: プラグイン plugin.json バージョンを 0.3.0-alpha.129 に統一`（4f7acf1）を追加コミットしてプッシュ。",
+      "created_at": "2026-05-13T06:59:58Z"
+    },
+    {
+      "source": "#2498",
+      "author": "particles7",
+      "body": "## コミット完了\n\n`skill-md-size` ルールの設定型・デフォルト設定から未使用の `severity` フィールドを削除し、`checkSkillMdSize` の TOCTOU パターン（`existsSync` + `readFileSync`）を `try/catch` に集約した。また `validateSkillMdSize` の冗長コメントも合わせて削除した。\n\n**ブランチ:** feat/2498-skill-md-size\n**コミット:** 9196a0e refactor(lint): skill-md-size の未使用 severity フィールド削除と TOCTOU パターン修正\n**ファイル:** 3 ファイル変更\n**プッシュ:** yes",
+      "created_at": "2026-05-13T07:09:39Z"
+    },
+    {
+      "source": "#2498",
+      "author": "particles7",
+      "body": "## 作業完了\n\n`lint workflow` に `skill-md-size` ルール（warn: 250 行 / error: 400 行）を追加し、肥大化スキル（`implement-flow`, `review-issue`, `prepare-flow`）を ja/en 両方とも `reference/*.md` 分割で error 閾値以下に収めた。\n\n**ブランチ:** `feat/2498-skill-md-size`\n**PR:** #2554\n**Status:** Review\n\n### 実装サマリー\n\n| フェーズ | 成果 |\n|---------|------|\n| Phase 1: lint ルール | `validateSkillMdSize` 純粋関数 + `checkSkillMdSize` スキャナを `packages/flow/src/lint/rules/workflow-skill-md-size.ts` に追加。9 ユニットテスト全通過 |\n| Phase 2: ドライラン | `shirokuma-flow lint workflow` で動作確認、warn=250/error=400 を採用 |\n| Phase 3: 分割 | implement-flow / review-issue / prepare-flow（ja/en）を `reference/*.md` 切り出しで error → warning に降格 |\n\n### 行数変化\n\n| スキル | Before | After (ja/en) |\n|--------|--------|---------------|\n| implement-flow | 541 (error) | 392 / 394 (warn) |\n| review-issue | 483 (error) | 383 / 396 (warn) |\n| prepare-flow | 401 (error) | 373 / 393 (warn) |\n\n### 後処理（finalize-changes）\n\nsimplify/security-review 指摘を反映した追加コミット `9196a0e`:\n- `skill-md-size` 設定型から未使用の `severity` フィールド削除\n- `validateSkillMdSize` の冗長 WHAT コメント削除\n- `checkSkillMdSize` の TOCTOU パターン（`existsSync` + `readFileSync`）を `try/catch` に集約\n\nセキュリティレビュー: 脆弱性なし（confidence ≥ 7 の所見ゼロ）。\n\n### 新規 reference/ ファイル（ja/en 同名）\n\n- `implement-flow/reference/headless-mode.md`\n- `implement-flow/reference/epic-entry.md`\n- `review-issue/reference/review-checklist.md`\n- `prepare-flow/reference/sub-issue-creation.md`（ja のみ、en は元々 prepare-flow が短いため対象外）\n\n### ドキュメント\n\n- `.shirokuma/rules/shirokuma-flow/config-reference.md` に `skill-md-size` ルール仕様と YAML サンプルを追記\n\n### 受け入れ基準\n\n- [x] `shirokuma-flow lint workflow` で `skill-md-size` ルールが動作する\n- [x] error 超過 3 スキル（implement-flow / review-issue / prepare-flow）が ja/en 両方で 400 行以下\n- [x] 既存テスト 234 件すべて通過",
+      "created_at": "2026-05-13T07:10:10Z"
+    }
+  ]
+}

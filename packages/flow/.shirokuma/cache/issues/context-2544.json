@@ -1,0 +1,46 @@
+{
+  "target": {
+    "number": 2544,
+    "type": "issue",
+    "title": "fix(cli): status transition --rollback が setItemFields 内部の再バリデーションに伝わらない（6 値モデルリグレッション）",
+    "body": "## 目的\n\nADR-v3-022 第二改訂版（6 値モデル）で導入された `--rollback` フラグが、`status transition` の最初の `validateTransition` 呼び出しは通るものの、`setItemFields` 内部の二重バリデーションに伝達されず常に失敗するリグレッションを修正する。\n\n合わせて、同種のリグレッションが今後混入しないよう、`allowRollback` 伝達経路と各ロールバックパターンのテストカバレッジを強化する。\n\n## 再現手順\n\nIssue #2502 が Review ステータスのとき:\n\n```sh\n$ shirokuma-flow status transition 2502 --to \"Backlog\" --rollback\nwarn [ROLLBACK] Review → Backlog\nerror Review → Backlog は rollback 遷移です。--rollback フラグが必要です\nerror ステータスの更新に失敗しました: update-failed\n{\n  \"number\": 2502,\n  \"from\": \"Review\",\n  \"to\": \"Backlog\",\n  \"result\": \"error\",\n  \"message\": \"ステータスの更新に失敗しました: update-failed\"\n}\n```\n\n`[ROLLBACK]` 警告ログの存在は、`status/transition/index.ts:263` の `validateTransition(allowRollback: true)` が成功したことを示す。にもかかわらず、その後 `setItemFields` 内部で再バリデーションが走り `--rollback フラグが必要です` エラーとなる。\n\n`--force` を併用しても同様にエラー（force が `setItemFields` まで伝達されないため）。\n\n## 原因\n\n`packages/flow/src/utils/project-fields.ts:388-399` の `setItemFields` が `validateTransition(resolvedItemType, currentStatus, fields[\"Status\"])` を `allowRollback` オプション**なし**で呼んでいる。\n\ncall chain:\n\n| 層 | 関数 | `allowRollback` 伝達 |\n|---|------|---------------------|\n| 1 | `status/transition/index.ts:263` `validateTransition(...)` | ✅ `options.rollback` 渡している |\n| 2 | `resolveAndUpdateStatus` (`utils/issue-detail.ts:385`) | ❌ オプション未受け取り |\n| 3 | `updateProjectStatus` (`utils/issue-detail.ts:297`) | ❌ オプション未受け取り |\n| 4 | `setItemFields` (`utils/project-fields.ts:370`) | ❌ `validateTransition` に未伝達 |\n\n加えて、`resolveAndUpdateStatus` から `updateProjectStatus` への `force` 伝達も同様に欠落している（line 402-409 に `force` プロパティがない）。\n\n## 影響範囲\n\nADR-v3-022 第二改訂版の 4 系統 STATUS_TRANSITIONS 下で `--rollback` を伴う遷移すべてが CLI から実行不可能。具体的には:\n\n- `Review → Backlog` (Issue, ISSUE_ROLLBACK)\n- `Review → In progress` (PR, PR_ROLLBACK)\n- `Done → In progress` (Issue, ISSUE_ROLLBACK)\n- `Done → ToDo` (Issue, ISSUE_ROLLBACK)\n- `Done → Backlog` (Issue, ISSUE_ROLLBACK)\n- `In progress → Backlog` (Issue, ISSUE_ROLLBACK)\n- `Blocked → Backlog` (Issue, ISSUE_ROLLBACK)\n\n上位コマンドで影響を受ける可能性:\n\n- `pr close --rollback` — PR Review/Completed 救済時にリンク Issue を In progress に戻す経路\n- `issue rollback --action revert/cancel` — 各種ロールバック処理\n- `prepare-flow` の Review 状態からの再計画パス（このバグ発見契機）\n\n## 検討事項\n\n- 修正方針 A: `allowRollback?: boolean` を call chain 全層（setItemFields → updateProjectStatus → resolveAndUpdateStatus / resolvePrAndUpdateStatus）に追加して伝達\n- 修正方針 B: `setItemFields` の二重バリデーションを廃止 or `skipValidation: true` フラグで明示的にバイパス（status/transition で既に validate 済みのため冗長）\n- A は安全側だが伝達点が多い。B はシグネチャ追加が少ない代わりに、setItemFields の独立呼び出し箇所での後方互換に注意が必要\n- いずれを取るかは plan-issue で具体実装パターン調査後に確定\n\n## 受け入れ基準\n\n- [ ] `Issue が Review` の状態で `shirokuma-flow status transition <N> --to \"Backlog\" --rollback` が成功する\n- [ ] `Issue が Done` の状態で `shirokuma-flow status transition <N> --to \"In progress\" --rollback` が成功する\n- [ ] `PR が Review` の状態で `shirokuma-flow status transition <N> --to \"In progress\" --rollback` が成功する\n- [ ] `pr close --rollback` の Review/Completed 救済が成功する（Issue ステータスが In progress に戻る）\n- [ ] `--rollback` なしで rollback 遷移先を指定した場合は従来どおり「`--rollback フラグが必要です`」エラーとなる（ガード機能維持）\n- [ ] 既存テスト（`__tests__/utils/status-workflow.test.ts`, `__tests__/utils/project-fields.test.ts`, `__tests__/commands/status/transition.test.ts` 等）がすべて PASS\n\n## テストケース強化\n\nこのバグの根本原因は「複数層に同じバリデーションを書いて伝達を忘れた」ことにある。再発防止のため以下を追加:\n\n- `setItemFields` 単体テスト: `currentStatus = \"Review\"`, `Status = \"Backlog\"` の組み合わせで\n  - `allowRollback` なし → return 0 (失敗)\n  - `allowRollback: true` → updatedCount > 0 (成功)\n  - `force: true` → 警告ログ + 成功\n- `updateProjectStatus` 単体テスト: `allowRollback` を受け取り `setItemFields` に伝達することを確認\n- `resolveAndUpdateStatus` 単体テスト: `allowRollback` を受け取り下層に伝達することを確認\n- `status transition --rollback` 統合テスト: 4 系統全パターン（ISSUE_ROLLBACK 5 件 + PR_ROLLBACK 1 件）を網羅\n- `pr close --rollback` 統合テスト: Review 救済が動作することを確認（既存 #2234 / #2250 の修正対応テストの強化）\n- `__tests__/integration/` レベルで「ロールバック CLI 経路全体」がリグレッションしないかの薄い E2E 1 本\n\n## 注意\n\n`status-workflow.ts` の `validateTransition` 自体は正しい。修正対象は `setItemFields` / `updateProjectStatus` / `resolveAndUpdateStatus` / `resolvePrAndUpdateStatus` の call chain と、`status/transition/index.ts` からの `options.rollback` 伝達のみ。\n\n`status approve` は `validateTransition` を直接呼ばず別ロジックで Review → Done 遷移を扱うため別経路（影響なしと推定。実装時に確認）。",
+    "status": "In progress",
+    "labels": [
+      "area:cli",
+      "area:workflow"
+    ],
+    "assignees": [
+      "particles7"
+    ]
+  },
+  "parent": null,
+  "children": [
+    {
+      "number": 2545,
+      "title": "計画: fix(cli): status transition --rollback が setItemFields 内部の再バリデーションに伝わらない（6 値モデルリグレッション）",
+      "status": "Done"
+    }
+  ],
+  "discussions": [],
+  "pull_requests": [],
+  "recent_comments": [
+    {
+      "source": "#2544",
+      "author": "particles7",
+      "body": "## コミット完了\n\n`setItemFields` の二重バリデーション廃止と `pushIssueBody` 入口ガード追加により、6値モデルリグレッション（ADR-v3-022）を修正した。`--rollback` フラグが全層（issue push → issue-detail → project-fields）に正しく伝達されるよう修正。\n\n**ブランチ:** fix/2544-rollback-validation-propagation\n**コミット:** 804c16a7 fix(cli): status transition --rollback を全層に伝達（6値モデルリグレッション #2544）\n**ファイル:** 7 ファイル変更\n**プッシュ:** yes",
+      "created_at": "2026-05-12T10:26:09Z"
+    },
+    {
+      "source": "#2544",
+      "author": "particles7",
+      "body": "## コミット完了\n\n`/simplify` レビューによる純粋なクリーンアップを実施した。`pushIssueBody` 内のデッドコードな `??` フォールバック削除、テストファイル 3 件からタスク narrative コメント（`#2544:` プレフィックス）8 箇所を削除。機能変更なし。\n\n**ブランチ:** fix/2544-rollback-validation-propagation\n**コミット:** 2a97c17 refactor(cli): #2544 narrative コメントとデッドエラーフォールバック削除\n**ファイル:** 4 ファイル変更\n**プッシュ:** yes",
+      "created_at": "2026-05-12T10:38:32Z"
+    },
+    {
+      "source": "#2544",
+      "author": "particles7",
+      "body": "## 作業完了\n\nADR-v3-022 第二改訂版（6 値モデル）下で `--rollback` フラグが Status 更新の二重バリデーション層に伝達されないリグレッションを修正した。`setItemFields` の冗長な `validateTransition` ブロックを廃止し、ガードを各 CLI 入口（`status transition`、`pushIssueBody`）に集約。`updateProjectStatus` / `setItemFields` のシグネチャから `force` / `currentStatus` / `itemType` 引数を除去してバリデーション責務を一意化した。\n\n**ブランチ:** `fix/2544-rollback-validation-propagation`\n**コミット:** `804c16a7` 実装 + `2a97c17` simplify クリーンアップ\n**PR:** #2546\n**計画 Issue:** #2545（Done）\n\n### 変更内容\n\n| 種別 | ファイル | 変更内容 |\n|------|---------|---------|\n| 修正 | `packages/flow/src/utils/project-fields.ts` | `setItemFields` から `validateTransition` ブロック削除、引数 3 つ除去 |\n| 修正 | `packages/flow/src/utils/issue-detail.ts` | `updateProjectStatus` から `force` パラメータ削除 |\n| 修正 | `packages/flow/src/commands/issue/push/issue.ts` | `pushIssueBody` 入口に `validateTransition(allowRollback: false)` ガード追加 |\n| 修正 | `.shirokuma/rules/shirokuma-flow/cli-status-update-policy.md` | 入口ガード方針を反映（L96-99, L121-125） |\n| テスト | `packages/flow/__tests__/commands/issue/push.test.ts` | 既存 5 アサーション更新 + 新規ロールバックガードテスト 2 件 |\n| テスト | `packages/flow/__tests__/commands/status/transition.test.ts` | `--rollback` 統合テスト 3 件追加 |\n| テスト | `packages/flow/__tests__/utils/issue-detail.test.ts` | シグネチャ変更追従 |\n\n### simplify レビュー結果\n\n- Reuse review: 共通ヘルパー抽出余地あり（2 箇所のみ・挙動微差で見送り）\n- Quality review: ナラティブコメント削除 + 入れ子平坦化 + デッド `??` フォールバック削除 → 適用済み\n- Efficiency review: 問題なし（call count 中立）\n\n### セキュリティレビュー結果\n\nビジネスロジック（state-machine check）の責務移動のみ。認証・認可・入力検証・暗号・ログには影響なし。No findings.\n\n### 受け入れ基準（テストで検証済み）\n\n- Issue Review → Backlog の `--rollback` が成功\n- Issue Done → In progress の `--rollback` が成功（テスト経由）\n- PR Review → In progress の `--rollback` が成功\n- `--rollback` なしの rollback 遷移先指定はエラー（ガード機能維持）\n- `issue push` のロールバック遷移は `--force` のみで許可（`--rollback` フラグなし）\n\nCloses #2544",
+      "created_at": "2026-05-12T10:39:26Z"
+    }
+  ]
+}

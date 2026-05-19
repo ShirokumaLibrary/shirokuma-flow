@@ -1,0 +1,8 @@
+[
+  {
+    "source": "#2502",
+    "author": "particles7",
+    "body": "## 要件レビュー結果\n\n**レビュー結果:** PASS\n**設計要否:** NOT_NEEDED\n**プロジェクト要件整合性:** PASS\n**参照 ADR:** ADR-v3-018 (#2437)\n\n親 → 子の close 連鎖（逆方向）を追加する Improvement Issue。必須セクションが揃い、既存正方向連鎖（`syncParentStatus`、#2451）との対称設計と、子に PR/孫がある場合の挙動などのエッジケースが検討事項に列挙されている。\n\n### 問題サマリー\n\n問題は検出されませんでした。\n\n### 良い実践\n\n- 正方向連鎖（#2451）との関係を明記し、対称な設計として位置付けている\n- ループ防止（既存 `MAX_PARENT_SYNC_DEPTH = 2` パターン踏襲）に言及\n- 子に PR/孫がある場合の挙動 → `issue rollback` ロジック相当を参考にする方向性を示している\n\n### 改善提案（任意）\n\n- **[Medium]** トリガー条件（`issue close` / `issue cancel` / `pr merge` のいずれで発火させるか）の明示が着手時に最初の判断ポイント — 検討事項にトリガー設計のサブ項目を追加すると良い\n- **[Low]** NOT_PLANNED（`issue cancel`）と通常 close（`issue close`）で挙動を分けるか統一するかの方針を補足\n\n### プロジェクト要件整合性\n\n- **ADR-v3-018**（Discussion #2437、Status 4 値モデル）と整合 — 親子連鎖の文脈下に位置する\n- 正方向連鎖（#2451）が `syncParentStatus` で実装されており、逆方向は対称的に親で発火する設計が自然\n- Deprecated/Superseded ADR の再採用なし\n- 進行中の他 Issue との競合なし\n\n### 推奨事項\n\n1. 着手時に `utils/parent-status.ts` 周辺の現行構造を再確認（正方向連鎖の実装パターンを継承）\n2. テスト戦略は #2451 の `parent-status.test.ts` / `merge.test.ts` のパターンを踏襲\n3. 設計議論用に `/requirements-flow` で ADR 補強（逆方向連鎖の意思決定記録）を検討",
+    "created_at": "2026-05-10T19:20:53Z"
+  }
+]

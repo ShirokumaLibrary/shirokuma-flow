@@ -1,0 +1,38 @@
+/**
+ * claude-code プリセット
+ *
+ * Claude Code ドキュメント向け individual fetch プリセット。
+ * code.claude.com/docs/llms.txt から各ページを個別に取得する。
+ * ページ先頭の引用ブロック（> で始まる行）を除去する。
+ */
+import { resolve } from "node:path";
+import { fetchAndSaveLlmsTxt, fetchIndividual } from "../fetch.js";
+/**
+ * claude-code プリセットのメタ情報。
+ * `resolvePresetMeta("claude-code-2")` が動的 import でこれを取得する。
+ */
+export const meta = {
+    url: "https://code.claude.com/docs/llms.txt",
+    fetchStrategy: "individual",
+    linkFormat: "md",
+    stripHeaderPattern: "^(>\\s.*\\n)+\\n?",
+};
+/**
+ * プリセットエントリーポイント。
+ * fetchSource() から動的 import で呼び出される。
+ */
+export async function execute(src, outDir, options, stats, logger) {
+    const resolvedUrl = src.url ?? meta.url;
+    const docsRoot = resolve(outDir, "..");
+    logger.info(`[${src.name}] llms.txt を取得中: ${resolvedUrl}`);
+    let llmsContent;
+    try {
+        llmsContent = await fetchAndSaveLlmsTxt(src.name, resolvedUrl, docsRoot, options.dryRun ?? false);
+    }
+    catch (err) {
+        logger.error(`[${src.name}] llms.txt の取得に失敗: ${String(err)}`);
+        return stats;
+    }
+    return fetchIndividual({ ...src, url: resolvedUrl }, outDir, options, stats, logger, llmsContent, meta);
+}
+//# sourceMappingURL=claude-code-2.js.map

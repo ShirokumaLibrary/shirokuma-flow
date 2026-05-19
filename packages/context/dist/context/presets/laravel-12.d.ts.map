@@ -1,0 +1,1 @@
+{"version":3,"file":"laravel-12.d.ts","sourceRoot":"","sources":["../../../src/context/presets/laravel-12.ts"],"names":[],"mappings":"AAAA,gDAAgD;AAKhD,OAAO,KAAK,EAAE,UAAU,EAAE,MAAM,aAAa,CAAC;AAC9C,OAAO,KAAK,EAAE,mBAAmB,EAAE,MAAM,YAAY,CAAC;AAItD,wBAAsB,OAAO,CAAC,MAAM,EAAE,mBAAmB,GAAG,OAAO,CAAC,UAAU,CAAC,CAwB9E"}
