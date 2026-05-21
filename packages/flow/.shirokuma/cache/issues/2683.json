@@ -1,0 +1,16 @@
+{
+  "number": 2683,
+  "type": "issue",
+  "title": "chore: issue-flow 再設計の実装（create-item-flow 改名 + トリアージ Status フロー + ADR-v3-022 改訂）",
+  "body": "## 目的\n\ncreate-item-flow を issue-flow に改名し、「課題 Issue 自体のステータスを動かす」トリアージフローを実装する。現状は Backlog で作成して要件レビューを回すだけでステータス遷移を一切行わず、トリアージ（チェック → 人間承認）の段階が Status に表れない。\n\n## 関連参照\n\n### 関連 ADR（Accepted）\n\n- ADR-v3-022 (#2527): 6 値ステータスモデル。本課題で **D-1 の文言訂正 + トリアージ遷移追加**の改訂を行う\n- ADR-v3-017 (#2419): 計画 Issue 中心ステータスモデル（`syncParentStatus` の前提）\n- ADR-v3-018 (#2437): 旧 5 値モデル（v3-022 が supersede）\n\n### 正本ドキュメント\n\n- 設計の理想形 explainer: https://shirokuma-flow-pages.gadget.to/explainers/skill-ja-issue-flow/\n- `docs/specs/workflow/status.md`（ステータス一覧・遷移）\n- `docs/specs/cli/items-transition.md`（CLI 遷移マトリクス）\n- `plugin/shirokuma-skills-{ja,en}/rules/github/project-items.md`（配布ルール）\n\n### 関連既存 Issue / PR\n\n- #2543 (PR, MERGED) / #2529 / #2530: ADR-v3-022 6 値モデル実装 epic（本課題の土台）\n\n## 概要\n\nissue-flow（旧 create-item-flow）が課題 Issue を `Backlog → Review`（トリアージ承認待ち）`→ ToDo` と進め、次フロー（prepare / design / implement）が Backlog 着手を拒否し Review 着手で承認確認する。詳細な決定事項は上記 explainer を一次参照とする。explainer（pages）は理想形として実装済みで、本課題は CLI / skill 本体の実装 + ADR 改訂が対象。\n\n## スコープ（決定済）\n\n1. **スキル改名**: create-item-flow → issue-flow（ja / en）。参照・トリガー・ナビを更新。\n2. **トリアージ Status**: 課題 Issue を `Backlog → Review`（チェック PASS で遷移）`→ ToDo`（承認）。承認は基本 GitHub Web で人間が手動、AI 自発時は approve スキル。\n3. **CLI (`status-workflow.ts`)**: `ISSUE_FORWARD_TRANSITIONS` に `Review → ToDo` を追加。`Backlog → Review` を「計画 Issue 子のみ」から課題 Issue にも許可。Review の意味を「人間レビュー待ち（Backlog からはトリアージ / In progress からは PR）」に拡張。`In progress → Review` は PR エンティティのみ（不変）。\n4. **次フロー共通ゲート**（prepare / design / implement）: Backlog 着手は NG、Review 着手は AskUserQuestion で承認確認 → `Review → ToDo →`（begin で）`In progress`。\n5. **approve スキル**: `issue_kind` で分岐（計画/設計子 = `Review → Done` + `syncParentStatus`、課題トリアージ = `Review → ToDo`）。存続。\n6. **`syncParentStatus`**: 前進のみ（monotonic forward）。トリアージで到達した `ToDo` を `Backlog` に後退させない（**暫定決定・運用しながら調整**）。\n7. **トリアージ中の専用ステータスは作らない**（Backlog + アサインで表現）。競合対策はチェック前の assignee 確認 + 冪等なチェック（重いロックは作らない）。\n8. **`autoSetTimestamps` / `Review at` は仕様から削除済み前提**（関連論点は不要）。\n9. **ADR-v3-022 (#2527) の改訂**: D-1 の文言訂正（「`In progress → Review` は PR だけ」という*遷移単位*の話であり、Review 全体を PR 専用に限定する規則ではない）+ トリアージ遷移（`Backlog → Review` / `Review → ToDo`）の追加。\n\n## ドキュメント同時更新（status-model-change-doc-checklist）\n\nステータスモデル変更のため、以下を同時更新する: `project-items.md`（ja / en）、`cli-status-update-policy.md`、`docs/specs/workflow/status.md`、`docs/specs/cli/items-transition.md`、`docs/guide/workflows/*`、approve-flow（ja / en）、showing-github / managing-github-items の reference。\n\n## 完了条件\n\n- CLI 遷移表・skill（issue-flow / implement-flow / prepare-flow / design-flow / approve-flow）・docs・ADR-v3-022 を整合更新する\n- ja / en を同期する\n- `pnpm -r build && pnpm -r test` が通過する\n- **マージ後にアルファリリース必須**: version bump → prerelease 配信（`release-production.sh bump` → `plugins`/`npm --npm-tag alpha`）。skill / CLI 変更はプラグインキャッシュが version でキー付けされるため、**同一バージョンの push ではクライアントに伝播しない**。bump を伴うアルファリリースを必ず実施する。",
+  "status": "In progress",
+  "labels": [
+    "area:cli",
+    "area:plugin",
+    "area:workflow",
+    "area:status-workflow"
+  ],
+  "assignees": [
+    "particles7"
+  ]
+}

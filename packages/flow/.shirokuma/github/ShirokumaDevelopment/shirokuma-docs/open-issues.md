@@ -7,3 +7,4 @@
 | 2615 | issue | test: finalize-worker SubAgent から `Skill(skill: "simplify")` で builtin 起動可能かを手動検証 | Backlog | Low | XS |
 | 2616 | issue | evolution: finalize-worker の opus 切り替えトリガーをメトリック化 | Backlog | Low | S |
 | 2617 | issue | chore: 中途半端に残った autoSetTimestamps と Project lifecycle 日時フィールド (Start at / Review at / End at) を完全削除 | Backlog | Medium | M |
+| 2683 | issue | chore: issue-flow 再設計の実装（create-item-flow 改名 + トリアージ Status フロー + ADR-v3-022 改訂） | In progress | Medium | L |

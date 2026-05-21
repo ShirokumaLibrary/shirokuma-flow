@@ -166,6 +166,40 @@ export function isBackwardTransition(from: string, to: string): boolean {
   return toIdx < fromIdx;
 }
 
+/**
+ * 前進序列における Status の順位を返す（monotonic forward 比較用）。
+ *
+ * 序列: `Backlog(0) < ToDo(1) < In progress / Blocked(2) < Review(3) < Done(4)`。
+ * In progress と Blocked は同順（どちらも作業中フェーズ）として扱う。
+ * `STATUS_ORDER`（後退検出用、In progress=2 / Blocked=3 と別順位）とは異なり、
+ * トリアージ後の親 Issue を後退させない判定（`syncParentStatus` 前進のみ化）に使う。
+ *
+ * LEGACY 値は `normalizeLegacyStatus` で正規化してから順位付けする。
+ * 未知の値（マッピング対象外）は `-1` を返す。
+ *
+ * @param status - ステータス文字列
+ * @returns 前進順位（0〜4）。未知の値は -1
+ * @since #2683 syncParentStatus 前進のみ化（ADR-v3-022 改訂）
+ */
+export function statusRank(status: string): number {
+  const normalized = normalizeLegacyStatus(status);
+  switch (normalized) {
+    case STATUS_VALUES.BACKLOG:
+      return 0;
+    case STATUS_VALUES.TODO:
+      return 1;
+    case STATUS_VALUES.IN_PROGRESS:
+    case STATUS_VALUES.BLOCKED:
+      return 2;
+    case STATUS_VALUES.REVIEW:
+      return 3;
+    case STATUS_VALUES.DONE:
+      return 4;
+    default:
+      return -1;
+  }
+}
+
 /** Completed statuses — excluded from active lists by default (Done only, not Cancelled) */
 export const DEFAULT_EXCLUDE_STATUSES: readonly string[] = [STATUS_VALUES.DONE];
 
@@ -292,30 +326,35 @@ export const WORK_STARTED_STATUSES: readonly string[] = [
 // =============================================================================
 
 /**
- * Issue の正規前進遷移テーブル (#2531).
+ * Issue の正規前進遷移テーブル (#2531, #2683).
  *
- * | From          | To            | コマンド                                     | 用途                          |
- * |---------------|---------------|---------------------------------------------|-------------------------------|
- * | Backlog       | ToDo          | approve（計画 Issue Done 同期）/ 手動         | 計画承認・着手準備完了         |
- * | Backlog       | Review        | submit（計画 Issue 子のみ）                   | 計画策定完了・人間レビュー待ち |
- * | Backlog       | Done          | cancel                                      | NOT_PLANNED                   |
- * | ToDo          | In progress   | begin / `/implement-flow`                    | 実装着手                       |
- * | ToDo          | Done          | cancel                                      | NOT_PLANNED                   |
- * | In progress   | Blocked       | block                                       | ブロック宣言                   |
- * | In progress   | Done          | close                                       | 直接完了                       |
- * | Blocked       | In progress   | resume                                      | ブロック解除                   |
- * | Review        | Done          | approve（計画 Issue 子）/ pr merge（実装）   | 計画完了 / PR マージ          |
+ * | From          | To            | コマンド                                          | 用途                                   |
+ * |---------------|---------------|--------------------------------------------------|----------------------------------------|
+ * | Backlog       | ToDo          | approve（計画 Issue Done 同期）/ 手動              | 計画承認・着手準備完了                  |
+ * | Backlog       | Review        | submit（計画 Issue 子）/ 課題 Issue トリアージ提出 | 計画策定完了 / トリアージ承認待ち       |
+ * | Backlog       | Done          | cancel                                           | NOT_PLANNED                            |
+ * | ToDo          | In progress   | begin / `/implement-flow`                         | 実装着手                                |
+ * | ToDo          | Done          | cancel                                           | NOT_PLANNED                            |
+ * | In progress   | Blocked       | block                                            | ブロック宣言                            |
+ * | In progress   | Done          | close                                            | 直接完了                                |
+ * | Blocked       | In progress   | resume                                           | ブロック解除                            |
+ * | Review        | ToDo          | approve（課題 Issue トリアージ承認）               | トリアージ承認・着手待ち                |
+ * | Review        | Done          | approve（計画 Issue 子）/ pr merge（実装）        | 計画完了 / PR マージ                    |
  *
  * @remarks
- * - `In progress → Review` は廃止（PR 経由のみ。`PR_FORWARD_TRANSITIONS` 参照）
- * - `Review → ToDo` は廃止（approve は `Review → Done` に統一）
+ * - `In progress → Review` は ISSUE_FORWARD には含めない（PR 経由のみ。`PR_FORWARD_TRANSITIONS` 参照）
+ * - `Review` は「人間レビュー待ち」の総称。Backlog からはトリアージ承認待ち、In progress（PR）からは
+ *   PR コードレビュー待ちを表す。
+ * - `Review → ToDo` は課題 Issue のトリアージ承認専用（approve の `issue_kind=normal` 分岐）。
+ *   計画/設計 Issue 子の approve は引き続き `Review → Done`。
  *
  * @since #2531 ADR-v3-022 第二改訂版
+ * @since #2683 トリアージ Status フロー: `Review → ToDo` 追加・`Backlog → Review` を課題 Issue にも許可（ADR-v3-022 改訂）
  */
 export const ISSUE_FORWARD_TRANSITIONS: Record<string, readonly string[]> = {
   [STATUS_VALUES.BACKLOG]: [
     STATUS_VALUES.TODO,    // approve（計画 Issue Done 同期 or 手動）
-    STATUS_VALUES.REVIEW,  // submit（計画 Issue 子のみ）
+    STATUS_VALUES.REVIEW,  // submit（計画 Issue 子）/ 課題 Issue トリアージ提出 (#2683)
     STATUS_VALUES.DONE,    // cancel
   ],
   [STATUS_VALUES.TODO]: [
@@ -331,6 +370,7 @@ export const ISSUE_FORWARD_TRANSITIONS: Record<string, readonly string[]> = {
     STATUS_VALUES.IN_PROGRESS, // resume
   ],
   [STATUS_VALUES.REVIEW]: [
+    STATUS_VALUES.TODO,        // approve（課題 Issue トリアージ承認、issue_kind=normal）(#2683)
     STATUS_VALUES.DONE,        // approve（計画 Issue 子）/ pr merge（実装 Issue）
   ],
   [STATUS_VALUES.DONE]: [],

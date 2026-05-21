@@ -42,6 +42,8 @@ export interface RejectOptions extends ItemsOptions {
    * ADR-v3-022 第二改訂版 #2531
    */
   rollback?: boolean;
+  /** キャッシュを使わずライブから現在ステータスを再取得しキャッシュを更新する（#2683） */
+  refresh?: boolean;
 }
 
 // =============================================================================
@@ -81,7 +83,9 @@ export async function cmdReject(
   const { owner, name: repo } = repoInfo;
   const number = parseInt(numberStr, 10);
 
-  const { status: fromStatus, isPr } = await resolveCurrentStatus(owner, repo, number, logger);
+  const { status: fromStatus, isPr } = await resolveCurrentStatus(owner, repo, number, logger, {
+    refresh: options.refresh,
+  });
   const itemType: "issue" | "pr" = isPr ? "pr" : "issue";
 
   if (fromStatus !== null && fromStatus !== STATUS_VALUES.REVIEW) {
@@ -129,7 +133,7 @@ export async function cmdReject(
   const { cmdItemTransition } = await import("./status/transition/index.js");
   return await cmdItemTransition(
     numberStr,
-    { ...options, to: toStatus, rollback: true, force: options.force },
+    { ...options, to: toStatus, rollback: true, force: options.force, refresh: options.refresh },
     logger,
   );
 }
@@ -149,6 +153,7 @@ export function createRejectCommand(): Command {
     .requiredOption("--reason <text>", "差し戻し理由 (必須)")
     .requiredOption("--rollback", "ロールバック遷移フラグ（必須: reject は常にロールバック遷移）")
     .option("--force", "ステータス遷移ルールを無視して強制遷移")
+    .option("--refresh", "キャッシュを使わずライブから現在ステータスを再取得しキャッシュを更新する")
     .option("--owner <owner>", "リポジトリオーナー (デフォルト: 現在のリポジトリ)")
     .option("--public", "公開リポジトリを対象 (repoPairs 設定から)")
     .option("--repo <alias>", "クロスリポジトリのエイリアス (crossRepos 設定から)")

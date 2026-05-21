@@ -48,7 +48,7 @@ sequenceDiagram
 
     Note over U,G: ── Issue 作成 ──
     U->>C: 「○○ の Issue 作って」
-    C->>C: /create-item-flow
+    C->>C: /issue-flow
     C->>F: issue add（frontmatter で title/type/priority/size）
     F->>G: Issue + Project Item 作成（Status: Backlog）
     G-->>F: N
@@ -157,9 +157,9 @@ sequenceDiagram
 
 | 場面 | スキル | CLI | GitHub への影響 | Reviewer 関与 |
 |---|---|---|---|---|
-| 自然言語からの Issue 化 | `/create-item-flow` | `issue add` | Issue + Project Item 作成 | — |
+| 自然言語からの Issue 化 | `/issue-flow` | `issue add` | Issue + Project Item 作成 | — |
 | 要件 / 設計 / サイズ判定 | `/analyze-issue` | （内部） | Project Status 設定 | — |
-| Discussion からの変換 | `/create-item-flow` | `discussion show` + `issue add` | 同上 | — |
+| Discussion からの変換 | `/issue-flow` | `discussion show` + `issue add` | 同上 | — |
 | **Issue 内容の確認** | — | — | — | ✅ GitHub UI で本文確認・修正コメント |
 
 ### 3. 設計フェーズ（条件付き）
@@ -307,7 +307,7 @@ sequenceDiagram
 #### 図の補足注釈
 
 - **課題作成直後は Status: Backlog**: `issue add` で作成された課題 Issue は Status: Backlog で起動する。未調査・未トリアージの状態を表す。
-- **AI 自己レビュー結果はコメント投稿のみ**: `create-item-flow` 末で `analyze-issue` の結果が Issue コメントに投稿されるが、Status は Backlog のまま変化しない（親 Issue の Review は PR レビュー専用）。
+- **AI 自己レビュー結果はコメント投稿のみ**: `issue-flow` 末で `analyze-issue` の結果が Issue コメントに投稿されるが、Status は Backlog のまま変化しない（親 Issue の Review は PR レビュー専用）。
 - **approve コマンドは計画 Issue (子) の Review → Done**: `approve` コマンドは計画 Issue (子) の Review → Done 遷移を行う（計画完了）。親 Issue は `syncParentStatus` で Backlog → ToDo に自動同期される。課題 Issue 自体は approve の対象外。
 - **計画フェーズの課題 Issue**: `prepare-flow` は課題 Issue の Status を変更しない（Backlog のまま維持）。計画策定の実作業は計画 Issue 上で進む（計画 Issue は Backlog → Review → Done を経由）。課題 Issue は計画 Issue (子) の `approve` 後に `syncParentStatus` で Backlog → ToDo に自動同期される。
 - **計画 Issue 作成**: `prepare-flow` が課題 Issue の子として生成する（親子関係を設定）。

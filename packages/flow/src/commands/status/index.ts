@@ -48,6 +48,7 @@ export function createStatusCommand(): Command {
     .option("--force", "遷移ルールを無視して強制遷移")
     .option("--reason <reason>", "--to Blocked 時に必須。Issue コメントとして記録される。")
     .option("--rollback", "ロールバック遷移を許可する（ADR-v3-022 第二改訂版）。ロールバック遷移テーブルに対して遷移を行う場合に必須。")
+    .option("--refresh", "キャッシュを使わずライブから現在ステータスを再取得しキャッシュを更新する")
     .action(async (number, localOpts, command: Command) => {
       const options = mergeOpts(command, localOpts);
       const { cmdItemTransition } = await import("./transition/index.js");
@@ -94,6 +95,7 @@ export function createStatusCommand(): Command {
   status
     .command("get <number>")
     .description("Issue の現在ステータスと遷移可能なステータス一覧を取得する")
+    .option("--refresh", "キャッシュを使わずライブから現在ステータスを再取得しキャッシュを更新する")
     .action(async (number, localOpts, command: Command) => {
       const options = mergeOpts(command, localOpts);
       const { cmdStatusGet } = await import("./get.js");
@@ -108,6 +110,7 @@ export function createStatusCommand(): Command {
     .command("allowed [number]")
     .description("遷移可能なステータス一覧を返す（Issue 番号または --status で現在ステータスを指定）")
     .option("--status <status>", "現在のステータスを直接指定（静的照会）")
+    .option("--refresh", "キャッシュを使わずライブから現在ステータスを再取得しキャッシュを更新する")
     .action(async (number, localOpts, command: Command) => {
       const options = mergeOpts(command, localOpts);
       const { cmdStatusAllowed } = await import("./allowed.js");

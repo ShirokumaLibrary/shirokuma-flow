@@ -132,10 +132,10 @@ Claude Code で作業セッションを開始する:
 
 ### Issue を作成して作業する
 
-`/create-item-flow` で Issue を作成し、そのまま作業を開始する:
+`/issue-flow` で Issue を作成し、そのまま作業を開始する:
 
 ```
-/create-item-flow 認証ページの実装
+/issue-flow 認証ページの実装
 ```
 
 Issue が作成され、自動的に `/implement-flow` に引き継がれる。以下が順次実行される:

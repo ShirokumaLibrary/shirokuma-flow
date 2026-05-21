@@ -30,6 +30,11 @@ import type { ItemsOptions } from "../../items/types.js";
 export interface ContextOptions extends ItemsOptions {
   /** キャッシュを使わず強制的に API から取得 */
   noCache?: boolean;
+  /**
+   * --no-cache のエイリアス（#2683）。指定するとキャッシュをスキップしてライブ再取得し、
+   * JSON キャッシュを書き直す。`issue context <n> --refresh` を直感どおり機能させる。
+   */
+  refresh?: boolean;
 }
 
 // =============================================================================
@@ -407,9 +412,10 @@ export async function cmdItemContext(
   const { owner, name: repo } = repoInfo;
   const number = parseIssueNumber(numberStr);
 
-  // キャッシュ確認（--no-cache でない場合）
+  // キャッシュ確認（--no-cache / --refresh でない場合）
+  // --refresh は --no-cache のエイリアス（#2683）。どちらか指定でキャッシュをスキップしライブ再取得する
   // ContextData 全体は context-{N} キーに保存（ContextTarget とは別キー）
-  if (!options.noCache) {
+  if (!options.noCache && !options.refresh) {
     const cached = readContextCache<ContextData>("issues", `context-${number}`);
     if (cached) {
       logger.info(`Issue #${number} のキャッシュを使用します`);

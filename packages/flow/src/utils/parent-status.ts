@@ -9,7 +9,7 @@
 import { runGraphQL } from "./github.js";
 import { Logger } from "./logger.js";
 import { resolveAndUpdateStatus, getIssueDetail } from "./issue-detail.js";
-import { STATUS_VALUES, LEGACY_STATUS_VALUES, isBacklogEquivalent, isCancelledEquivalent, isInvestigationPending, isReadyForImplementation } from "./status-workflow.js";
+import { STATUS_VALUES, LEGACY_STATUS_VALUES, isBacklogEquivalent, isCancelledEquivalent, isInvestigationPending, isReadyForImplementation, statusRank } from "./status-workflow.js";
 import {
   GRAPHQL_QUERY_SUB_ISSUES,
   SUB_ISSUES_GRAPHQL_HEADERS,
@@ -597,6 +597,25 @@ export async function syncParentStatus(
     if (parentDetail?.status === expectedStatus) {
       logger.info(`syncParentStatus: parent #${parentNumber} already ${expectedStatus}, skipping update`);
       return { parentNumber, subIssueNodes };
+    }
+
+    // 4.5. 前進のみ方針（monotonic forward, #2683 ADR-v3-022 改訂）:
+    // このガードはトリアージ経路に限らず、全 syncParentStatus 呼び出しに適用される。
+    // 親 Issue の Status が statusRank の低い値へ後退（= 巻き戻し）するケースを一律抑止する
+    // monotonic forward 方針である。トリアージで課題 Issue（親）が ToDo に到達した後、
+    // 別の子の同期で期待値が Backlog（全サブ Backlog）等に後退するケースが代表例。
+    // 現在の親順位 > 期待順位（= 後退）ならスキップ。Done への前進・In progress 維持は通す。
+    // ※ 順位付け不能（未知ステータス）の場合は従来通り更新する（過剰抑止を避ける）。
+    const currentParentStatus = parentDetail?.status ?? null;
+    if (currentParentStatus) {
+      const currentRank = statusRank(currentParentStatus);
+      const expectedRank = statusRank(expectedStatus);
+      if (currentRank >= 0 && expectedRank >= 0 && currentRank > expectedRank) {
+        logger.info(
+          `syncParentStatus: parent #${parentNumber} ${currentParentStatus} → ${expectedStatus} は前進のみ方針により後退をスキップ`,
+        );
+        return { parentNumber, subIssueNodes };
+      }
     }
 
     // 5. 差分があれば更新

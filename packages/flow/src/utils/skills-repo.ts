@@ -65,7 +65,7 @@ export const AVAILABLE_SKILLS = [
   "implement-flow",
   "commit-issue",
   "open-pr-issue",
-  "create-item-flow",
+  "issue-flow",
   // GitHub integration skills
   "setting-up-project",
   "starting-session",

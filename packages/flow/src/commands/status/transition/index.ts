@@ -17,7 +17,7 @@ import {
   getAllowedTransitions,
   STATUS_VALUES,
 } from "../../../utils/status-workflow.js";
-import { resolveAndUpdateStatus, getIssueDetail, getPrDetail, resolvePrAndUpdateStatus } from "../../../utils/issue-detail.js";
+import { resolveAndUpdateStatus, getIssueDetail, resolvePrAndUpdateStatus } from "../../../utils/issue-detail.js";
 import {
   readContextCache,
   writeContextCache,
@@ -38,6 +38,7 @@ import type { Logger } from "../../../utils/logger.js";
 import type { ItemsOptions } from "../../items/types.js";
 import type { ContextTarget } from "../../issue/context/index.js";
 import { checkChildrenAllDone } from "../../../utils/parent-status.js";
+import { resolveCurrentStatus } from "../shared/resolve-status.js";
 
 // =============================================================================
 // オプション型
@@ -65,6 +66,11 @@ export interface TransitionOptions extends ItemsOptions {
    * ロールバック遷移テーブルに対して遷移を行う場合に必須。
    */
   rollback?: boolean;
+  /**
+   * キャッシュを使わずライブから現在ステータスを再取得しキャッシュを更新する（#2683）。
+   * 外部で Status が変わってキャッシュが stale な場合に古い値で誤判定するのを防ぐ。
+   */
+  refresh?: boolean;
 }
 
 // =============================================================================
@@ -86,95 +92,6 @@ export interface TransitionResult {
   kind?: "forward" | "rollback";
   /** itemType（自動判定の結果）*/
   item_type?: "issue" | "pr";
-}
-
-// =============================================================================
-// ヘルパー
-// =============================================================================
-
-/** GraphQL クエリ: Issue の現在のステータスを取得 */
-const GRAPHQL_QUERY_ISSUE_STATUS = `
-query($owner: String!, $name: String!, $number: Int!) {
-  repository(owner: $owner, name: $name) {
-    issue(number: $number) {
-      id
-      title
-      state
-      projectItems(first: 5) {
-        nodes {
-          id
-          project { id title }
-          status: fieldValueByName(name: "Status") {
-            ... on ProjectV2ItemFieldSingleSelectValue { name optionId }
-          }
-        }
-      }
-    }
-  }
-}
-`;
-
-interface IssueStatusQueryResult {
-  data?: {
-    repository?: {
-      issue?: {
-        id?: string;
-        title?: string;
-        state?: string;
-        projectItems?: {
-          nodes?: Array<{
-            id?: string;
-            project?: { id?: string; title?: string };
-            status?: { name?: string; optionId?: string } | null;
-          }>;
-        };
-      };
-    };
-  };
-}
-
-/**
- * キャッシュまたは API から現在のステータスを取得する。
- * Issue クエリで見つからない場合は PR にフォールバックする。
- *
- * @returns status（現在のステータス）、isPr（PR 番号かどうか）、fromCache（キャッシュから取得したかどうか）
- */
-async function getCurrentStatus(
-  owner: string,
-  repo: string,
-  number: number,
-  logger: Logger
-): Promise<{ status: string | null; fromCache: boolean; isPr: boolean }> {
-  const cached = readContextCache<ContextTarget>("issues", String(number));
-  if (cached?.status) {
-    logger.info(`Issue #${number} のステータスをキャッシュから取得: ${cached.status}`);
-    return { status: cached.status, fromCache: true, isPr: false };
-  }
-
-  const issueResult = await runGraphQL<IssueStatusQueryResult>(
-    GRAPHQL_QUERY_ISSUE_STATUS,
-    { owner, name: repo, number }
-  );
-
-  if (issueResult.success) {
-    const issueData = issueResult.data?.data?.repository?.issue;
-    if (issueData) {
-      const projectItems = issueData.projectItems?.nodes ?? [];
-      for (const item of projectItems) {
-        if (item.status?.name) {
-          return { status: item.status.name, fromCache: false, isPr: false };
-        }
-      }
-      return { status: null, fromCache: false, isPr: false };
-    }
-  }
-
-  const prDetail = await getPrDetail(owner, repo, number);
-  if (prDetail) {
-    return { status: prDetail.status ?? null, fromCache: false, isPr: true };
-  }
-
-  return { status: null, fromCache: false, isPr: false };
 }
 
 // =============================================================================
@@ -252,7 +169,14 @@ export async function cmdItemTransition(
   const targetStatus = options.to;
 
   // 現在のステータスを取得（Issue または PR を自動判別）
-  const { status: currentStatus, isPr } = await getCurrentStatus(owner, repo, number, logger);
+  // --refresh 指定時はキャッシュを信頼せずライブから再取得しキャッシュを更新する（#2683）
+  const { status: currentStatus, isPr } = await resolveCurrentStatus(
+    owner,
+    repo,
+    number,
+    logger,
+    { refresh: options.refresh },
+  );
 
   // itemType を判定（isPr の結果を使用）
   const itemType: "issue" | "pr" = isPr ? "pr" : "issue";

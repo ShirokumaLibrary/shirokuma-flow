@@ -168,7 +168,7 @@ shirokuma-flow integrity --setup        # GitHub 手動設定（Issue Types / Di
 各フェーズは通常、別の Claude Code 会話で実行される。会話間のコンテキスト引き継ぎは Issue 本文（計画）と Issue コメント（作業サマリー）が担う。
 
 ```
-会話 1: Issue 作成（/create-item-flow）
+会話 1: Issue 作成（/issue-flow）
     ↓
 会話 2: 計画策定（/prepare-flow #N）
     ↓

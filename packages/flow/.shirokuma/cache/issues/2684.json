@@ -1,0 +1,9 @@
+{
+  "number": 2684,
+  "type": "issue",
+  "title": "計画: issue-flow 再設計の実装（create-item-flow 改名 + トリアージ Status フロー + ADR-v3-022 改訂）",
+  "body": "",
+  "status": "In progress",
+  "labels": [],
+  "assignees": []
+}

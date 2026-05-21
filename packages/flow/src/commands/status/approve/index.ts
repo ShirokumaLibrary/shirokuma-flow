@@ -3,13 +3,17 @@
  *
  * Review ステータスの Issue を明示的に承認する。
  * - itemType === "issue" かつ fromStatus === "Review" のみ許可
- * - Review → Done に遷移（ADR-v3-022 第二改訂版 #2531: approve 意味変更）
+ * - issue_kind で遷移先を分岐（#2683）:
+ *   - plan / design（子）→ Review → Done（計画/設計完了）
+ *   - normal（課題トリアージ）→ Review → ToDo（トリアージ承認・着手待ち）
  * - 副作用: 計画 Issue (子) の approve 後、親 Issue を Backlog → ToDo に自動同期する
+ *   （normal トリアージは親同期なし）
  * Status 更新のみで Issue 本体はクローズしない。
  * CLOSED 化は親 Close 連動もしくは明示的な items close で行う（ADR-v3-013 / ADR-v3-014）。
  *
  * @since #2439 全 Issue Type で Review → ToDo に統一（旧: plan/design → Approved、通常 → Done）
  * @since #2532 Review → Done に変更、親 Backlog → ToDo 同期追加（ADR-v3-022 第二改訂版）
+ * @since #2683 issue_kind で遷移先を分岐（plan/design = Done、normal = ToDo）（ADR-v3-022 改訂）
  */
 
 import { runGraphQL, parseIssueNumber, isIssueNumber } from "../../../utils/github.js";
@@ -25,7 +29,7 @@ import {
   STATUS_VALUES,
   isCancelledEquivalent,
 } from "../../../utils/status-workflow.js";
-// #2439: issue_kind は出力フィールドとして保持するが遷移先の分岐には使用しない
+// #2683: issue_kind で遷移先を分岐する（plan/design = Done、normal = ToDo）
 import { SUB_ISSUES_GRAPHQL_HEADERS } from "../../items/helpers.js";
 import type { Logger } from "../../../utils/logger.js";
 import type { ItemsOptions } from "../../items/types.js";
@@ -247,17 +251,19 @@ export async function cmdItemApprove(
 
   const currentStatus = extractFirstStatus(issue.projectItems);
 
-  // Issue 種別を判定（出力フィールド issue_kind の値として使用）
+  // Issue 種別を判定し、種別で遷移先を分岐する（#2683）。
+  // - plan / design（子）→ Done（計画/設計完了）
+  // - normal（課題トリアージ）→ ToDo（トリアージ承認・着手待ち）
   const issueKind = classifyIssueKind(issue);
-  // #2532: Review → Done に変更（ADR-v3-022 第二改訂版: approve 意味変更）
-  const targetStatus = STATUS_VALUES.DONE;
+  const targetStatus =
+    issueKind === "normal" ? STATUS_VALUES.TODO : STATUS_VALUES.DONE;
 
   if (currentStatus !== STATUS_VALUES.REVIEW) {
     const result = buildErrorResult(
       number,
       currentStatus,
       targetStatus,
-      `Issue #${number} は Review ステータスではありません (現在: ${currentStatus ?? "(未設定)"})。approve は Review → Done のみ許可されています（ADR-v3-022 第二改訂版）`,
+      `Issue #${number} は Review ステータスではありません (現在: ${currentStatus ?? "(未設定)"})。approve は Review からの遷移のみ許可されています（plan/design = Done、normal = ToDo）`,
       issueKind,
     );
     logger.error(result.message ?? "");
@@ -332,24 +338,28 @@ export async function cmdItemApprove(
     return 1;
   }
 
-  // 親 Issue の Backlog → ToDo 自動同期（ADR-v3-022 #2532）。
-  // それ以外の親は既存の syncParentStatus に委ねる。
-  if (parentNumber && parentStatus === STATUS_VALUES.BACKLOG) {
-    try {
-      const parentUpdateResult = await resolveAndUpdateStatus(
-        owner, repo, parentNumber, STATUS_VALUES.TODO, logger
-      );
-      if (parentUpdateResult.success) {
-        logger.success(`親 Issue #${parentNumber}: Backlog → ToDo（approve 後自動同期）`);
-      } else {
-        logger.warn(`親 Issue #${parentNumber} の Backlog → ToDo 同期に失敗しました（best-effort）`);
+  // 親同期は plan / design（計画/設計子の approve）のみ。
+  // normal（課題トリアージ）は課題 Issue 自身が対象であり親同期しない（#2683）。
+  if (issueKind !== "normal") {
+    // 親 Issue の Backlog → ToDo 自動同期（ADR-v3-022 #2532）。
+    // それ以外の親は既存の syncParentStatus に委ねる。
+    if (parentNumber && parentStatus === STATUS_VALUES.BACKLOG) {
+      try {
+        const parentUpdateResult = await resolveAndUpdateStatus(
+          owner, repo, parentNumber, STATUS_VALUES.TODO, logger
+        );
+        if (parentUpdateResult.success) {
+          logger.success(`親 Issue #${parentNumber}: Backlog → ToDo（approve 後自動同期）`);
+        } else {
+          logger.warn(`親 Issue #${parentNumber} の Backlog → ToDo 同期に失敗しました（best-effort）`);
+        }
+      } catch (err) {
+        const msg = err instanceof Error ? err.message : String(err);
+        logger.warn(`親 Issue #${parentNumber} の Backlog → ToDo 同期中にエラー（best-effort）: ${msg}`);
       }
-    } catch (err) {
-      const msg = err instanceof Error ? err.message : String(err);
-      logger.warn(`親 Issue #${parentNumber} の Backlog → ToDo 同期中にエラー（best-effort）: ${msg}`);
+    } else if (parentNumber) {
+      await syncParentStatus(owner, repo, number, logger);
     }
-  } else if (parentNumber) {
-    await syncParentStatus(owner, repo, number, logger);
   }
 
   const result: ApproveResult = {
@@ -359,7 +369,7 @@ export async function cmdItemApprove(
     issue_kind: issueKind,
     result: "ok",
     current_status_after_update: actualStatus,
-    next_suggestions: buildNextSuggestions({ issueKind, parentNumber }),
+    next_suggestions: buildNextSuggestions({ issueKind, number, parentNumber }),
     parent_status: parentStatus,
     sibling_statuses: siblingStatuses,
     has_plan_children: hasPlanChildren,
@@ -367,7 +377,9 @@ export async function cmdItemApprove(
     pending_subissues: pendingSubissues,
   };
 
-  logger.success(`Issue #${number}: ${currentStatus} → ${targetStatus} (承認 → Done)`);
+  const approveLabel =
+    issueKind === "normal" ? "トリアージ承認 → ToDo" : "承認 → Done";
+  logger.success(`Issue #${number}: ${currentStatus} → ${targetStatus} (${approveLabel})`);
   console.log(JSON.stringify(result, null, 2));
   return 0;
 }

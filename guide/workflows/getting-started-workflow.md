@@ -14,7 +14,7 @@
 
 ```
 1. セッションを開始する       /starting-session
-2. Issue を作成する           /create-item-flow
+2. Issue を作成する           /issue-flow
 3. 計画を確認・承認する       （AI が計画を提示、ユーザーが承認）
 4. 実装を待つ                 （自動フロー: begin → code → commit → PR → submit）
 5. PR を確認してマージする    （GitHub 上で操作）
@@ -53,7 +53,7 @@ Claude Code のチャット画面を開き、次のように入力する:
 新しい機能や作業内容を Issue として登録する。自然な日本語で指示するだけで良い:
 
 ```
-/create-item-flow ユーザープロフィールページの作成
+/issue-flow ユーザープロフィールページの作成
 ```
 
 または:
@@ -62,7 +62,7 @@ Claude Code のチャット画面を開き、次のように入力する:
 新しい Issue を作りたい。ユーザーがプロフィールを編集できるページを実装したい
 ```
 
-**AI の動作:** `create-item-flow` スキルが起動し、以下を実行する:
+**AI の動作:** `issue-flow` スキルが起動し、以下を実行する:
 
 1. Issue のタイプ・優先度・サイズを推定
 2. GitHub に Issue を作成

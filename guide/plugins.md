@@ -221,7 +221,7 @@ claude plugin install shirokuma-skills-ja@shirokuma-library --scope project
 
 | スキル | 呼び出し方 | 機能 |
 |-------|-----------|------|
-| `create-item-flow` | `/create-item-flow` | Issue 作成 → implement-flow に自動チェーン |
+| `issue-flow` | `/issue-flow` | Issue 作成 → implement-flow に自動チェーン |
 | `commit-issue` | `/commit-issue` | ステージ → コミット → プッシュ（subagent: commit-worker） |
 | `open-pr-issue` | `/open-pr-issue` | PR 作成（subagent: pr-worker） |
 | `managing-github-items` | — | Issue / Discussion エンジン（内部利用） |

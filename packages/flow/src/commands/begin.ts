@@ -32,6 +32,8 @@ export interface BeginOptions extends ItemsOptions {
   noAssign?: boolean;
   /** 強制遷移（status transition --force と同等） */
   force?: boolean;
+  /** キャッシュを使わずライブから現在ステータスを再取得しキャッシュを更新する（#2683） */
+  refresh?: boolean;
 }
 
 // =============================================================================
@@ -52,7 +54,7 @@ export async function cmdBegin(
   const { cmdItemTransition } = await import("./status/transition/index.js");
   const transitionCode = await cmdItemTransition(
     numberStr,
-    { ...options, to: "In progress", force: options.force },
+    { ...options, to: "In progress", force: options.force, refresh: options.refresh },
     logger,
   );
   if (transitionCode !== 0) {
@@ -90,6 +92,7 @@ export function createBeginCommand(): Command {
     .argument("<number>", "Issue 番号")
     .option("--no-assign", "自己アサインをスキップ")
     .option("--force", "ステータス遷移ルールを無視して強制遷移")
+    .option("--refresh", "キャッシュを使わずライブから現在ステータスを再取得しキャッシュを更新する")
     .option("--owner <owner>", "リポジトリオーナー (デフォルト: 現在のリポジトリ)")
     .option("--public", "公開リポジトリを対象 (repoPairs 設定から)")
     .option("--repo <alias>", "クロスリポジトリのエイリアス (crossRepos 設定から)")
