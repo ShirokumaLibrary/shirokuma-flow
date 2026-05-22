@@ -503,8 +503,14 @@ export const MAX_PARENT_SYNC_DEPTH = 2;
  * 3. deriveExpectedParentStatus() で期待値を算出
  * 4. 期待ステータスが Done の場合は closeIssueById 経由で state + Status を二相更新（#2451 AC-A）
  *    それ以外は resolveAndUpdateStatus() で Project Status のみを更新
- * 5. Done 遷移が完了した場合、さらに上位の親も再帰的に同様の処理を実行（ネスト連鎖、#2451 AC-B）
- *    最大深さ MAX_PARENT_SYNC_DEPTH = 2 で打ち切る（3 層深さガード）
+ * 5. 親の更新が完了した場合、さらに上位の親も再帰的に同様の処理を実行（ネスト連鎖、#2451 AC-B）
+ *    最大深さ MAX_PARENT_SYNC_DEPTH = 2 で打ち切る（3 層深さガード）。
+ *    既定では #2451 の Done-only 上位伝播（親が Done になったときだけ祖父へ連鎖）を維持する。
+ *    #2689 ADR-v3-022 第四改訂版: 計画子が Review → ToDo（非 Done）になる新モデルでは課題（親）への
+ *    導出値が ToDo / In progress 中心になるため、非 Done でも多段（計画 → 設計 → 課題）で上位伝播
+ *    する経路が必要になった。#2697: この非 Done 多段伝播は呼び出し元が `propagateNonDone` を明示した
+ *    approve/plan 経路に限定し、pr/create・pr/merge・issue/push 等の他経路は Done-only 伝播のまま
+ *    据え置く（緩和の blast radius を限定）。
  *
  * best-effort: エラーが発生してもログのみで続行する。
  *
@@ -514,6 +520,8 @@ export const MAX_PARENT_SYNC_DEPTH = 2;
  * @param logger - ロガー
  * @param _visitedNumbers - ループ防止用の訪問済み Issue 番号セット（内部再帰用、外部から指定不要）
  * @param _depth - 現在のネスト深さ（内部再帰用、外部から指定不要）
+ * @param _propagateNonDone - 非 Done の上位多段伝播を許可するか（#2697）。approve/plan 経路のみ true。
+ *   既定 false では親が Done になったときだけ祖父へ連鎖する（#2451 Done-only 伝播）。
  */
 export async function syncParentStatus(
   owner: string,
@@ -521,10 +529,12 @@ export async function syncParentStatus(
   issueNumber: number,
   logger: Logger,
   _visitedNumbers?: Set<number>,
-  _depth?: number
+  _depth?: number,
+  _propagateNonDone?: boolean
 ): Promise<SyncParentResult> {
   const visited = _visitedNumbers ?? new Set<number>();
   const depth = _depth ?? 0;
+  const propagateNonDone = _propagateNonDone ?? false;
 
   // 自己参照ループ防止: 訪問済みの Issue 番号は処理しない
   if (visited.has(issueNumber)) {
@@ -637,11 +647,20 @@ export async function syncParentStatus(
       }
     }
 
-    // 6. Done 遷移が完了かつ最大深さ未満の場合、さらに上位の親も連鎖処理する (#2451 AC-B)
+    // 6. 親の更新が完了かつ最大深さ未満の場合、さらに上位の親も連鎖処理する (#2451 AC-B)
     // サブ → 計画 Issue → エピックの 2 段昇格（MAX_PARENT_SYNC_DEPTH = 2）を上限とする。
-    if (updateSucceeded && expectedStatus === STATUS_VALUES.DONE && depth < MAX_PARENT_SYNC_DEPTH) {
-      logger.debug(`syncParentStatus: propagating Done to parent of #${parentNumber} (depth=${depth + 1})`);
-      await syncParentStatus(owner, repo, parentNumber, logger, visited, depth + 1);
+    //
+    // #2689 / #2697 ADR-v3-022 第四改訂版: 旧来は `expectedStatus === Done` のときだけ上位伝播していた。
+    // 計画子の Review → ToDo（非 Done）後に課題（親）へ ToDo / In progress を導出してさらに祖父へ
+    // 伝播する経路は approve/plan に固有のため、`propagateNonDone` を明示した呼び出しのみ非 Done でも連鎖する。
+    // 既定（pr/create・pr/merge・issue/push 等）は Done-only 伝播のままで blast radius を限定する。
+    // 上位の前進のみガード（statusRank）と楽観的ロックにより、後退や no-op は連鎖中も抑止される。
+    const canPropagateUp = propagateNonDone
+      ? updateSucceeded
+      : updateSucceeded && expectedStatus === STATUS_VALUES.DONE;
+    if (canPropagateUp && depth < MAX_PARENT_SYNC_DEPTH) {
+      logger.debug(`syncParentStatus: propagating ${expectedStatus} to parent of #${parentNumber} (depth=${depth + 1})`);
+      await syncParentStatus(owner, repo, parentNumber, logger, visited, depth + 1, propagateNonDone);
     }
 
     return { parentNumber, subIssueNodes };

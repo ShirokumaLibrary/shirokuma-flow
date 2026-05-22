@@ -4,14 +4,15 @@
  * Review ステータスの Issue を承認した後に推奨する次コマンドを返す純関数。
  *
  * 判定:
- * - 計画 Issue 承認（Review → Done）→ 親の実装フロー
- * - 設計 Issue 承認（Review → Done）→ 親の計画フロー or 実装フロー（両方）
+ * - 計画 Issue 承認（Review → ToDo）→ 親の実装フロー
+ * - 設計 Issue 承認（Review → ToDo）→ 親の計画フロー or 実装フロー（両方）
  * - 課題 Issue トリアージ承認（Review → ToDo）→ 自身の実装フロー（着手を促す）
  *
  * plan / design は親 Issue 番号が前提のため、親番号が不明な独立 Issue では空配列を返す。
  * normal（課題トリアージ）は自身の Issue 番号で `/implement-flow #{number}` を提案する。
  *
  * @since #2683 normal（課題トリアージ）で自身番号の /implement-flow を提案（ADR-v3-022 改訂）
+ * @since #2689 計画/設計子の遷移先を Review → ToDo に変更（ADR-v3-022 第四改訂版。提案内容は不変）
  */
 
 export type IssueKind = "plan" | "design" | "normal";

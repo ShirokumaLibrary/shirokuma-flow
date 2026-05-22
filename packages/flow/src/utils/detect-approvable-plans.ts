@@ -13,19 +13,22 @@ import type { IssueData } from "../commands/items/shared/session-utils.js";
 // =============================================================================
 
 /**
- * 全サブ Issue が Done の計画 Issue を検出し、approve 提案文字列を生成する。
+ * 承認待ち（Review）の計画 Issue を検出し、approve 提案文字列を生成する。
  *
  * 判定基準:
  * - isPlanIssue(node) が true（`area:plan` ラベル OR タイトルプレフィックス「計画:」/「Plan:」）
  * - state !== "CLOSED"（OPEN のまま）
  * - ステータスが Review（承認待ち状態）
  *
- * 「全サブ Issue が Done」の proxy として Review 状態を用いる前提:
- * syncParentStatus() は計画 Issue を filteredNodes から除外（parent-status.ts）するため、
- * 計画 Issue は deriveExpectedParentStatus() によって自動 Review に到達しない。
- * Review 到達は plan-issue スキル等で手動 push（items approve 相当）する経路のみ。
- * よって「計画 Issue が Review 状態」≈「approve 実行済みで全サブ完了」と解釈する。
- * この proxy 仮定を呼び出し元が把握することを意図してドキュメント化する。
+ * 検出の意味（#2689 ADR-v3-022 第四改訂版で見直し・「承認待ち Review 検出」を維持）:
+ * 計画 Issue の `Review` は「計画策定が完了し承認待ち」の状態を表す。`approve` を実行すると
+ * 計画 Issue は `Review → ToDo`（計画承認・着手準備完了。Done は実装フェーズで到達）に遷移する。
+ * したがって「承認可能 = まだ Review にある計画 Issue」であり、本関数は Review 状態の計画 Issue を
+ * 検出する。approve 後は ToDo になり Review から外れるため本関数の対象外になる（重複提案しない）。
+ *
+ * NOTE: 旧 docstring は「Review = approve 実行済みで全サブ完了」という Done-proxy 前提だったが、
+ * 第四改訂版で approve の遷移先が Done → ToDo に変わったためその前提は失効した。検出ロジックの挙動
+ * （Review を承認待ちとして検出する）は変えず、意味づけのみを「承認待ち Review 検出」に正した。
  *
  * Pure function - API 呼び出しなし。
  *
