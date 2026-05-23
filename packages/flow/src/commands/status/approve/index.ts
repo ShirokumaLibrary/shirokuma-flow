@@ -35,6 +35,7 @@ import {
   STATUS_VALUES,
   isCancelledEquivalent,
 } from "../../../utils/status-workflow.js";
+import { updateCachedStatus } from "../../../utils/context-cache.js";
 // #2683: issue_kind で遷移先を分岐する（plan/design = Done、normal = ToDo）
 import { SUB_ISSUES_GRAPHQL_HEADERS } from "../../items/helpers.js";
 import type { Logger } from "../../../utils/logger.js";
@@ -347,6 +348,11 @@ export async function cmdItemApprove(
     return 1;
   }
 
+  // 対象 Issue の Status をキャッシュ両キー（issues/{n}.json と context-{n}.json）に同期する（#2694）。
+  // 従来 approve はどちらのキャッシュも更新せず、後続コマンド（issue context の cache hit 等）が
+  // stale な Review を読んでいた。事後検証で actualStatus === targetStatus を確認した後に同期する。
+  updateCachedStatus(number, targetStatus);
+
   // 承認継承の下方カスケード（決定 #7、計画 approve のみ）。
   // 計画 Issue を approve（Review → ToDo）した時、同じ親（課題 Issue）配下の
   // 「計画 Issue 以外の子」= 実装サブ Issue で Backlog のものを Backlog → ToDo に一括遷移させる。
@@ -373,6 +379,8 @@ export async function cmdItemApprove(
         );
         if (cascadeResult.success) {
           cascadedSubissues.push(sibling.number);
+          // カスケードで遷移できた兄弟のキャッシュ両キーも同期する（#2694）。
+          updateCachedStatus(sibling.number, STATUS_VALUES.TODO);
           logger.success(`実装サブ Issue #${sibling.number}: Backlog → ToDo（計画承認の継承）`);
         } else {
           cascadeFailed.push(sibling.number);

@@ -28,11 +28,17 @@ import type { ItemsOptions } from "../../items/types.js";
 
 /** items context サブコマンドのオプション */
 export interface ContextOptions extends ItemsOptions {
-  /** キャッシュを使わず強制的に API から取得 */
-  noCache?: boolean;
+  /**
+   * commander が `--no-cache` を `options.cache = false` にマップした結果（#2694）。
+   * commander.js は `--no-cache` を boolean negation として扱い `cache`（既定 true、
+   * `--no-cache` 指定時 false）にマップし、`noCache` フィールドは生成しない。
+   * そのため CLI の `--no-cache` を尊重するにはこの `cache === false` を判定する必要がある。
+   */
+  cache?: boolean;
   /**
    * --no-cache のエイリアス（#2683）。指定するとキャッシュをスキップしてライブ再取得し、
    * JSON キャッシュを書き直す。`issue context <n> --refresh` を直感どおり機能させる。
+   * プログラム呼び出しでライブ取得したい場合もこのフィールドを使う。
    */
   refresh?: boolean;
 }
@@ -414,8 +420,10 @@ export async function cmdItemContext(
 
   // キャッシュ確認（--no-cache / --refresh でない場合）
   // --refresh は --no-cache のエイリアス（#2683）。どちらか指定でキャッシュをスキップしライブ再取得する
+  // CLI の `--no-cache` は commander が `options.cache = false` にマップする（#2694）。
   // ContextData 全体は context-{N} キーに保存（ContextTarget とは別キー）
-  if (!options.noCache && !options.refresh) {
+  const skipCache = options.refresh === true || options.cache === false;
+  if (!skipCache) {
     const cached = readContextCache<ContextData>("issues", `context-${number}`);
     if (cached) {
       logger.info(`Issue #${number} のキャッシュを使用します`);

@@ -36,6 +36,7 @@ import {
 import { closeIssueById, fetchPrsWithProjectStatus } from "../items/integrity/index.js";
 import { syncParentStatus, checkChildrenAllDone } from "../../utils/parent-status.js";
 import { STATUS_VALUES } from "../../utils/status-workflow.js";
+import { updateCachedStatus } from "../../utils/context-cache.js";
 
 // =============================================================================
 // Options
@@ -241,7 +242,11 @@ export async function cmdUpdateStatus(
 
     const syncedNumbers = new Set<number>();
     for (const updated of updatedIssues) {
+      // PR 経路（updatedPrNumbers）は issue キャッシュ前提でないため除外する（#2694）。
       if (updatedPrNumbers.has(updated.number)) continue;
+      // Issue の Status をキャッシュ両キー（issues/{n}.json と context-{n}.json）に同期する（#2694）。
+      // 従来 update-batch はキャッシュを更新せず、後続コマンドが stale な Status を読んでいた。
+      updateCachedStatus(updated.number, updated.status);
       if (!syncedNumbers.has(updated.number)) {
         syncedNumbers.add(updated.number);
         await syncParentStatus(owner, repo, updated.number, logger);

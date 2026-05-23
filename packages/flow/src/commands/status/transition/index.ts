@@ -19,8 +19,7 @@ import {
 } from "../../../utils/status-workflow.js";
 import { resolveAndUpdateStatus, getIssueDetail, resolvePrAndUpdateStatus } from "../../../utils/issue-detail.js";
 import {
-  readContextCache,
-  writeContextCache,
+  updateCachedStatus,
 } from "../../../utils/context-cache.js";
 import {
   getProjectId,
@@ -36,7 +35,6 @@ import {
 } from "../../../utils/graphql-queries.js";
 import type { Logger } from "../../../utils/logger.js";
 import type { ItemsOptions } from "../../items/types.js";
-import type { ContextTarget } from "../../issue/context/index.js";
 import { checkChildrenAllDone } from "../../../utils/parent-status.js";
 import { resolveCurrentStatus } from "../shared/resolve-status.js";
 
@@ -261,11 +259,10 @@ export async function cmdItemTransition(
     return 1;
   }
 
-  // キャッシュを更新
-  const cached = readContextCache<ContextTarget>("issues", String(number));
-  if (cached) {
-    writeContextCache("issues", String(number), { ...cached, status: targetStatus });
-  }
+  // キャッシュ両キー（issues/{n}.json と context-{n}.json）の status を同期する（#2694）。
+  // 従来は issues/{n}.json のみ更新していたため、issue context の cache hit が
+  // context-{n}.json から stale な status を返す不整合があった。
+  updateCachedStatus(number, targetStatus);
 
   // Blocked 遷移時は reason を Issue コメントとして記録
   if (targetStatus === STATUS_VALUES.BLOCKED && options.reason && !isPr) {
