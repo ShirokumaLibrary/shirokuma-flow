@@ -22,6 +22,7 @@ import {
 } from "./project-fields.js";
 import { getProjectId } from "./project-utils.js";
 import { removeOpenIssuesEntry } from "./github-cache.js";
+import { updateCachedStatus } from "./context-cache.js";
 import { STATUS_VALUES, LEGACY_STATUS_VALUES } from "./status-workflow.js";
 
 /** open-issues インデックスから除去対象となる終了ステータス。
@@ -364,12 +365,19 @@ export async function resolveProjectItem(
  * Issue 番号から Status を解決・更新する。
  * projectId/itemId 未知の場合のファサード。
  *
+ * 更新成功時・already-at-target 時は context キャッシュ 2 キー
+ * （issues/{n}.json と context-{n}.json）を `updateCachedStatus` で同期する（#2701）。
+ * これにより issue rollback / pr merge / pr create / issue close 等の Status 書き込み経路が
+ * このファサードを通すだけでキャッシュ整合を得る。承認経路のように事後検証後に同期したい場合は
+ * `options.skipCacheSync = true` でファサード同期を抑止する。
+ *
  * @param owner - リポジトリオーナー
  * @param repo - リポジトリ名
  * @param issueNumber - Issue 番号
  * @param statusValue - 設定する Status 値
  * @param logger - ロガー
  * @param projectName - プロジェクト名（省略時はリポジトリ名）
+ * @param options.skipCacheSync - true の場合 updateCachedStatus を呼ばない（呼び出し元が事後検証後に同期するケース用）
  */
 export async function resolveAndUpdateStatus(
   owner: string,
@@ -377,7 +385,8 @@ export async function resolveAndUpdateStatus(
   issueNumber: number,
   statusValue: string,
   logger: Logger,
-  projectName?: string
+  projectName?: string,
+  options?: { skipCacheSync?: boolean }
 ): Promise<FullStatusUpdateResult> {
   const resolved = await resolveProjectItem(owner, repo, issueNumber, logger, projectName);
   if (!resolved) {
@@ -385,6 +394,10 @@ export async function resolveAndUpdateStatus(
   }
 
   if (resolved.currentStatus === statusValue) {
+    // 既に目標値でもキャッシュが stale な可能性があるため同期する（#2701）
+    if (!options?.skipCacheSync) {
+      updateCachedStatus(issueNumber, statusValue);
+    }
     return { success: true, reason: "already-at-target" };
   }
 
@@ -396,9 +409,15 @@ export async function resolveAndUpdateStatus(
     logger,
   });
 
-  // 成功かつ終了ステータスの場合は open-issues から除去
-  if (result.success && CLOSE_STATUSES.includes(statusValue)) {
-    removeOpenIssuesEntry(issueNumber, owner, repo);
+  if (result.success) {
+    // 更新成功後にキャッシュ 2 キーを同期する（#2701）
+    if (!options?.skipCacheSync) {
+      updateCachedStatus(issueNumber, statusValue);
+    }
+    // 終了ステータスの場合は open-issues から除去
+    if (CLOSE_STATUSES.includes(statusValue)) {
+      removeOpenIssuesEntry(issueNumber, owner, repo);
+    }
   }
 
   return result;
@@ -537,6 +556,10 @@ export async function resolvePrAndUpdateStatus(
     projectFields: resolved.fields,
     logger,
   });
+
+  if (result.success) {
+    updateCachedStatus(prNumber, statusValue);
+  }
 
   return result;
 }

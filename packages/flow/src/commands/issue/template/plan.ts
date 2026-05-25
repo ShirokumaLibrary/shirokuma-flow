@@ -13,8 +13,7 @@ export type PlanLevel = "light" | "standard" | "detailed" | "epic";
 const PLAN_TEMPLATES_JA: Record<PlanLevel, string> = {
   light: `---
 title: "計画: {親 Issue のタイトル}"
-status: "Review"
-labels: ["area:plan"]
+status: "Backlog"
 ---
 
 ## 計画
@@ -28,8 +27,7 @@ labels: ["area:plan"]
 `,
   standard: `---
 title: "計画: {親 Issue のタイトル}"
-status: "Review"
-labels: ["area:plan"]
+status: "Backlog"
 ---
 
 ## 計画
@@ -50,8 +48,7 @@ labels: ["area:plan"]
 `,
   detailed: `---
 title: "計画: {親 Issue のタイトル}"
-status: "Review"
-labels: ["area:plan"]
+status: "Backlog"
 ---
 
 ## 計画
@@ -75,8 +72,7 @@ labels: ["area:plan"]
 `,
   epic: `---
 title: "計画: {親 Issue のタイトル}"
-status: "Review"
-labels: ["area:plan"]
+status: "Backlog"
 ---
 
 ## 計画
@@ -116,8 +112,7 @@ labels: ["area:plan"]
 const PLAN_TEMPLATES_EN: Record<PlanLevel, string> = {
   light: `---
 title: "Plan: {parent issue title}"
-status: "Review"
-labels: ["area:plan"]
+status: "Backlog"
 ---
 
 ## Plan
@@ -131,8 +126,7 @@ Refer to #{parent-number}.
 `,
   standard: `---
 title: "Plan: {parent issue title}"
-status: "Review"
-labels: ["area:plan"]
+status: "Backlog"
 ---
 
 ## Plan
@@ -153,8 +147,7 @@ Refer to #{parent-number}.
 `,
   detailed: `---
 title: "Plan: {parent issue title}"
-status: "Review"
-labels: ["area:plan"]
+status: "Backlog"
 ---
 
 ## Plan
@@ -178,8 +171,7 @@ Refer to #{parent-number}.
 `,
   epic: `---
 title: "Plan: {parent issue title}"
-status: "Review"
-labels: ["area:plan"]
+status: "Backlog"
 ---
 
 ## Plan

@@ -302,8 +302,11 @@ export async function cmdItemApprove(
     }
   }
 
-  // Status のみ更新し Issue 本体はクローズしない（CLOSED 化は親 Close 連動または明示 close）
-  const updateResult = await resolveAndUpdateStatus(owner, repo, number, targetStatus, logger);
+  // Status のみ更新し Issue 本体はクローズしない（CLOSED 化は親 Close 連動または明示 close）。
+  // skipCacheSync: true — このメイン承認呼び出しは事後検証ゲート（下記）の前にあるため、
+  // ファサードによるキャッシュ同期を抑止し、actualStatus === targetStatus 検証後に
+  // line 354 付近の updateCachedStatus で明示同期する（#2701）。
+  const updateResult = await resolveAndUpdateStatus(owner, repo, number, targetStatus, logger, undefined, { skipCacheSync: true });
   if (!updateResult.success) {
     const result = buildErrorResult(
       number,
@@ -379,8 +382,7 @@ export async function cmdItemApprove(
         );
         if (cascadeResult.success) {
           cascadedSubissues.push(sibling.number);
-          // カスケードで遷移できた兄弟のキャッシュ両キーも同期する（#2694）。
-          updateCachedStatus(sibling.number, STATUS_VALUES.TODO);
+          // resolveAndUpdateStatus ファサードが updateCachedStatus を内部呼び出し済み（#2701）。
           logger.success(`実装サブ Issue #${sibling.number}: Backlog → ToDo（計画承認の継承）`);
         } else {
           cascadeFailed.push(sibling.number);

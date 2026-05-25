@@ -10,7 +10,7 @@ import type { Locale } from "../../../utils/i18n.js";
 const ISSUE_TEMPLATES: Record<Locale, string> = {
   ja: `---
 title: ""
-status: "In progress"
+status: "Backlog"
 priority: "Medium"
 size: "S"
 labels: []
@@ -33,7 +33,7 @@ labels: []
 `,
   en: `---
 title: ""
-status: "In progress"
+status: "Backlog"
 priority: "Medium"
 size: "S"
 labels: []

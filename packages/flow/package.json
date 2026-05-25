@@ -1,6 +1,6 @@
 {
   "name": "@shirokuma-library/flow",
-  "version": "0.3.0-alpha.142",
+  "version": "0.3.0-alpha.145",
   "description": "Next.js プロジェクト用ドキュメント自動生成 CLI",
   "type": "module",
   "main": "dist/index.js",

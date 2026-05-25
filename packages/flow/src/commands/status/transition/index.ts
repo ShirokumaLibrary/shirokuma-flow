@@ -19,9 +19,6 @@ import {
 } from "../../../utils/status-workflow.js";
 import { resolveAndUpdateStatus, getIssueDetail, resolvePrAndUpdateStatus } from "../../../utils/issue-detail.js";
 import {
-  updateCachedStatus,
-} from "../../../utils/context-cache.js";
-import {
   getProjectId,
 } from "../../../utils/project-utils.js";
 import {
@@ -259,10 +256,9 @@ export async function cmdItemTransition(
     return 1;
   }
 
-  // キャッシュ両キー（issues/{n}.json と context-{n}.json）の status を同期する（#2694）。
-  // 従来は issues/{n}.json のみ更新していたため、issue context の cache hit が
-  // context-{n}.json から stale な status を返す不整合があった。
-  updateCachedStatus(number, targetStatus);
+  // キャッシュ両キー（issues/{n}.json と context-{n}.json）の status 同期は
+  // resolveAndUpdateStatus（Issue）/ resolvePrAndUpdateStatus（PR）ファサード内で
+  // それぞれ実施される（#2701）。
 
   // Blocked 遷移時は reason を Issue コメントとして記録
   if (targetStatus === STATUS_VALUES.BLOCKED && options.reason && !isPr) {

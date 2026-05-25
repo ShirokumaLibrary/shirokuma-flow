@@ -390,7 +390,7 @@ export async function fetchParentSubIssueSummaries(
         .map((n) => n?.number)
         .filter((n): n is number => typeof n === "number");
 
-      // area:plan ラベルの計画 Issue をステータス集計から除外
+      // タイトルが「計画:」で始まる計画 Issue をステータス集計から除外
       const filteredNodes = subIssueNodes.filter((node) => !isPlanIssue(node));
       const subIssueStatuses = extractSubIssueStatuses(filteredNodes);
 

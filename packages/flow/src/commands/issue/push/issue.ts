@@ -11,6 +11,7 @@ import {
   getLabels,
   resolveIssueTypeId,
   getIssueInternalId,
+  SUB_ISSUES_GRAPHQL_HEADERS,
 } from "../../items/helpers.js";
 import { writeCache } from "../../../utils/github-cache.js";
 import {
@@ -29,6 +30,7 @@ import {
 } from "../../../utils/graphql-queries.js";
 import type { Logger } from "../../../utils/logger.js";
 import type { CacheMetadata } from "../../../utils/github-cache.js";
+import { RequestError } from "@octokit/request-error";
 import { syncParentStatus } from "../../../utils/parent-status.js";
 import type { PushOptions } from "../../items/types.js";
 
@@ -71,6 +73,7 @@ query($owner: String!, $name: String!, $number: Int!) {
       state
       updatedAt
       issueType { id name }
+      parent { number }
       labels(first: 20) { nodes { name } }
       assignees(first: 10) { nodes { login } }
       projectItems(first: 5) {
@@ -107,6 +110,7 @@ interface IssueForPushResult {
         state?: string;
         updatedAt?: string;
         issueType?: { id?: string; name?: string };
+        parent?: { number?: number };
         labels?: { nodes?: Array<{ name?: string }> };
         assignees?: { nodes?: Array<{ login?: string }> };
         projectItems?: {
@@ -194,12 +198,17 @@ export async function pushIssueBody(
     return 1;
   }
 
-  // リモートから現在の Issue 情報を一括取得（ID + 本文 + Projects フィールド）
-  const remoteResult = await runGraphQL<IssueForPushResult>(GRAPHQL_QUERY_ISSUE_FOR_PUSH, {
-    owner,
-    name: repo,
-    number,
-  });
+  // リモートから現在の Issue 情報を一括取得（ID + 本文 + Projects フィールド + parent）
+  // parent フィールドは Sub-Issues API のため GraphQL-Features ヘッダが必要
+  const remoteResult = await runGraphQL<IssueForPushResult>(
+    GRAPHQL_QUERY_ISSUE_FOR_PUSH,
+    {
+      owner,
+      name: repo,
+      number,
+    },
+    { headers: SUB_ISSUES_GRAPHQL_HEADERS }
+  );
 
   if (!remoteResult.success || !remoteResult.data?.data?.repository?.issue) {
     logger.error(`Issue #${number} が見つかりません`);
@@ -302,9 +311,12 @@ export async function pushIssueBody(
   }
 
   // parent の差分（frontmatter parent フィールドが存在する場合のみ）
+  // リモートの現在の親と比較し、差分がある場合のみ sub_issue 登録を行う。
+  // 既存の sub_issue リンクに対する再 POST は 422 を引き起こすため避ける (#2695)。
   const localParent = typeof localMeta.parent === "number" ? localMeta.parent : undefined;
-  if (localParent !== undefined) {
-    changes.parent = { local: localParent, remote: undefined };
+  const remoteParent = remoteIssue.parent?.number;
+  if (localParent !== undefined && localParent !== remoteParent) {
+    changes.parent = { local: localParent, remote: remoteParent };
   }
 
   if (Object.keys(changes).length === 0) {
@@ -547,9 +559,16 @@ export async function pushIssueBody(
       );
       logger.success(`Issue #${number} を #${localParent} のサブ Issue に設定しました`);
     } catch (e: unknown) {
-      const message = e instanceof Error ? e.message : String(e);
-      logger.error(`parent の設定に失敗しました: ${message}`);
-      return 1;
+      // 既存リンクへの再 POST は 422 になる。重複は致命扱いせず継続する (#2695)。
+      // 本文等の他フィールドの書き込みは既に成功しているため push 全体は失敗させない。
+      const is422 = e instanceof RequestError && e.status === 422;
+      if (is422) {
+        logger.warn(`Issue #${number} は既に #${localParent} のサブ Issue です（再登録をスキップ）`);
+      } else {
+        const message = e instanceof Error ? e.message : String(e);
+        logger.error(`parent の設定に失敗しました: ${message}`);
+        return 1;
+      }
     }
   }
 

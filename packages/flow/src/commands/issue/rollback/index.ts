@@ -5,7 +5,7 @@
  *
  * アクション:
  * - cancel: 課題・計画のキャンセル（子 Issue unparent + PR クローズ + ブランチ削除 + ステータス変更）
- * - reset: 計画を作業前（Ready）に戻す（area:plan ラベルチェック）
+ * - reset: 計画を作業前（Ready）に戻す（タイトルプレフィックスチェック）
  * - revert: revert ブランチ作成 + revert PR 作成
  */
 
@@ -17,7 +17,7 @@ import { STATUS_VALUES } from "../../../utils/status-workflow.js";
 import { execFileAsync } from "../../../utils/spawn-async.js";
 import { closeIssueById } from "../../items/integrity/index.js";
 import { getIssueId } from "../../items/helpers.js";
-import { unparentFromOwnParent, syncChildCloseOnParentClose } from "../../../utils/parent-status.js";
+import { unparentFromOwnParent, syncChildCloseOnParentClose, isPlanIssueFromLabels } from "../../../utils/parent-status.js";
 import type { Logger } from "../../../utils/logger.js";
 import type { ItemsOptions } from "../../items/types.js";
 
@@ -432,7 +432,7 @@ async function actionCancel(
 
 /**
  * reset: 計画 Issue を Ready に戻す。
- * 対象は計画 Issue（area:plan ラベル）のみ。
+ * 対象はタイトルが「計画:」で始まる計画 Issue のみ。
  */
 async function actionReset(
   owner: string,
@@ -445,10 +445,10 @@ async function actionReset(
   const operations: RollbackOperation[] = [];
   const errors: string[] = [];
 
-  // area:plan ラベルチェック
+  // 計画 Issue チェック（ラベルまたはタイトルプレフィックスで判定）
   const labels = (issue.labels?.nodes ?? []).map((l) => l.name ?? "");
-  if (!labels.includes("area:plan")) {
-    const msg = "reset は計画 Issue（area:plan ラベル）のみを対象とします。課題 Issue には items transition を使用してください";
+  if (!isPlanIssueFromLabels(labels, issue.title ?? undefined)) {
+    const msg = "reset は計画 Issue（タイトルが「計画:」/「Plan:」で始まる Issue）のみを対象とします。課題 Issue には items transition を使用してください";
     logger.error(msg);
     return {
       action: "reset",
