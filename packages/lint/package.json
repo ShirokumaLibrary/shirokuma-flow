@@ -1,6 +1,6 @@
 {
   "name": "@shirokuma-library/lint",
-  "version": "0.3.0-alpha.145",
+  "version": "0.3.0-alpha.146",
   "description": "File-level lint checks for AI-first documentation and code structure (tests/coverage/docs/code/annotations/structure/workflow/security).",
   "license": "Apache-2.0",
   "repository": {
