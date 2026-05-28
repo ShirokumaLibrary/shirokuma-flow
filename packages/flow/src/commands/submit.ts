@@ -40,8 +40,6 @@ export interface SubmitOptions extends ItemsOptions {
   via?: string;
   /** 強制遷移（status transition --force と同等） */
   force?: boolean;
-  /** キャッシュを使わずライブから現在ステータスを再取得しキャッシュを更新する（#2683） */
-  refresh?: boolean;
 }
 
 // =============================================================================
@@ -66,9 +64,7 @@ export async function cmdSubmit(
   const { owner, name: repo } = repoInfo;
   const number = parseInt(numberStr, 10);
 
-  const { status: fromStatus, isPr } = await resolveCurrentStatus(owner, repo, number, logger, {
-    refresh: options.refresh,
-  });
+  const { status: fromStatus, isPr } = await resolveCurrentStatus(owner, repo, number, logger);
   const itemType: "issue" | "pr" = isPr ? "pr" : "issue";
   const expectedFrom = isPr ? STATUS_VALUES.IN_PROGRESS : STATUS_VALUES.BACKLOG;
 
@@ -103,7 +99,7 @@ export async function cmdSubmit(
   const { cmdItemTransition } = await import("./status/transition/index.js");
   return await cmdItemTransition(
     numberStr,
-    { ...options, to: toStatus, via: options.via, force: options.force, refresh: options.refresh },
+    { ...options, to: toStatus, via: options.via, force: options.force },
     logger,
   );
 }
@@ -128,7 +124,6 @@ export function createSubmitCommand(): Command {
       "中間ステータス (例: --via 'In progress' で Backlog → In progress → Review)",
     )
     .option("--force", "ステータス遷移ルールを無視して強制遷移")
-    .option("--refresh", "キャッシュを使わずライブから現在ステータスを再取得しキャッシュを更新する")
     .option("--owner <owner>", "リポジトリオーナー (デフォルト: 現在のリポジトリ)")
     .option("--public", "公開リポジトリを対象 (repoPairs 設定から)")
     .option("--repo <alias>", "クロスリポジトリのエイリアス (crossRepos 設定から)")

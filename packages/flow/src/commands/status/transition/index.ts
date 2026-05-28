@@ -61,11 +61,6 @@ export interface TransitionOptions extends ItemsOptions {
    * ロールバック遷移テーブルに対して遷移を行う場合に必須。
    */
   rollback?: boolean;
-  /**
-   * キャッシュを使わずライブから現在ステータスを再取得しキャッシュを更新する（#2683）。
-   * 外部で Status が変わってキャッシュが stale な場合に古い値で誤判定するのを防ぐ。
-   */
-  refresh?: boolean;
 }
 
 // =============================================================================
@@ -164,13 +159,12 @@ export async function cmdItemTransition(
   const targetStatus = options.to;
 
   // 現在のステータスを取得（Issue または PR を自動判別）
-  // --refresh 指定時はキャッシュを信頼せずライブから再取得しキャッシュを更新する（#2683）
+  // ADR-v3-025 (#2776): 読み取りは常に API 直取得。--refresh は廃止された。
   const { status: currentStatus, isPr } = await resolveCurrentStatus(
     owner,
     repo,
     number,
     logger,
-    { refresh: options.refresh },
   );
 
   // itemType を判定（isPr の結果を使用）

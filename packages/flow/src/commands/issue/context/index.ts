@@ -15,10 +15,7 @@
 
 import { runGraphQL, parseIssueNumber, isIssueNumber } from "../../../utils/github.js";
 import { resolveTargetRepo } from "../../../utils/repo-pairs.js";
-import {
-  readContextCache,
-  writeContextCache,
-} from "../../../utils/context-cache.js";
+import { writeContextCache } from "../../../utils/context-cache.js";
 import type { Logger } from "../../../utils/logger.js";
 import type { ItemsOptions } from "../../items/types.js";
 
@@ -26,22 +23,13 @@ import type { ItemsOptions } from "../../items/types.js";
 // オプション型
 // =============================================================================
 
-/** items context サブコマンドのオプション */
-export interface ContextOptions extends ItemsOptions {
-  /**
-   * commander が `--no-cache` を `options.cache = false` にマップした結果（#2694）。
-   * commander.js は `--no-cache` を boolean negation として扱い `cache`（既定 true、
-   * `--no-cache` 指定時 false）にマップし、`noCache` フィールドは生成しない。
-   * そのため CLI の `--no-cache` を尊重するにはこの `cache === false` を判定する必要がある。
-   */
-  cache?: boolean;
-  /**
-   * --no-cache のエイリアス（#2683）。指定するとキャッシュをスキップしてライブ再取得し、
-   * JSON キャッシュを書き直す。`issue context <n> --refresh` を直感どおり機能させる。
-   * プログラム呼び出しでライブ取得したい場合もこのフィールドを使う。
-   */
-  refresh?: boolean;
-}
+/**
+ * items context サブコマンドのオプション
+ *
+ * ADR-v3-025: 読み取りは常に API 直取得 + write-through キャッシュ。
+ * `--no-cache` / `--refresh` フラグおよびキャッシュ読み取りショートカットは廃止された。
+ */
+export interface ContextOptions extends ItemsOptions {}
 
 // =============================================================================
 // GraphQL クエリ定義
@@ -418,19 +406,8 @@ export async function cmdItemContext(
   const { owner, name: repo } = repoInfo;
   const number = parseIssueNumber(numberStr);
 
-  // キャッシュ確認（--no-cache / --refresh でない場合）
-  // --refresh は --no-cache のエイリアス（#2683）。どちらか指定でキャッシュをスキップしライブ再取得する
-  // CLI の `--no-cache` は commander が `options.cache = false` にマップする（#2694）。
-  // ContextData 全体は context-{N} キーに保存（ContextTarget とは別キー）
-  const skipCache = options.refresh === true || options.cache === false;
-  if (!skipCache) {
-    const cached = readContextCache<ContextData>("issues", `context-${number}`);
-    if (cached) {
-      logger.info(`Issue #${number} のキャッシュを使用します`);
-      console.log(JSON.stringify(cached, null, 2));
-      return 0;
-    }
-  }
+  // ADR-v3-025: 読み取りは常に API 直取得 + write-through キャッシュ。
+  // キャッシュは事後の write-through 経路でのみ更新する（差分ベースラインとしては github-cache が担当）。
 
   // Issue として取得を試みる
   const issueResult = await runGraphQL<IssueContextQueryResult>(

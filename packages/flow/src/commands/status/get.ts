@@ -11,10 +11,7 @@ import { resolveCurrentStatus } from "./shared/resolve-status.js";
 import type { Logger } from "../../utils/logger.js";
 import type { ItemsOptions } from "../items/types.js";
 
-export interface StatusGetOptions extends ItemsOptions {
-  /** キャッシュを使わずライブから現在ステータスを再取得しキャッシュを更新する（#2683） */
-  refresh?: boolean;
-}
+export type StatusGetOptions = ItemsOptions;
 
 export interface StatusGetResult {
   number: number;
@@ -41,9 +38,7 @@ export async function cmdStatusGet(
   const { owner, name: repo } = repoInfo;
   const number = parseIssueNumber(numberStr);
 
-  const { status: currentStatus, isPr } = await resolveCurrentStatus(owner, repo, number, logger, {
-    refresh: options.refresh,
-  });
+  const { status: currentStatus, isPr } = await resolveCurrentStatus(owner, repo, number, logger);
   const itemType: "issue" | "pr" = isPr ? "pr" : "issue";
   const allowedTransitions = currentStatus
     ? (() => {

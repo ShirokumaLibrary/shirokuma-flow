@@ -357,26 +357,18 @@ async function listLinks(
   issueNumber: number,
   logger: Logger
 ): Promise<number> {
-  let body: string;
+  // ADR-v3-025: 読み取りは常に API 直取得。キャッシュ優先ショートカットは廃止。
+  const issueResult = await runGraphQL<IssueBodyResult>(
+    GRAPHQL_QUERY_ISSUE_BODY,
+    { owner, name: repo, number: issueNumber }
+  );
 
-  // キャッシュから取得を試みる
-  const cached = readContextCache<ContextTarget>("issues", String(issueNumber));
-  if (cached?.body) {
-    body = cached.body;
-  } else {
-    // API から取得
-    const issueResult = await runGraphQL<IssueBodyResult>(
-      GRAPHQL_QUERY_ISSUE_BODY,
-      { owner, name: repo, number: issueNumber }
-    );
-
-    if (!issueResult.success || !issueResult.data?.data?.repository?.issue) {
-      logger.error(`Issue #${issueNumber} が見つかりません`);
-      return 1;
-    }
-
-    body = issueResult.data.data.repository.issue.body ?? "";
+  if (!issueResult.success || !issueResult.data?.data?.repository?.issue) {
+    logger.error(`Issue #${issueNumber} が見つかりません`);
+    return 1;
   }
+
+  const body = issueResult.data.data.repository.issue.body ?? "";
 
   const links = parseLinkSection(body);
 

@@ -18,8 +18,6 @@ import type { ItemsOptions } from "../items/types.js";
 export interface StatusAllowedOptions extends ItemsOptions {
   /** 現在のステータスを直接指定（静的照会）。指定時は Issue 番号照会をスキップ */
   status?: string;
-  /** キャッシュを使わずライブから現在ステータスを再取得しキャッシュを更新する（#2683） */
-  refresh?: boolean;
 }
 
 export interface StatusAllowedResult {
@@ -71,9 +69,7 @@ export async function cmdStatusAllowed(
   const { owner, name: repo } = repoInfo;
   const number = parseIssueNumber(numberStr);
 
-  const { status: currentStatus, isPr } = await resolveCurrentStatus(owner, repo, number, logger, {
-    refresh: options.refresh,
-  });
+  const { status: currentStatus, isPr } = await resolveCurrentStatus(owner, repo, number, logger);
   const itemType: "issue" | "pr" = isPr ? "pr" : "issue";
   const allowedTransitions = currentStatus
     ? (() => {

@@ -2,7 +2,9 @@
  * items comments サブコマンド (#1814, #2024)
  *
  * issues comments から移行。Issue の全コメントを GraphQL で取得する。
- * #2024 Phase 2-D: context cache を優先参照し、miss 時は API フォールバック。
+ *
+ * ADR-v3-025 (#2776): キャッシュ優先読み取り経路は廃止。常に API 直取得し、
+ * `processIssueContext` 内の write-through 経路でキャッシュは引き続き更新される。
  */
 
 import {
@@ -11,7 +13,6 @@ import {
   parseIssueNumber,
 } from "../../../utils/github.js";
 import { resolveTargetRepo } from "../../../utils/repo-pairs.js";
-import { readContextCache } from "../../../utils/context-cache.js";
 import type { Logger } from "../../../utils/logger.js";
 import type { CommentsOptions } from "../../items/types.js";
 
@@ -68,30 +69,7 @@ export async function cmdComments(
   const { owner, name: repo } = repoInfo;
   const number = parseIssueNumber(issueNumberStr);
 
-  // コンテキストキャッシュを確認（#2024 Phase 2-D）
-  interface CachedComment {
-    id?: string;
-    database_id?: number;
-    source?: string;
-    author?: string;
-    body?: string;
-    created_at?: string;
-    url?: string;
-  }
-  const cachedComments = readContextCache<CachedComment[]>("comments", `issue-${number}`);
-  if (cachedComments && Array.isArray(cachedComments)) {
-    logger.info(`Issue #${number} のコメントをキャッシュから取得します`);
-    const comments = cachedComments.map((c, i) => ({
-      id: c.id ?? String(i),
-      database_id: c.database_id ?? null,
-      author: c.author ?? null,
-      body: c.body ?? null,
-      created_at: c.created_at ?? null,
-      url: c.url ?? null,
-    }));
-    console.log(JSON.stringify(comments, null, 2));
-    return 0;
-  }
+  // ADR-v3-025: 読み取りは常に API 直取得。キャッシュ優先ショートカットは廃止。
 
   interface CommentNode {
     id?: string;

@@ -35,7 +35,6 @@ import {
   STATUS_VALUES,
   isCancelledEquivalent,
 } from "../../../utils/status-workflow.js";
-import { updateCachedStatus } from "../../../utils/context-cache.js";
 // #2683: issue_kind で遷移先を分岐する（plan/design = Done、normal = ToDo）
 import { SUB_ISSUES_GRAPHQL_HEADERS } from "../../items/helpers.js";
 import type { Logger } from "../../../utils/logger.js";
@@ -303,10 +302,8 @@ export async function cmdItemApprove(
   }
 
   // Status のみ更新し Issue 本体はクローズしない（CLOSED 化は親 Close 連動または明示 close）。
-  // skipCacheSync: true — このメイン承認呼び出しは事後検証ゲート（下記）の前にあるため、
-  // ファサードによるキャッシュ同期を抑止し、actualStatus === targetStatus 検証後に
-  // line 354 付近の updateCachedStatus で明示同期する（#2701）。
-  const updateResult = await resolveAndUpdateStatus(owner, repo, number, targetStatus, logger, undefined, { skipCacheSync: true });
+  // ADR-v3-025 (#2776): キャッシュ同期は廃止されたため、skipCacheSync オプションも不要。
+  const updateResult = await resolveAndUpdateStatus(owner, repo, number, targetStatus, logger);
   if (!updateResult.success) {
     const result = buildErrorResult(
       number,
@@ -351,10 +348,8 @@ export async function cmdItemApprove(
     return 1;
   }
 
-  // 対象 Issue の Status をキャッシュ両キー（issues/{n}.json と context-{n}.json）に同期する（#2694）。
-  // 従来 approve はどちらのキャッシュも更新せず、後続コマンド（issue context の cache hit 等）が
-  // stale な Review を読んでいた。事後検証で actualStatus === targetStatus を確認した後に同期する。
-  updateCachedStatus(number, targetStatus);
+  // ADR-v3-025 (#2776): キャッシュ Status 同期は廃止。読み取りは常に API 直取得のため、
+  // 事後検証で実値を確認済みなら後続コマンドが stale を読む経路は存在しない。
 
   // 承認継承の下方カスケード（決定 #7、計画 approve のみ）。
   // 計画 Issue を approve（Review → ToDo）した時、同じ親（課題 Issue）配下の
@@ -382,7 +377,6 @@ export async function cmdItemApprove(
         );
         if (cascadeResult.success) {
           cascadedSubissues.push(sibling.number);
-          // resolveAndUpdateStatus ファサードが updateCachedStatus を内部呼び出し済み（#2701）。
           logger.success(`実装サブ Issue #${sibling.number}: Backlog → ToDo（計画承認の継承）`);
         } else {
           cascadeFailed.push(sibling.number);

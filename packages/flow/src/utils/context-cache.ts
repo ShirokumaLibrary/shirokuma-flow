@@ -17,16 +17,6 @@ import { join } from "node:path";
 /** キャッシュのルートディレクトリ */
 export const CONTEXT_CACHE_ROOT = ".shirokuma/cache";
 
-/**
- * キャッシュファイルが存在するかどうかを返す。
- *
- * @param subdir - キャッシュサブディレクトリ
- * @param key - ファイルキー（拡張子なし）
- */
-function contextCacheExists(subdir: CacheSubdir, key: string): boolean {
-  return existsSync(join(CONTEXT_CACHE_ROOT, subdir, `${key}.json`));
-}
-
 /** キャッシュサブディレクトリの種別 */
 export type CacheSubdir = "issues" | "comments";
 
@@ -64,64 +54,5 @@ export function writeContextCache<T>(subdir: CacheSubdir, key: string, data: T):
   writeFileSync(filePath, JSON.stringify(data, null, 2), "utf-8");
 }
 
-// =============================================================================
-// Status 同期ヘルパー
-// =============================================================================
-
-/** status フィールドを持つ最小構造（issues/{n}.json = ContextTarget） */
-interface CachedStatusTarget {
-  status?: string;
-  [key: string]: unknown;
-}
-
-/** target.status を持つ最小構造（issues/context-{n}.json = ContextData） */
-interface CachedContextData {
-  target?: CachedStatusTarget;
-  [key: string]: unknown;
-}
-
-/**
- * Issue の Status をキャッシュ両キーに同期する（#2694）。
- *
- * Status の書き込み経路（transition / approve / update-batch 等）からこのヘルパーを
- * 呼ぶことで、後続コマンドが stale な Status を読むのを防ぐ。更新対象は同一 Issue の
- * 2 つのキャッシュキー:
- *
- * - `issues/{number}.json`         … ContextTarget。トップレベル `status` を更新
- *   （resolveCurrentStatus が transition/begin/get/allowed の遷移元判定に使用）
- * - `issues/context-{number}.json` … ContextData。ネストした `target.status` を更新
- *   （`issue context` の cache hit が参照）
- *
- * 動作:
- * - **ファイルが存在する場合のみ更新**する（存在しなければ no-op。キャッシュ未生成の
- *   Issue に対して空ファイルを作らない）。
- * - status 以外のフィールド（title / body / labels / target 以外の構造等）は保持し、
- *   status のみを書き換える。
- * - 一方のキーだけ存在する場合は、存在する側だけを更新する。
- *
- * @param number - Issue 番号
- * @param status - 書き込む新しい Status 値
- */
-export function updateCachedStatus(number: number, status: string): void {
-  const key = String(number);
-
-  // issues/{number}.json（ContextTarget）— トップレベル status
-  if (contextCacheExists("issues", key)) {
-    const target = readContextCache<CachedStatusTarget>("issues", key);
-    if (target) {
-      writeContextCache("issues", key, { ...target, status });
-    }
-  }
-
-  // issues/context-{number}.json（ContextData）— ネストした target.status
-  const contextKey = `context-${key}`;
-  if (contextCacheExists("issues", contextKey)) {
-    const data = readContextCache<CachedContextData>("issues", contextKey);
-    if (data?.target) {
-      writeContextCache("issues", contextKey, {
-        ...data,
-        target: { ...data.target, status },
-      });
-    }
-  }
-}
+// ADR-v3-025 (#2776): updateCachedStatus は廃止。
+// 読み取りが常に API 直取得になったため、Status 書き込み経路のキャッシュ同期は不要となった。

@@ -2,14 +2,14 @@
  * Issue / PR のステータス解決ヘルパー
  *
  * `status get` / `status allowed` / `status transition` で共通利用する。
- * キャッシュ優先 → GraphQL → PR フォールバックの順で現在ステータスを取得する。
+ *
+ * ADR-v3-025: 読み取りは常に API 直取得（GraphQL → PR フォールバック）。
+ * `context-cache` (JSON) を読み取りショートカットに使うロジックは廃止された。
  */
 
 import { runGraphQL } from "../../../utils/github.js";
 import { getPrDetail } from "../../../utils/issue-detail.js";
-import { readContextCache, writeContextCache } from "../../../utils/context-cache.js";
 import type { Logger } from "../../../utils/logger.js";
-import type { ContextTarget } from "../../issue/context/index.js";
 
 const GRAPHQL_QUERY_ISSUE_STATUS = `
 query($owner: String!, $name: String!, $number: Int!) {
@@ -48,49 +48,28 @@ interface IssueStatusQueryResult {
 export interface ResolvedStatus {
   status: string | null;
   isPr: boolean;
+  /**
+   * ADR-v3-025 以降は常に false。フィールド自体は呼び出し元の型互換のため残しているが、
+   * キャッシュヒット経路は廃止されている。
+   */
   fromCache: boolean;
 }
 
-/** resolveCurrentStatus のオプション */
-export interface ResolveStatusOptions {
-  /**
-   * キャッシュの status を信頼せずライブ（GraphQL → PR フォールバック）から再取得する。
-   * 外部（GitHub UI・他マシン・別ツール）で Status が変わってキャッシュが stale に
-   * なった場合に古い値で誤判定するのを防ぐ。ライブ取得に成功し非 null の status が
-   * 得られた場合のみ、既存キャッシュの他フィールド（body/title/labels/assignees）を
-   * 保持したまま status を書き戻す。
-   */
-  refresh?: boolean;
-}
-
 /**
- * キャッシュ → GraphQL → PR フォールバックの順で現在のステータスを取得する。
+ * GraphQL → PR フォールバックの順で現在のステータスを取得する。
  *
- * `options.refresh === true` のときはキャッシュの status を信頼せず、ライブ取得した
- * status を返す。ライブ取得が成功して非 null の status が得られ、かつ既存キャッシュが
- * 存在する場合のみ、その status をキャッシュへ書き戻す（他フィールドは保持）。取得失敗・
- * null のときは書き戻さず、既存キャッシュを破壊しない。
+ * ADR-v3-025: 読み取りは常に API 直取得。キャッシュ優先読み取りは廃止された。
  *
- * @returns ステータス値、PR 経由かどうか、キャッシュヒットかどうかを含む結果
+ * @returns ステータス値と PR 経由かどうかを含む結果
  */
 export async function resolveCurrentStatus(
   owner: string,
   repo: string,
   number: number,
   logger: Logger,
-  options?: ResolveStatusOptions,
 ): Promise<ResolvedStatus> {
-  const cached = readContextCache<ContextTarget>("issues", String(number));
-
-  // refresh 未指定時は従来どおりキャッシュ優先
-  if (!options?.refresh && cached?.status) {
-    logger.info(`Issue #${number} のステータスをキャッシュから取得: ${cached.status}`);
-    return { status: cached.status, isPr: false, fromCache: true };
-  }
-
-  if (options?.refresh) {
-    logger.info(`Issue #${number} のステータスをライブから再取得します（--refresh）`);
-  }
+  // 引数を未使用扱いから外す（将来のログ/メトリクス用に保持）
+  void logger;
 
   const issueResult = await runGraphQL<IssueStatusQueryResult>(
     GRAPHQL_QUERY_ISSUE_STATUS,
@@ -103,21 +82,15 @@ export async function resolveCurrentStatus(
       const nodes = issueData.projectItems?.nodes ?? [];
       for (const node of nodes) {
         if (node.status?.name) {
-          // refresh 時、既存キャッシュがあれば status を書き戻す（他フィールドは保持）
-          if (options?.refresh && cached) {
-            writeContextCache("issues", String(number), { ...cached, status: node.status.name });
-          }
           return { status: node.status.name, isPr: false, fromCache: false };
         }
       }
-      // ライブ status が null（projectItems 空）の場合は書き戻さない（null 上書き防止）
       return { status: null, isPr: false, fromCache: false };
     }
   }
 
   const prDetail = await getPrDetail(owner, repo, number);
   if (prDetail) {
-    // PR は issue キャッシュ前提でないため refresh でも書き戻しは行わない
     return { status: prDetail.status ?? null, isPr: true, fromCache: false };
   }
 

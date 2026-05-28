@@ -22,7 +22,6 @@ import {
 } from "./project-fields.js";
 import { getProjectId } from "./project-utils.js";
 import { removeOpenIssuesEntry } from "./github-cache.js";
-import { updateCachedStatus } from "./context-cache.js";
 import { STATUS_VALUES, LEGACY_STATUS_VALUES } from "./status-workflow.js";
 
 /** open-issues インデックスから除去対象となる終了ステータス。
@@ -365,11 +364,8 @@ export async function resolveProjectItem(
  * Issue 番号から Status を解決・更新する。
  * projectId/itemId 未知の場合のファサード。
  *
- * 更新成功時・already-at-target 時は context キャッシュ 2 キー
- * （issues/{n}.json と context-{n}.json）を `updateCachedStatus` で同期する（#2701）。
- * これにより issue rollback / pr merge / pr create / issue close 等の Status 書き込み経路が
- * このファサードを通すだけでキャッシュ整合を得る。承認経路のように事後検証後に同期したい場合は
- * `options.skipCacheSync = true` でファサード同期を抑止する。
+ * ADR-v3-025 (#2776): 読み取りが常に API 直取得になったため context キャッシュの Status 同期は不要。
+ * `updateCachedStatus` 呼び出しおよび `skipCacheSync` オプションは廃止された。
  *
  * @param owner - リポジトリオーナー
  * @param repo - リポジトリ名
@@ -377,7 +373,6 @@ export async function resolveProjectItem(
  * @param statusValue - 設定する Status 値
  * @param logger - ロガー
  * @param projectName - プロジェクト名（省略時はリポジトリ名）
- * @param options.skipCacheSync - true の場合 updateCachedStatus を呼ばない（呼び出し元が事後検証後に同期するケース用）
  */
 export async function resolveAndUpdateStatus(
   owner: string,
@@ -385,8 +380,7 @@ export async function resolveAndUpdateStatus(
   issueNumber: number,
   statusValue: string,
   logger: Logger,
-  projectName?: string,
-  options?: { skipCacheSync?: boolean }
+  projectName?: string
 ): Promise<FullStatusUpdateResult> {
   const resolved = await resolveProjectItem(owner, repo, issueNumber, logger, projectName);
   if (!resolved) {
@@ -394,10 +388,6 @@ export async function resolveAndUpdateStatus(
   }
 
   if (resolved.currentStatus === statusValue) {
-    // 既に目標値でもキャッシュが stale な可能性があるため同期する（#2701）
-    if (!options?.skipCacheSync) {
-      updateCachedStatus(issueNumber, statusValue);
-    }
     return { success: true, reason: "already-at-target" };
   }
 
@@ -410,10 +400,6 @@ export async function resolveAndUpdateStatus(
   });
 
   if (result.success) {
-    // 更新成功後にキャッシュ 2 キーを同期する（#2701）
-    if (!options?.skipCacheSync) {
-      updateCachedStatus(issueNumber, statusValue);
-    }
     // 終了ステータスの場合は open-issues から除去
     if (CLOSE_STATUSES.includes(statusValue)) {
       removeOpenIssuesEntry(issueNumber, owner, repo);
@@ -549,6 +535,7 @@ export async function resolvePrAndUpdateStatus(
     return { success: true, reason: "already-at-target" };
   }
 
+  // ADR-v3-025: 読み取りが常に API 直取得になったためキャッシュ同期は不要。
   const result = await updateProjectStatus({
     projectId: resolved.projectId,
     itemId: resolved.projectItemId,
@@ -556,10 +543,6 @@ export async function resolvePrAndUpdateStatus(
     projectFields: resolved.fields,
     logger,
   });
-
-  if (result.success) {
-    updateCachedStatus(prNumber, statusValue);
-  }
 
   return result;
 }

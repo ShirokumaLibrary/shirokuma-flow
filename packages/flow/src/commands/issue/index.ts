@@ -346,9 +346,7 @@ export function createIssueCommand(): Command {
   // ---------------------------------------------------------------------------
   issue
     .command("context <number>")
-    .description("Issue / PR を起点に関連情報を一括取得してキャッシュに書き込む")
-    .option("--no-cache", "キャッシュを使わず強制的に API から取得")
-    .option("--refresh", "--no-cache のエイリアス。キャッシュをスキップしてライブ再取得しキャッシュを更新する")
+    .description("Issue / PR を起点に関連情報を一括取得してキャッシュに書き込む（ADR-v3-025: 常に API 直取得 + write-through）")
     .action(async (number, localOpts, command: Command) => {
       const options = mergeOpts(command, localOpts);
       const { cmdItemContext } = await import("./context/index.js");
