@@ -12,13 +12,8 @@
 
 import { runGraphQL, parseIssueNumber, isIssueNumber } from "../../../utils/github.js";
 import { resolveTargetRepo } from "../../../utils/repo-pairs.js";
-import {
-  readContextCache,
-  writeContextCache,
-} from "../../../utils/context-cache.js";
 import type { Logger } from "../../../utils/logger.js";
 import type { ItemsOptions } from "../../items/types.js";
-import type { ContextTarget } from "../context/index.js";
 
 // =============================================================================
 // オプション型
@@ -331,12 +326,6 @@ async function addLink(
     return 1;
   }
 
-  // キャッシュを更新
-  const cached = readContextCache<ContextTarget>("issues", String(issueNumber));
-  if (cached) {
-    writeContextCache("issues", String(issueNumber), { ...cached, body: newBody });
-  }
-
   logger.success(`Issue #${issueNumber} に Discussion #D${discussionNumber} をリンクしました`);
   console.log(JSON.stringify({
     issue: issueNumber,
@@ -447,12 +436,6 @@ async function unlinkDiscussion(
   if (!updateResult.success) {
     logger.error(`Issue #${issueNumber} の本文更新に失敗しました`);
     return 1;
-  }
-
-  // キャッシュを更新
-  const cached = readContextCache<ContextTarget>("issues", String(issueNumber));
-  if (cached) {
-    writeContextCache("issues", String(issueNumber), { ...cached, body: newBody });
   }
 
   logger.success(`Issue #${issueNumber} から Discussion #D${discussionNumber} のリンクを解除しました`);

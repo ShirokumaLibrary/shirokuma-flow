@@ -30,14 +30,9 @@ import {
   setItemFields,
 } from "../../../utils/project-fields.js";
 import { getProjectId } from "../../../utils/project-utils.js";
-import {
-  readContextCache,
-  writeContextCache,
-} from "../../../utils/context-cache.js";
 import { getLabels, normalizeLabels } from "../../items/helpers.js";
 import type { Logger } from "../../../utils/logger.js";
 import type { ItemsOptions } from "../../items/types.js";
-import type { ContextTarget } from "../context/index.js";
 
 // =============================================================================
 // オプション型
@@ -574,16 +569,6 @@ async function updateIssue(
         logger.warn(`担当者 "${options.unassign}" が見つかりません`);
       }
     }
-  }
-
-  // キャッシュを更新
-  const cached = readContextCache<ContextTarget>("issues", String(number));
-  if (cached) {
-    const updatedCache = { ...cached };
-    if (options.status) updatedCache.status = options.status;
-    if (options.title) updatedCache.title = options.title;
-    if (updateVars.body) updatedCache.body = updateVars.body as string;
-    writeContextCache("issues", String(number), updatedCache);
   }
 
   logger.success(`Issue #${number} を更新しました`);

@@ -3,8 +3,8 @@
  *
  * `status get` / `status allowed` / `status transition` で共通利用する。
  *
- * ADR-v3-025: 読み取りは常に API 直取得（GraphQL → PR フォールバック）。
- * `context-cache` (JSON) を読み取りショートカットに使うロジックは廃止された。
+ * ADR-v3-025 / #2792: 読み取りは常に API 直取得（GraphQL → PR フォールバック）。
+ * JSON キャッシュを読み取りショートカットに使うロジックは廃止された。
  */
 
 import { runGraphQL } from "../../../utils/github.js";
@@ -48,11 +48,6 @@ interface IssueStatusQueryResult {
 export interface ResolvedStatus {
   status: string | null;
   isPr: boolean;
-  /**
-   * ADR-v3-025 以降は常に false。フィールド自体は呼び出し元の型互換のため残しているが、
-   * キャッシュヒット経路は廃止されている。
-   */
-  fromCache: boolean;
 }
 
 /**
@@ -82,17 +77,17 @@ export async function resolveCurrentStatus(
       const nodes = issueData.projectItems?.nodes ?? [];
       for (const node of nodes) {
         if (node.status?.name) {
-          return { status: node.status.name, isPr: false, fromCache: false };
+          return { status: node.status.name, isPr: false };
         }
       }
-      return { status: null, isPr: false, fromCache: false };
+      return { status: null, isPr: false };
     }
   }
 
   const prDetail = await getPrDetail(owner, repo, number);
   if (prDetail) {
-    return { status: prDetail.status ?? null, isPr: true, fromCache: false };
+    return { status: prDetail.status ?? null, isPr: true };
   }
 
-  return { status: null, isPr: false, fromCache: false };
+  return { status: null, isPr: false };
 }

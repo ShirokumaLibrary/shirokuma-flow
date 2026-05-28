@@ -1,6 +1,6 @@
 {
   "name": "@shirokuma-library/markdown",
-  "version": "0.3.0-alpha.149",
+  "version": "0.3.0-alpha.150",
   "description": "LLM-optimized Markdown document management CLI (shirokuma-md)",
   "type": "module",
   "main": "dist/index.js",

@@ -1,8 +1,7 @@
 /**
  * items context サブコマンド (#2024 Phase 1)
  *
- * 指定された Issue / PR を起点に関連情報を一括取得し、
- * `.shirokuma/cache/` にキャッシュとして書き込む。
+ * 指定された Issue / PR を起点に関連情報を一括取得し、JSON で出力する。
  *
  * 取得内容:
  * - 対象 Issue / PR の本文・ステータス・ラベル・担当者
@@ -11,11 +10,13 @@
  * - 本文からリンクされた Discussion
  * - 関連 PR（Closes #{N} の逆引き）
  * - 各アイテムの最新コメント
+ *
+ * #2792 (ADR-v3-025): `.shirokuma/cache/` への書き込みは廃止された。
+ * 読み取りは常に API 直取得で行うため、キャッシュ層は不要となった。
  */
 
 import { runGraphQL, parseIssueNumber, isIssueNumber } from "../../../utils/github.js";
 import { resolveTargetRepo } from "../../../utils/repo-pairs.js";
-import { writeContextCache } from "../../../utils/context-cache.js";
 import type { Logger } from "../../../utils/logger.js";
 import type { ItemsOptions } from "../../items/types.js";
 
@@ -26,10 +27,10 @@ import type { ItemsOptions } from "../../items/types.js";
 /**
  * items context サブコマンドのオプション
  *
- * ADR-v3-025: 読み取りは常に API 直取得 + write-through キャッシュ。
- * `--no-cache` / `--refresh` フラグおよびキャッシュ読み取りショートカットは廃止された。
+ * ADR-v3-025 / #2792: 読み取りは常に API 直取得。
+ * `--no-cache` / `--refresh` フラグおよびキャッシュ層は廃止された。
  */
-export interface ContextOptions extends ItemsOptions {}
+type ContextOptions = ItemsOptions;
 
 // =============================================================================
 // GraphQL クエリ定義
@@ -278,7 +279,7 @@ interface DiscussionContextQueryResult {
 // コンテキストデータ型（キャッシュと返却に使用）
 // =============================================================================
 
-export interface ContextTarget {
+interface ContextTarget {
   number: number;
   type: "issue" | "pull_request";
   title: string;
@@ -385,7 +386,7 @@ function extractStatusFromProjectItems(
 /**
  * items context サブコマンド
  *
- * Issue / PR を起点に関連情報を一括取得し、コンテキストキャッシュに書き込む。
+ * Issue / PR を起点に関連情報を一括取得して返す。
  */
 export async function cmdItemContext(
   numberStr: string,
@@ -406,8 +407,7 @@ export async function cmdItemContext(
   const { owner, name: repo } = repoInfo;
   const number = parseIssueNumber(numberStr);
 
-  // ADR-v3-025: 読み取りは常に API 直取得 + write-through キャッシュ。
-  // キャッシュは事後の write-through 経路でのみ更新する（差分ベースラインとしては github-cache が担当）。
+  // ADR-v3-025 / #2792: 読み取りは常に API 直取得。キャッシュ層は廃止された。
 
   // Issue として取得を試みる
   const issueResult = await runGraphQL<IssueContextQueryResult>(
@@ -440,7 +440,7 @@ export async function cmdItemContext(
 }
 
 /**
- * Issue コンテキストを処理してキャッシュに書き込む。
+ * Issue コンテキストを処理して JSON で出力する。
  */
 async function processIssueContext(
   issue: NonNullable<NonNullable<NonNullable<IssueContextQueryResult["data"]>["repository"]>["issue"]>,
@@ -473,16 +473,6 @@ async function processIssueContext(
       title: issue.parent.title ?? "",
       status: parentStatus,
     };
-    // 親 Issue もキャッシュに書き込む
-    writeContextCache("issues", String(issue.parent.number), {
-      number: issue.parent.number,
-      type: "issue",
-      title: issue.parent.title ?? "",
-      body: "",
-      status: parentStatus,
-      labels: [],
-      assignees: [],
-    });
   }
 
   // 子 Issue の整形
@@ -494,19 +484,6 @@ async function processIssueContext(
       status: childStatus,
     };
   }).filter((c) => c.number > 0);
-
-  // 子 Issue もキャッシュに書き込む
-  for (const child of children) {
-    writeContextCache("issues", String(child.number), {
-      number: child.number,
-      type: "issue",
-      title: child.title,
-      body: "",
-      status: child.status,
-      labels: [],
-      assignees: [],
-    });
-  }
 
   // Discussion リンクの検出と取得
   const discussions = await fetchLinkedDiscussions(
@@ -537,11 +514,6 @@ async function processIssueContext(
     created_at: comment.createdAt ?? "",
   }));
 
-  // コメントをキャッシュに書き込む
-  if (recentComments.length > 0) {
-    writeContextCache("comments", `issue-${number}`, recentComments);
-  }
-
   // コンテキストデータをまとめる
   const contextData: ContextData = {
     target,
@@ -551,11 +523,6 @@ async function processIssueContext(
     pull_requests: pullRequests,
     recent_comments: recentComments,
   };
-
-  // ContextTarget を他コマンド用にキャッシュ（transition/update/link/comments が参照）
-  writeContextCache("issues", String(number), target);
-  // ContextData 全体を items context 用にキャッシュ（cache hit 時に完全なデータを返す）
-  writeContextCache("issues", `context-${number}`, contextData);
 
   logger.success(`Issue #${number} のコンテキストを取得しました`);
   console.log(JSON.stringify(contextData, null, 2));
@@ -619,9 +586,6 @@ async function processPRContext(
     }],
     recent_comments: recentComments,
   };
-
-  // ContextData 全体を items context 用にキャッシュ（cache hit 時に完全なデータを返す）
-  writeContextCache("issues", `context-${number}`, contextData);
 
   logger.success(`PR #${number} のコンテキストを取得しました`);
   console.log(JSON.stringify(contextData, null, 2));
