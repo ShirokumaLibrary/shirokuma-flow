@@ -346,7 +346,7 @@ export function createIssueCommand(): Command {
   // ---------------------------------------------------------------------------
   issue
     .command("context <number>")
-    .description("Issue / PR を起点に関連情報を一括取得してキャッシュに書き込む（ADR-v3-025: 常に API 直取得 + write-through）")
+    .description("Issue / PR を起点に関連情報を API から直接取得して JSON で出力する（ADR-v3-025: 常に API 直取得 + .shirokuma/github/ への write-through）")
     .action(async (number, localOpts, command: Command) => {
       const options = mergeOpts(command, localOpts);
       const { cmdItemContext } = await import("./context/index.js");

@@ -11,12 +11,13 @@
  * - 関連 PR（Closes #{N} の逆引き）
  * - 各アイテムの最新コメント
  *
- * #2792 (ADR-v3-025): `.shirokuma/cache/` への書き込みは廃止された。
- * 読み取りは常に API 直取得で行うため、キャッシュ層は不要となった。
+ * #2792 (ADR-v3-025): `.shirokuma/cache/` の読み書きは廃止。読み取りは常に API 直取得。
+ * #2797: write-through として `.shirokuma/github/` に最新データを書き込む（スキルが body.md を Read できるよう）。
  */
 
 import { runGraphQL, parseIssueNumber, isIssueNumber } from "../../../utils/github.js";
 import { resolveTargetRepo } from "../../../utils/repo-pairs.js";
+import { writeCache } from "../../../utils/github-cache.js";
 import type { Logger } from "../../../utils/logger.js";
 import type { ItemsOptions } from "../../items/types.js";
 
@@ -27,8 +28,8 @@ import type { ItemsOptions } from "../../items/types.js";
 /**
  * items context サブコマンドのオプション
  *
- * ADR-v3-025 / #2792: 読み取りは常に API 直取得。
- * `--no-cache` / `--refresh` フラグおよびキャッシュ層は廃止された。
+ * ADR-v3-025 / #2792: 読み取りは常に API 直取得。`--no-cache` / `--refresh` フラグは廃止。
+ * #2797: API 取得後に .shirokuma/github/ へ write-through する。
  */
 type ContextOptions = ItemsOptions;
 
@@ -46,6 +47,7 @@ query($owner: String!, $name: String!, $number: Int!) {
       body
       state
       url
+      updatedAt
       issueType { name }
       labels(first: 20) { nodes { name } }
       assignees(first: 10) { nodes { login } }
@@ -75,6 +77,11 @@ query($owner: String!, $name: String!, $number: Int!) {
             }
           }
         }
+      }
+      subIssuesSummary {
+        total
+        completed
+        percentCompleted
       }
       projectItems(first: 5) {
         nodes {
@@ -129,10 +136,19 @@ query($owner: String!, $name: String!, $number: Int!) {
       body
       state
       url
+      updatedAt
       baseRefName
       headRefName
       labels(first: 20) { nodes { name } }
       assignees(first: 10) { nodes { login } }
+      projectItems(first: 5) {
+        nodes {
+          id
+          status: fieldValueByName(name: "Status") {
+            ... on ProjectV2ItemFieldSingleSelectValue { name optionId }
+          }
+        }
+      }
       closingIssuesReferences(first: 10) {
         nodes {
           number
@@ -217,6 +233,7 @@ interface IssueContextQueryResult {
         body?: string;
         state?: string;
         url?: string;
+        updatedAt?: string;
         issueType?: { name?: string };
         labels?: { nodes?: Array<{ name?: string }> };
         assignees?: { nodes?: Array<{ login?: string }> };
@@ -227,6 +244,11 @@ interface IssueContextQueryResult {
           projectItems?: { nodes?: ProjectItemNode[] };
         } | null;
         subIssues?: { nodes?: SubIssueNode[] };
+        subIssuesSummary?: {
+          total?: number;
+          completed?: number;
+          percentCompleted?: number;
+        } | null;
         projectItems?: { nodes?: ProjectItemNode[] };
         timelineItems?: {
           nodes?: Array<{
@@ -248,10 +270,12 @@ interface PRContextQueryResult {
         body?: string;
         state?: string;
         url?: string;
+        updatedAt?: string;
         baseRefName?: string;
         headRefName?: string;
         labels?: { nodes?: Array<{ name?: string }> };
         assignees?: { nodes?: Array<{ login?: string }> };
+        projectItems?: { nodes?: ProjectItemNode[] };
         closingIssuesReferences?: {
           nodes?: Array<{ number?: number; title?: string; state?: string }>;
         };
@@ -463,6 +487,40 @@ async function processIssueContext(
     assignees: (issue.assignees?.nodes ?? []).map((a) => a.login ?? "").filter(Boolean),
   };
 
+  // write-through: .shirokuma/github/ に最新データを書き込む（スキルの Read が常に最新値を参照できるよう）
+  // 書き込み失敗（CI サンドボックス・権限エラー等）は主出力（JSON）に影響させない
+  try {
+    const firstItem = projectItems[0];
+    const priority = firstItem?.priority?.name;
+    const size = firstItem?.size?.name;
+    const parentNumber = issue.parent?.number;
+    const rawSummary = issue.subIssuesSummary;
+    const subIssuesSummary = rawSummary
+      ? {
+          total: rawSummary.total ?? 0,
+          completed: rawSummary.completed ?? 0,
+          percentCompleted: rawSummary.percentCompleted ?? 0,
+        }
+      : undefined;
+    writeCache(number, {
+      number,
+      type: "issue",
+      updated_at: issue.updatedAt,
+      title: target.title,
+      status,
+      priority,
+      size,
+      labels: target.labels.length > 0 ? target.labels : undefined,
+      assignees: target.assignees.length > 0 ? target.assignees : undefined,
+      issue_type: issue.issueType?.name,
+      state: issue.state,
+      parent: parentNumber,
+      subIssuesSummary,
+    }, target.body, owner, repo);
+  } catch {
+    // best-effort: write-through 失敗はサイレントに無視する
+  }
+
   // 親 Issue の整形
   let parent: ContextParent | null = null;
   if (issue.parent?.number) {
@@ -487,7 +545,7 @@ async function processIssueContext(
 
   // Discussion リンクの検出と取得
   const discussions = await fetchLinkedDiscussions(
-    issue.body ?? "",
+    target.body,
     owner,
     repo,
     logger
@@ -549,6 +607,23 @@ async function processPRContext(
     assignees: (pr.assignees?.nodes ?? []).map((a) => a.login ?? "").filter(Boolean),
   };
 
+  // write-through: .shirokuma/github/ に最新データを書き込む
+  // 書き込み失敗は主出力（JSON）に影響させない
+  try {
+    const prStatus = extractStatusFromProjectItems(pr.projectItems?.nodes ?? []);
+    writeCache(number, {
+      number,
+      type: "pull_request",
+      updated_at: pr.updatedAt,
+      title: target.title,
+      status: prStatus,
+      labels: target.labels.length > 0 ? target.labels : undefined,
+      assignees: target.assignees.length > 0 ? target.assignees : undefined,
+    }, target.body, owner, repo);
+  } catch {
+    // best-effort: write-through 失敗はサイレントに無視する
+  }
+
   // 関連 Issue の整形（Closes #{N}）
   const closingIssues = (pr.closingIssuesReferences?.nodes ?? []).map((issue) => ({
     number: issue.number ?? 0,
@@ -558,7 +633,7 @@ async function processPRContext(
 
   // Discussion リンクの検出と取得
   const discussions = await fetchLinkedDiscussions(
-    pr.body ?? "",
+    target.body,
     owner,
     repo,
     logger
