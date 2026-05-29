@@ -1,5 +1,5 @@
 /**
- * approve <number> — Issue を Review → Done に承認する checkpoint
+ * approve <number> — Issue を Review → ToDo に承認する checkpoint
  *
  * `status approve` の top-level エイリアス。AI が「これで承認」という意図を
  * 直接表現できる。Issue 本体はクローズしない（親 Close 時に連動）。
@@ -52,7 +52,7 @@ export async function cmdApprove(
 export function createApproveCommand(): Command {
   return new Command("approve")
     .description(
-      "Issue を Review → Done に承認する (status: Review → Done)。" +
+      "Issue を Review → ToDo に承認する (status: Review → ToDo)。" +
         " status approve の top-level エイリアス checkpoint",
     )
     .argument("<number>", "Issue 番号")

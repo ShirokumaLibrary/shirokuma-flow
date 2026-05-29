@@ -392,7 +392,7 @@ export function createIssueCommand(): Command {
   // ---------------------------------------------------------------------------
   issue
     .command("rollback <number>")
-    .description("Issue / PR の切り戻し操作（cancel: キャンセル, reset: Ready に戻す, revert: マージ取り消し）")
+    .description("Issue / PR の切り戻し操作（cancel: キャンセル, reset: ToDo に戻す, revert: マージ取り消し）")
     .requiredOption("--action <action>", "アクション: cancel | reset | revert")
     .option("--dry-run", "実行内容を表示するが実行しない")
     .option("--force", "確認プロンプトをスキップ")

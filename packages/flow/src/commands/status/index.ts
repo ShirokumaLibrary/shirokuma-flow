@@ -3,7 +3,7 @@
  *
  * サブコマンド:
  * - `status transition <number> --to <status>`: ステータス遷移を検証付きで実行
- * - `status approve <number>`: Review → Done 承認遷移
+ * - `status approve <number>`: Review → ToDo 承認遷移
  * - `status update-batch`: Issue ステータスを一括更新
  * - `status get <number>`: 現在ステータスと遷移先候補を取得
  * - `status allowed <N> | --status <S>`: 遷移可能なステータス一覧を返す
@@ -60,7 +60,7 @@ export function createStatusCommand(): Command {
   // ---------------------------------------------------------------------------
   status
     .command("approve <number>")
-    .description("Review ステータスの Issue を承認して Done に遷移。計画 Issue の場合は親 Issue を Backlog → ToDo に自動同期（Status のみ、Issue 本体はクローズしない）（ADR-v3-022 第二改訂版 #2532）")
+    .description("Review ステータスの Issue を承認して ToDo に遷移（全種別で Review → ToDo に統一。Done は実装フェーズで到達）。計画 Issue の場合は同じ親配下の実装サブ Issue を Backlog → ToDo に承認継承し、親 Issue は子から syncParentStatus で導出（ADR-v3-022 第四改訂版 #2689）")
     .action(async (number, localOpts, command: Command) => {
       const options = mergeOpts(command, localOpts);
       const { cmdItemApprove } = await import("./approve/index.js");
