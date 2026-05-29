@@ -305,8 +305,13 @@ export function validateInitialStatus(status: string): string | null {
  * Valid statuses for PRs — subset of Issue workflow (project-items.md).
  *
  * @since #2204 Cancelled を廃止。PR クローズ時は Done（state_reason: not_planned ベース）
+ * @since #2802 Backlog を追加。`pr create` は PR を Backlog で作成し、`review-flow` の
+ *   AI レビュー PASS 後に `Backlog → Review` で前進する。OPEN+Backlog は正規の初期状態。
+ *   MERGED/CLOSED PR が Backlog のまま残るケースは `classifyPrInconsistencies` のパターン 3
+ *   （MERGED/CLOSED 非 Done 検出）で別途 error として検出する。
  */
 export const PR_VALID_STATUSES: readonly string[] = [
+  STATUS_VALUES.BACKLOG,
   STATUS_VALUES.REVIEW,
   STATUS_VALUES.DONE,
 ];
@@ -404,14 +409,20 @@ export const ISSUE_ROLLBACK_TRANSITIONS: Record<string, readonly string[]> = {
 /**
  * PR の正規前進遷移テーブル (#2531).
  *
- * | From          | To            | コマンド                | 用途                         |
- * |---------------|---------------|-------------------------|------------------------------|
- * | In progress   | Review        | pr create / pr open     | PR 作成・コードレビュー依頼   |
- * | Review        | Done          | pr merge                | PR マージ                    |
+ * | From          | To            | コマンド                | 用途                              |
+ * |---------------|---------------|-------------------------|-----------------------------------|
+ * | Backlog       | Review        | status transition       | AI レビュー PASS 後の前進 (#2802) |
+ * | In progress   | Review        | pr create / pr open     | PR 作成・コードレビュー依頼（互換）|
+ * | Review        | Done          | pr merge                | PR マージ                         |
+ *
+ * @remarks #2802: `pr create` は PR を Backlog で作成するため、`review-flow` の
+ * AI レビュー PASS 後に `Backlog → Review` で前進できる必要がある。
+ * `In progress → Review` は後方互換と手動運用救済のため残す。
  *
  * @since #2531
  */
 export const PR_FORWARD_TRANSITIONS: Record<string, readonly string[]> = {
+  [STATUS_VALUES.BACKLOG]:     [STATUS_VALUES.REVIEW],
   [STATUS_VALUES.IN_PROGRESS]: [STATUS_VALUES.REVIEW],
   [STATUS_VALUES.REVIEW]:      [STATUS_VALUES.DONE],
 };

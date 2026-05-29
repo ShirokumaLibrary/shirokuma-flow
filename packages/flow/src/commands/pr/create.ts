@@ -187,15 +187,16 @@ export async function cmdPrCreate(
       projectItemId = await addItemToProject(projectId, data.node_id, logger);
       if (projectItemId) {
         // ADR-v3-014 FIX-1 (#2155): Status は updateProjectStatus 経由で設定（#2207 型レベル強制）。
+        // #2802: PR は Backlog で作成し、review-flow の AI レビュー PASS 後に Review へ前進させる。
         const projectFields = await getProjectFields(projectId);
         await updateProjectStatus({
           projectId,
           itemId: projectItemId,
-          statusValue: STATUS_VALUES.REVIEW,
+          statusValue: STATUS_VALUES.BACKLOG,
           projectFields,
           logger,
         });
-        logger.success("プロジェクトに追加しました（Review）");
+        logger.success("プロジェクトに追加しました（Backlog）");
       } else {
         logger.warn("プロジェクトへの追加に失敗しました");
       }

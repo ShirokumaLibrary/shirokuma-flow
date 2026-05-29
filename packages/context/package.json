@@ -1,6 +1,6 @@
 {
   "name": "@shirokuma-library/context",
-  "version": "0.3.0-alpha.152",
+  "version": "0.3.0-alpha.154",
   "description": "External documentation fetching CLI for shirokuma workflows.",
   "type": "module",
   "private": false,

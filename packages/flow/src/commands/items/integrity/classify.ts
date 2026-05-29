@@ -191,8 +191,11 @@ export function classifyInconsistencies(
  *
  * 検出パターン:
  * 1. OPEN PR が Done ステータス → error
- * 2. MERGED/CLOSED PR がアクティブステータス (In Progress/Review) → error
+ * 2. MERGED/CLOSED PR が非 Done ステータス → error
  * 3. PR に Issue 専用ステータスが設定されている → error
+ *
+ * #2802: Backlog は PR の正規初期状態（`pr create` 起点）のため OPEN+Backlog は valid。
+ * ただし MERGED/CLOSED+Backlog は未マージ扱いの取り残しなのでパターン 2 で error 化する。
  */
 export function classifyPrInconsistencies(prs: PrData[]): Inconsistency[] {
   const inconsistencies: Inconsistency[] = [];
@@ -229,8 +232,9 @@ export function classifyPrInconsistencies(prs: PrData[]): Inconsistency[] {
       });
     }
 
-    // MERGED/CLOSED PR がアクティブステータス
-    if ((pr.state === "MERGED" || pr.state === "CLOSED") && (status === STATUS_VALUES.IN_PROGRESS || status === STATUS_VALUES.REVIEW)) {
+    // MERGED/CLOSED PR が非 Done ステータス（マージ済み PR は Done であるべき。#2802: OPEN+Backlog は valid だが MERGED/CLOSED+Backlog は不整合）
+    // #2204: LEGACY Cancelled-equivalent は終端扱いのため除外する
+    if ((pr.state === "MERGED" || pr.state === "CLOSED") && status !== STATUS_VALUES.DONE && !isCancelledEquivalent(status)) {
       inconsistencies.push({
         number: pr.number,
         title: pr.title,
