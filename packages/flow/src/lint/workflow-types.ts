@@ -109,6 +109,16 @@ export interface LintWorkflowConfig {
       /** index ファイルが配置されるディレクトリ（デフォルト: .shirokuma/rules/shirokuma-flow） */
       indexDir?: string;
     };
+    /** 本文＝最新 payload / コメント＝Why 原則: コメントファースト検査（#2821） */
+    "github-item-comment-first"?: {
+      severity?: WorkflowIssueSeverity;
+      enabled?: boolean;
+    };
+    /** 本文＝最新 payload 原則: 本文の履歴的記述検査（実験的・#2821） */
+    "github-item-body-history"?: {
+      severity?: WorkflowIssueSeverity;
+      enabled?: boolean;
+    };
     /** SKILL.md 行数上限チェック（Issue #2498） */
     "skill-md-size"?: {
       enabled?: boolean;

@@ -44,6 +44,8 @@ import {
   DEFAULT_PLUGIN_DIRS,
   checkSkillMdSize,
 } from "../../lint/rules/workflow-skill-md-size.js";
+import { checkCommentFirst } from "../../lint/rules/workflow-github-item-comment-first.js";
+import { checkBodyHistory } from "../../lint/rules/workflow-github-item-body-history.js";
 
 /**
  * Command options
@@ -59,6 +61,10 @@ interface LintWorkflowOptions {
   issues?: boolean;
   branches?: boolean;
   commits?: boolean;
+  /** GitHub アイテム（Issue/PR/Discussion）の本文/コメント原則を検査（#2821） */
+  githubItems?: boolean;
+  /** 検査対象アイテム番号（--github-items 用。value-taking option） */
+  item?: number;
 }
 
 /**
@@ -73,6 +79,8 @@ const defaultLintWorkflowConfig: LintWorkflowConfig = {
     "main-protection": { severity: "error", enabled: true },
     "commit-format": { severity: "warning", enabled: true },
     "co-authored-by": { severity: "warning", enabled: true },
+    "github-item-comment-first": { severity: "warning", enabled: true },
+    "github-item-body-history": { severity: "warning", enabled: true },
     "claude-md-budget": { severity: "warning", enabled: true, maxLines: 150 },
     "claude-md-index-drift": { severity: "warning", enabled: true },
     "skill-md-size": {
@@ -107,8 +115,14 @@ export async function lintWorkflowCommand(
 
   const strict = options.strict ?? lintWorkflowConfig.strict ?? false;
 
-  // Determine which rules to run
-  const hasFilter = options.issues || options.branches || options.commits;
+  // Determine which rules to run.
+  // 設計判断 1 の CLI シグネチャ（素の `lint workflow`=既存+新規全込み /
+  // `--github-items`=新規2ルールのみ）を満たすため、githubItems も hasFilter に含める。
+  // - 素の `lint workflow`: hasFilter=false → 全ルール（既存5 + 新規2）が走る
+  // - `--github-items --item N`: hasFilter=true → 既存ルールは走らず、
+  //   runGithubItems=(!true||true)=true で新規2ルールのみが走る
+  const hasFilter =
+    options.issues || options.branches || options.commits || options.githubItems;
   const runIssues =
     (!hasFilter || options.issues) &&
     lintWorkflowConfig.rules?.["issue-fields"]?.enabled !== false;
@@ -118,6 +132,10 @@ export async function lintWorkflowCommand(
   const runCommits =
     (!hasFilter || options.commits) &&
     lintWorkflowConfig.rules?.["main-protection"]?.enabled !== false;
+
+  // github-item-* ルール（#2821）。既存ルールと同じフィルタパターンに統一する。
+  // さらに --item 未指定時は info でスキップする（後述）。
+  const runGithubItems = !hasFilter || options.githubItems;
 
   // Run checks
   const ruleResults: WorkflowRuleResult[] = [];
@@ -192,6 +210,75 @@ export async function lintWorkflowCommand(
         issues: coAuthoredByIssues,
         passed: coAuthoredByIssues.filter((i) => i.type === "error").length === 0,
       });
+    }
+  }
+
+  // github-item-* rules（#2821）: 本文＝最新 payload / コメント＝Why 原則の検査。
+  // --item 未指定時は info でスキップ（一括スキャンはスコープ外）。
+  if (runGithubItems) {
+    const commentFirstCfg = lintWorkflowConfig.rules?.["github-item-comment-first"];
+    const bodyHistoryCfg = lintWorkflowConfig.rules?.["github-item-body-history"];
+    const commentFirstEnabled = commentFirstCfg?.enabled !== false;
+    const bodyHistoryEnabled = bodyHistoryCfg?.enabled !== false;
+
+    if (options.item === undefined) {
+      // --item 未指定: スキップ（info）。
+      if (commentFirstEnabled) {
+        ruleResults.push({
+          rule: "github-item-comment-first",
+          description: "本文＝最新 payload / コメント＝Why 原則（コメントファースト）",
+          issues: [
+            {
+              type: "info",
+              message:
+                "--item <number> が未指定のため github-item-comment-first チェックをスキップします。",
+              rule: "github-item-comment-first",
+            },
+          ],
+          passed: true,
+        });
+      }
+      if (bodyHistoryEnabled) {
+        ruleResults.push({
+          rule: "github-item-body-history",
+          description: "本文＝最新 payload 原則（本文の履歴的記述検査・実験的）",
+          issues: [
+            {
+              type: "info",
+              message:
+                "--item <number> が未指定のため github-item-body-history チェックをスキップします。",
+              rule: "github-item-body-history",
+            },
+          ],
+          passed: true,
+        });
+      }
+    } else {
+      const repoOpts = { public: false, repo: undefined };
+
+      if (commentFirstEnabled) {
+        logger.debug("Checking github-item comment-first principle...");
+        const severity = commentFirstCfg?.severity ?? "warning";
+        const issues = await checkCommentFirst(options.item, severity, repoOpts);
+        ruleResults.push({
+          rule: "github-item-comment-first",
+          description: "本文＝最新 payload / コメント＝Why 原則（コメントファースト）",
+          issues,
+          passed: issues.filter((i) => i.type === "error").length === 0,
+        });
+      }
+
+      if (bodyHistoryEnabled) {
+        logger.debug("Checking github-item body-history principle...");
+        const severity = bodyHistoryCfg?.severity ?? "warning";
+        const issues = await checkBodyHistory(options.item, severity, repoOpts);
+        ruleResults.push({
+          rule: "github-item-body-history",
+          description: "本文＝最新 payload 原則（本文の履歴的記述検査・実験的）",
+          issues,
+          passed: issues.filter((i) => i.type === "error").length === 0,
+        });
+      }
     }
   }
 

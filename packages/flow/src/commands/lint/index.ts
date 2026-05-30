@@ -12,7 +12,7 @@
 // Commander.js mergeCommanderOpts returns a merged options object typed via as-cast at the boundary.
 // Dynamic imports mean each sub-option type is not statically known here.
 /* eslint-disable @typescript-eslint/no-unsafe-assignment, @typescript-eslint/no-unsafe-argument */
-import { Command } from "commander";
+import { Command, InvalidArgumentError } from "commander";
 import { setExitCode, mergeCommanderOpts as mergeOpts } from "../../utils/cli-helpers.js";
 import { validateProjectPath } from "../../utils/sanitize.js";
 import { CONFIG_FILE } from "../../utils/config.js";
@@ -141,6 +141,19 @@ export function createLintCommand(): Command {
     .option("--issues", "Issue フィールドのみチェック")
     .option("--branches", "ブランチ命名のみチェック")
     .option("--commits", "コミット規約のみチェック")
+    .option("--github-items", "GitHub アイテム（本文/コメント）原則のみチェック")
+    .option(
+      "--item <number>",
+      "github-items チェック対象のアイテム番号",
+      (value) => {
+        // value-taking option: 正の整数のみ許容。不正値は黙って info スキップせず明示エラーにする。
+        const n = Number(value);
+        if (!Number.isInteger(n) || n <= 0) {
+          throw new InvalidArgumentError("--item は正の整数を指定してください。");
+        }
+        return n;
+      }
+    )
     .action(async (localOpts, command: Command) => {
       const options = mergeOpts(command, localOpts);
       const { lintWorkflowCommand } = await import("./workflow.js");
