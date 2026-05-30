@@ -1,6 +1,6 @@
 {
   "name": "@shirokuma-library/portal",
-  "version": "0.3.0-alpha.155",
+  "version": "0.3.0-alpha.156",
   "description": "Human-facing documentation portal generation for shirokuma workflows.",
   "type": "module",
   "private": false,
