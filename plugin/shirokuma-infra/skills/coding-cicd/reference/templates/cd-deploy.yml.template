@@ -1,0 +1,258 @@
+# cd-deploy.yml.template
+# CD パイプライン: dev（自動）→ staging（自動）→ prod（手動承認）
+#
+# 前提条件:
+#   1. GitHub Environments を作成:
+#      - dev: Protection rules なし（自動デプロイ）
+#      - staging: Protection rules なし（自動）または Required reviewers 1名
+#      - production: Required reviewers 最低1名
+#
+#   2. AWS OIDC プロバイダーを設定（各環境用ロール推奨）:
+#      - dev 用: CDK_DEPLOY_ROLE_ARN_DEV または DEPLOY_ROLE_ARN（environment secrets）
+#      - staging 用: CDK_DEPLOY_ROLE_ARN_STAGING
+#      - prod 用: CDK_DEPLOY_ROLE_ARN_PROD（最小権限・別アカウント推奨）
+#
+#   3. GitHub Secrets / Variables を設定:
+#      - DEPLOY_ROLE_ARN: 各 environment の secrets に設定
+#      - AWS_REGION: リポジトリ Variables（必須。デプロイ先のリージョン。既定値は持たない）
+#      - ECR_REGISTRY: リポジトリ Variables（ECR を使用する場合）
+#
+# CDK デプロイを含む場合:
+#   coding-cdk の templates/github-actions-cdk.yml.template を参照して
+#   deploy ステップを差し替えること。本テンプレートはアプリケーションデプロイ
+#   （ECS / Lambda 等）を想定している。
+#
+# カスタマイズ箇所（すべて置換必須）:
+#   - {PACKAGE_MANAGER}: npm / pnpm / yarn
+#   - {LOCK_FILE}: package-lock.json / pnpm-lock.yaml / yarn.lock
+#   - {NODE_VERSION}: 20 / 22 等
+#   - {MAIN_BRANCH}: このリポジトリの mainline ブランチ名（main / master / develop 等）。
+#       確認: gh repo view --json defaultBranchRef -q .defaultBranchRef.name
+#       on.push.branches と deploy-staging / deploy-prod の if 条件
+#       （refs/heads/{MAIN_BRANCH}）の両方に出てくる。両方まとめて置換すること。
+#   - {DEV_BRANCH}: dev 環境へ自動デプロイする開発ブランチ名（develop 等）。
+#       on.push.branches と deploy-dev の if 条件の両方に出てくる。
+#       ★★ {MAIN_BRANCH} と必ず異なる名前にすること。同じ名前を入れると、その
+#          ブランチへの 1 回の push が deploy-dev / deploy-staging / deploy-prod の
+#          if 条件をすべて満たし、3 環境が同時にデプロイされる（本番を含む）。
+#       ★★ dev 用のブランチが無い（mainline 1 本で運用する）場合は、{DEV_BRANCH} を
+#          何かに置換するのではなく、以下を削除する:
+#            1) on.push.branches の '{DEV_BRANCH}' の行
+#            2) Job 2 (deploy-dev) のブロック全体
+#            3) 他 job の needs: から deploy-dev への参照（本テンプレートには無いが、
+#               改変後に残っていないか確認する）
+#            4) on.workflow_dispatch.inputs.environment.options から 'dev' を削除する
+#               ★ これを残すと、手動実行で dev を選んでも受け取る job がもう無いため
+#                 全 job が skip され、run は緑のまま何も起きない（沈黙する）。
+#            5) 本ヘッダの {DEV_BRANCH} 解説ブロック（この項目自体）も削除する
+#               ★ 削除しないと、下記「置換確認」の grep 検査に {DEV_BRANCH} が
+#                 コメントとして引っかかり続け、正しく削除した人ほど検査に落ちる。
+#          workflow_dispatch から dev へ手動デプロイしたい場合は、上記 2)〜5) を
+#          行わず、deploy-dev の if から push 側の条件式だけを削って
+#          workflow_dispatch 側を残す（options の 'dev' もそのまま残す）。
+#   - deploy ステップ: ECS / Lambda / S3 等プロジェクトのデプロイ方式に変更
+#
+# 未置換のまま配置したときに何が起きるか（プレースホルダごとに違う。
+# 「未置換＝いつも沈黙」ではない）:
+#   - ブランチ名のプレースホルダ（branches / if に出るもの）→ 沈黙する
+#       デプロイは失敗せず「起きない」。branches 側が未置換なら workflow 自体が
+#       トリガーせず、if 側が未置換なら job が skip されるだけでチェックは緑のまま。
+#       どちらも赤くならないので気づきにくい。
+#   - {PACKAGE_MANAGER} → workflow がトリガーされれば赤くなる（パース段階）
+#       run: {PACKAGE_MANAGER} ... が YAML としてパースできず、GitHub が
+#       workflow を invalid として拒否する。
+#   - {LOCK_FILE} / {NODE_VERSION} → workflow がトリガーされれば赤くなる
+#       （ステップ実行時）YAML は通るが、setup-node が不正なバージョン /
+#       存在しないパスで失敗する。
+#   ⚠️ 上記 2 つの「赤くなる」には成立条件がある——workflow がトリガーされること。
+#     テンプレートをコピーして「何も置換しなかった」場合は branches も未置換なので
+#     どのイベントにもマッチせず、赤が出る前に沈黙する側へ倒れうる。つまり
+#     「赤くならない＝置換漏れは無い」とも「緑＝置換済み」とも判断できない。
+#   ⚠️ 「ステップ実行時に赤」は YAML パースまでを実測した上での推論であって、
+#     GitHub Actions 上で実走検証したものではない。配置後に必ず 1 度 mainline へ
+#     変更を反映（PR を merge）し、該当 job が実際に実行されたことを確認する。
+
+name: CD
+
+on:
+  push:
+    branches:
+      - '{DEV_BRANCH}'    # dev 環境へ自動デプロイ
+      - '{MAIN_BRANCH}'   # staging / prod 環境へデプロイ
+  workflow_dispatch:
+    inputs:
+      environment:
+        description: 'デプロイ先環境'
+        required: true
+        type: choice
+        options: [dev, staging, production]
+
+permissions:
+  contents: read
+  id-token: write   # OIDC 認証に必須
+
+env:
+  AWS_REGION: ${{ vars.AWS_REGION }}  # 既定のリージョンを持たない（未設定なら認証の段で失敗する）
+  NODE_VERSION: '{NODE_VERSION}'
+
+jobs:
+  # ============================================================
+  # Job 1: CI 確認（デプロイ前に CI パスを確認）
+  # ============================================================
+  check-ci:
+    name: Check CI status
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: ${{ env.NODE_VERSION }}
+          cache: '{PACKAGE_MANAGER}'
+          cache-dependency-path: '{LOCK_FILE}'
+
+      - name: Install dependencies
+        run: {PACKAGE_MANAGER} install --frozen-lockfile
+
+      - name: Run tests
+        run: {PACKAGE_MANAGER} run test
+        env:
+          CI: true
+
+      - name: Build
+        run: {PACKAGE_MANAGER} run build
+        env:
+          NODE_ENV: production
+
+  # ============================================================
+  # Job 2: deploy-dev（開発ブランチ {DEV_BRANCH} への push で自動実行）
+  # dev 用ブランチが無い運用ではこの job ごと削除する（ヘッダの {DEV_BRANCH} 参照）
+  # ============================================================
+  deploy-dev:
+    name: Deploy to dev
+    runs-on: ubuntu-latest
+    needs: check-ci
+    if: |
+      (github.ref == 'refs/heads/{DEV_BRANCH}' && github.event_name == 'push') ||
+      (github.event_name == 'workflow_dispatch' && github.event.inputs.environment == 'dev')
+    environment: dev
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Configure AWS credentials (OIDC)
+        uses: aws-actions/configure-aws-credentials@v4
+        with:
+          role-to-assume: ${{ secrets.DEPLOY_ROLE_ARN }}
+          aws-region: ${{ env.AWS_REGION }}
+
+      # ----------------------------------------------------------
+      # デプロイステップ（プロジェクトに合わせて変更）
+      # ----------------------------------------------------------
+      # ECS を使用する場合:
+      # - name: Deploy to ECS
+      #   run: |
+      #     aws ecs update-service \
+      #       --cluster {cluster-name}-dev \
+      #       --service {service-name} \
+      #       --force-new-deployment
+      #     aws ecs wait services-stable \
+      #       --cluster {cluster-name}-dev \
+      #       --services {service-name}
+      #
+      # Lambda を使用する場合:
+      # - name: Deploy Lambda
+      #   run: |
+      #     aws lambda update-function-code \
+      #       --function-name {function-name}-dev \
+      #       --image-uri ${{ vars.ECR_REGISTRY }}/{image-name}:${{ github.sha }}
+      #
+      # CDK を使用する場合:
+      # coding-cdk の github-actions-cdk.yml.template の deploy-dev ジョブを参照
+
+      - name: Deploy (placeholder)
+        run: echo "dev デプロイを実装してください"
+
+      - name: Notify deployment
+        if: always()
+        run: |
+          echo "::notice::dev デプロイ完了: ${{ github.sha }}"
+
+  # ============================================================
+  # Job 3: deploy-staging（mainline = {MAIN_BRANCH} ブランチ push で自動実行）
+  # ============================================================
+  deploy-staging:
+    name: Deploy to staging
+    runs-on: ubuntu-latest
+    needs: check-ci
+    if: |
+      (github.ref == 'refs/heads/{MAIN_BRANCH}' && github.event_name == 'push') ||
+      (github.event_name == 'workflow_dispatch' && github.event.inputs.environment == 'staging')
+    environment: staging
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Configure AWS credentials (OIDC)
+        uses: aws-actions/configure-aws-credentials@v4
+        with:
+          role-to-assume: ${{ secrets.DEPLOY_ROLE_ARN }}
+          aws-region: ${{ env.AWS_REGION }}
+
+      # ----------------------------------------------------------
+      # デプロイステップ（プロジェクトに合わせて変更）
+      # ----------------------------------------------------------
+      - name: Deploy (placeholder)
+        run: echo "staging デプロイを実装してください"
+
+      - name: Run smoke tests
+        run: |
+          # スモークテスト（staging のエンドポイントに簡易リクエスト）
+          # curl -f https://staging.{your-domain}/health || exit 1
+          echo "スモークテストを実装してください"
+
+  # ============================================================
+  # Job 4: deploy-prod（staging 成功後 + 手動承認で実行）
+  # ============================================================
+  deploy-prod:
+    name: Deploy to production
+    runs-on: ubuntu-latest
+    needs: deploy-staging
+    if: |
+      (github.ref == 'refs/heads/{MAIN_BRANCH}' && github.event_name == 'push') ||
+      (github.event_name == 'workflow_dispatch' && github.event.inputs.environment == 'production')
+    environment: production   # GitHub Environments の手動承認ゲート
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Configure AWS credentials (OIDC)
+        uses: aws-actions/configure-aws-credentials@v4
+        with:
+          role-to-assume: ${{ secrets.DEPLOY_ROLE_ARN }}
+          # production 用ロールは dev/staging と分離することを推奨
+          # 別アカウント構成の場合: role-to-assume: ${{ secrets.DEPLOY_ROLE_ARN_PROD }}
+          aws-region: ${{ env.AWS_REGION }}
+
+      # ----------------------------------------------------------
+      # 本番デプロイステップ（プロジェクトに合わせて変更）
+      # ----------------------------------------------------------
+      - name: Deploy (placeholder)
+        run: echo "production デプロイを実装してください"
+
+      - name: Run smoke tests
+        run: |
+          # 本番スモークテスト
+          # curl -f https://{your-domain}/health || exit 1
+          echo "本番スモークテストを実装してください"
+
+      - name: Create deployment record
+        if: success()
+        run: |
+          echo "::notice::本番デプロイ完了: ${{ github.sha }}"
+          # 必要に応じてデプロイ通知（Slack 等）を追加

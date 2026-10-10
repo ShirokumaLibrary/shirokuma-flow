@@ -1,0 +1,50 @@
+# docker-compose サービス定義テンプレート
+# 使用方法: このスニペットを docker-compose.yml の services: セクションにコピーして編集する
+#
+# 置換変数:
+#   {project}     - プロジェクト名 (例: myapp)
+#   {service}     - サービス名 (例: postgres, valkey, mailpit)
+#   {image}       - Docker イメージ名 (例: postgres)
+#   {version}     - イメージバージョン (例: 18-alpine ※ {data-path} と対で選ぶ・下記)
+#   {PORT}        - ポート環境変数名 (例: POSTGRES_PORT)
+#   {host-port}   - ホスト側デフォルトポート (例: 5432)
+#   {container-port} - コンテナ内ポート (例: 5432)
+#   {volume-name} - ボリューム名 (例: postgres-data)
+#   {data-path}   - コンテナ内データパス。先頭の / を含む絶対パスで書く
+#                   (postgres 18 は /var/lib/postgresql。17 は /var/lib/postgresql/data。
+#                    使う版の PGDATA は docker image inspect <image> --format '{{.Config.Env}}' で確かめられる)
+#   ⚠ 既に旧マウント先（PGDATA が /var/lib/postgresql/data の版。17 で実測）で稼働している volume を、そのまま 18 の新マウント先へ当て替えても起動しない
+#     （上流ガードが「there appears to be PostgreSQL data in: /var/lib/postgresql」で Exited (1)）。
+#     データは消えないし空のクラスタも作られない——倒れる向きは fail-closed。移行は旧イメージで
+#     起動して pg_dump で吸い出し、新構成へ restore する。
+#                   ⚠ イメージのバージョンピンとデータパスは連動する。メジャーを上げるときは
+#                     {version} と {data-path} を対で見直す（postgres は 17→18 で PGDATA が移動した）。
+
+  {service}:
+    image: {image}:{version}
+    container_name: {project}-{service}
+    restart: unless-stopped
+    environment:
+      - EXAMPLE_VAR=${EXAMPLE_VAR:-default_value}
+    ports:
+      - "${PORT:-{host-port}}:{container-port}"
+    volumes:
+      - {volume-name}:{data-path}
+    networks:
+      - {project}-network
+    healthcheck:
+      test: ["CMD", "echo", "ok"]   # サービスに合わせて変更
+      interval: 10s
+      timeout: 5s
+      retries: 5
+      start_period: 30s
+
+# --- volumes セクションに追加 ---
+# volumes:
+#   {volume-name}:
+#     name: {project}-{volume-name}
+
+# --- networks セクションに追加（未定義の場合） ---
+# networks:
+#   {project}-network:
+#     name: {project}-network

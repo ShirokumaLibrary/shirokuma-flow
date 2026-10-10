@@ -1,0 +1,51 @@
+#!/bin/bash
+# LocalStack 初期化スクリプト（最小実例）
+# 配置: ./scripts/localstack/init/01-setup-resources.sh として展開し chmod +x する。
+#   compose.localstack.yml がこのディレクトリを /etc/localstack/init/ready.d/ にマウントし、
+#   LocalStack 起動後に NN-*.sh をアルファベット順で自動実行する（実行順は数値プレフィックスで制御）。
+#
+# 置換変数:
+#   {project}        - プロジェクト名（リソース名のプレフィックス）
+#   {from-address}   - SES の送信元検証アドレス（例: no-reply@example.com）
+#
+# awslocal を使う（aws のラッパー。--endpoint-url とダミー認証情報を自動設定）。
+# 必要なリソースだけを残し、不要な行は削除する。追加は下部のコメント例を雛形に足す。
+set -e
+
+REGION="${AWS_DEFAULT_REGION:-us-east-1}"
+
+echo "=== LocalStack init ({project}) ==="
+
+# --- S3: アップロード用バケット 1 つ ---
+# `|| true`: 永続ボリューム併用時は再起動時もバケットが残り、mb が BucketAlreadyOwnedByYou で
+# 非ゼロ終了して set -e により init 全体が中断するため（sqs/ses は冪等でガード不要）
+awslocal s3 mb "s3://{project}-uploads" --region "$REGION" || true
+echo "S3 bucket created: {project}-uploads"
+
+# --- SQS: ジョブキュー 1 つ ---
+awslocal sqs create-queue --queue-name "{project}-jobs" --region "$REGION"
+echo "SQS queue created: {project}-jobs"
+
+# --- SES: 送信元アドレスの検証 1 つ ---
+awslocal ses verify-email-identity --email-address "{from-address}" --region "$REGION"
+echo "SES identity verified: {from-address}"
+
+echo "=== init done ==="
+
+# ----------------------------------------------------------------------------
+# 追加リソースの足し方（必要になったらコメントを外して編集する）
+#
+# S3 バケットをもう 1 つ:
+#   awslocal s3 mb "s3://{project}-assets" --region "$REGION"
+#
+# SNS トピック:
+#   awslocal sns create-topic --name "{project}-notifications" --region "$REGION"
+#
+# SQS の FIFO キュー:
+#   awslocal sqs create-queue --queue-name "{project}-events.fifo" \
+#     --attributes FifoQueue=true --region "$REGION"
+#
+# Secrets Manager のシークレット:
+#   awslocal secretsmanager create-secret --name "{project}/app/api-key" \
+#     --secret-string "local-dev-only" --region "$REGION"
+# ----------------------------------------------------------------------------

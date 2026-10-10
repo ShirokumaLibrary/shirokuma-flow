@@ -1,0 +1,2031 @@
+/* ブラウザ既定スタイルのリセット土台（modern-normalize v3.0.1, MIT）。
+   @import は他の全ルールより前に置く必要がある。更新時は ?v を上げる。 */
+@import "modern-normalize.css?v=1";
+
+:root {
+  /* Anthropic-inspired warm palette + semantic phase colors */
+  --ivory:    #FAF9F5;      /* page background */
+  --slate:    #141413;      /* strongest text (headings) */
+  --clay:     #D97757;      /* accent (highlights / numbers) */
+  --clay-dark: #8f4227;    /* accent の AA 達成版（前景/背景に使う） */
+  --oat:      #E3DACC;      /* warm tan (badges, eyebrow bg) */
+  --olive:    #788C5D;      /* olive green accent */
+  --gray-150: #F0EEE6;      /* soft surface */
+  --gray-300: #D1CFC5;      /* border */
+  --gray-500: #5F5E59;      /* muted text */
+  --gray-700: #3D3D3A;      /* body text */
+
+  /* semantic aliases */
+  --fg: var(--gray-700);
+  --fg-strong: var(--slate);
+  --muted: var(--gray-500);
+  --bg: var(--ivory);
+  --bg-soft: var(--gray-150);
+  --border: var(--gray-300);
+
+  /* semantic phase colors (desaturated to harmonize with warm neutrals) */
+  --accent: #4d7299;        /* dusty blue (process) */
+  --accent-soft: #dde5ef;
+  --accent-dark: #2c4d75;
+  --ok: var(--olive);       /* olive for review/done */
+  --ok-soft: #dde5d0;
+  --ok-dark: #4f5f3d;
+  --warn: #b08838;          /* warm amber */
+  --warn-soft: #f0e3c0;
+  --warn-dark: #6e5417;
+  --danger: #a85040;        /* terracotta-tinted brick */
+  --danger-soft: #ecd6cd;
+  --danger-dark: #6e2f25;
+  --purple: #856ea3;        /* dusty purple */
+  --purple-soft: #e6dde9;
+  --purple-dark: #4b3680;
+
+  --code-bg: var(--gray-150);
+
+  /* 本文の行長（measure）— html-readability rule のターゲット 66 字 ≒ ~34em。
+     CJK 主体の本文は ch（半角基準）より em（全角 1 字 ≈ 1em）が素直なので、
+     66 半角字 ≒ 33 全角字 ≒ ~34em を font-relative で直接担保する。
+     一般本文（main 直下の p / ul / ol / blockquote）と本文系コンポーネント
+     （.approach > p / .milestone-timeline .body p）が参照する。timeline /
+     action-items / table / card-grid 等の意図的に広い構造要素は対象外。 */
+  --measure: 34em;
+
+  /* typography stacks — rounded gothic family (丸ゴシック)
+     - body: Kosugi Maru (Regular のみ)
+     - 見出し: M PLUS Rounded 1c (500 / 700 ウェイトあり)
+     - 丸ゴシック系を先頭に置き、Latin 文字も同フォントの丸み付きグリフでレンダリングさせる */
+  --display: "M PLUS Rounded 1c", "Hiragino Maru Gothic ProN",
+             -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto,
+             "Hiragino Kaku Gothic ProN", "Yu Gothic", "Meiryo", sans-serif;
+  --sans:    "Kosugi Maru", "Hiragino Maru Gothic ProN",
+             -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto,
+             "Hiragino Kaku Gothic ProN", "Yu Gothic", "Meiryo", sans-serif;
+  --mono:    "M PLUS 1 Code", ui-monospace, "SF Mono", Menlo, Monaco, Consolas, monospace;
+}
+
+/* ========== ダークモード ========== */
+[data-theme="dark"] {
+  /* base */
+  --ivory:    #1f1d1a;
+  --slate:    #f5f2ea;
+  --clay:     #e89377;
+  --clay-dark: #f0b39c;
+  --oat:      #3d342a;
+  --olive:    #a5b07e;
+  --gray-150: #2a2724;
+  --gray-300: #44413c;
+  --gray-500: #a8a599;
+  --gray-700: #d4d0c4;
+  /* semantic */
+  --accent: #7da3c8;
+  --accent-soft: #2c3a4a;
+  --accent-dark: #b5c8de;
+  --ok: #a5b07e;
+  --ok-soft: #34392a;
+  --ok-dark: #c8d29f;
+  --warn: #d4a648;
+  --warn-soft: #3d3320;
+  --warn-dark: #e8c073;
+  --danger: #d97a6b;
+  --danger-soft: #3d2620;
+  --danger-dark: #ebab9c;
+  --purple: #ab95c5;
+  --purple-soft: #2e2935;
+  --purple-dark: #c9b8de;
+}
+
+/* SVG の hex 直書き色をダークモードで個別オーバーライド */
+[data-theme="dark"] .diagram svg [fill="#dde5ef"] { fill: #2c3a4a; }
+[data-theme="dark"] .diagram svg [fill="#4d7299"] { fill: #7da3c8; }
+[data-theme="dark"] .diagram svg [stroke="#4d7299"] { stroke: #7da3c8; }
+[data-theme="dark"] .diagram svg [fill="#2c4d75"] { fill: #b5c8de; }
+[data-theme="dark"] .diagram svg [fill="#dde5d0"] { fill: #34392a; }
+[data-theme="dark"] .diagram svg [fill="#788C5D"] { fill: #a5b07e; }
+[data-theme="dark"] .diagram svg [stroke="#788C5D"] { stroke: #a5b07e; }
+[data-theme="dark"] .diagram svg [fill="#4f5f3d"] { fill: #c8d29f; }
+[data-theme="dark"] .diagram svg [fill="#e6dde9"] { fill: #2e2935; }
+[data-theme="dark"] .diagram svg [fill="#856ea3"] { fill: #ab95c5; }
+[data-theme="dark"] .diagram svg [stroke="#856ea3"] { stroke: #ab95c5; }
+[data-theme="dark"] .diagram svg [fill="#4b3680"] { fill: #c9b8de; }
+[data-theme="dark"] .diagram svg [fill="#f0e3c0"] { fill: #3d3320; }
+[data-theme="dark"] .diagram svg [fill="#f0e3b8"] { fill: #3d3320; }
+[data-theme="dark"] .diagram svg [fill="#b08838"] { fill: #d4a648; }
+[data-theme="dark"] .diagram svg [stroke="#b08838"] { stroke: #d4a648; }
+[data-theme="dark"] .diagram svg [fill="#6e5417"] { fill: #e8c073; }
+[data-theme="dark"] .diagram svg [fill="#ecd6cd"] { fill: #3d2620; }
+[data-theme="dark"] .diagram svg [fill="#a85040"] { fill: #d97a6b; }
+[data-theme="dark"] .diagram svg [stroke="#a85040"] { stroke: #d97a6b; }
+[data-theme="dark"] .diagram svg [fill="#6e2f25"] { fill: #ebab9c; }
+[data-theme="dark"] .diagram svg [fill="#E3DACC"] { fill: #3d342a; }
+[data-theme="dark"] .diagram svg [fill="#87867F"] { fill: #9b988d; }
+[data-theme="dark"] .diagram svg [stroke="#87867F"] { stroke: #9b988d; }
+[data-theme="dark"] .diagram svg [fill="#3D3D3A"] { fill: #d4d0c4; }
+[data-theme="dark"] .diagram svg [stroke="#3D3D3A"] { stroke: #d4d0c4; }
+[data-theme="dark"] .diagram svg [stroke="#D1CFC5"] { stroke: #44413c; }
+[data-theme="dark"] .diagram svg [fill="#F0EEE6"] { fill: #2a2724; }
+[data-theme="dark"] .diagram svg [stroke="#F0EEE6"] { stroke: #2a2724; }
+/* §12-16 .artboard SVG モック向けの ivory/clay オーバーライド */
+[data-theme="dark"] .diagram svg [fill="#FAF9F5"] { fill: #1f1d1a; }
+[data-theme="dark"] .diagram svg [stroke="#FAF9F5"] { stroke: #1f1d1a; }
+[data-theme="dark"] .diagram svg [fill="#D97757"] { fill: #e89377; }
+[data-theme="dark"] .diagram svg [stroke="#D97757"] { stroke: #e89377; }
+/* その他の配色のダーク対応 */
+[data-theme="dark"] .diagram svg [fill="#efe8db"] { fill: #2a2724; }
+[data-theme="dark"] .diagram svg [fill="#8a8378"] { fill: #9b988d; }
+[data-theme="dark"] .diagram svg [stroke="#8a8378"] { stroke: #9b988d; }
+[data-theme="dark"] .diagram svg [fill="#fbeee0"] { fill: #3d3320; }
+[data-theme="dark"] .diagram svg [stroke="#c08a3e"] { stroke: #d4a648; }
+[data-theme="dark"] .diagram svg [fill="#7a4a14"] { fill: #e8c073; }
+[data-theme="dark"] .diagram svg [fill="#f3f6ef"] { fill: #34392a; }
+[data-theme="dark"] .diagram svg [fill="#3d6627"] { fill: #a5b07e; }
+[data-theme="dark"] .diagram svg [stroke="#3d6627"] { stroke: #a5b07e; }
+[data-theme="dark"] .diagram svg [fill="#2c4a1c"] { fill: #c8d29f; }
+[data-theme="dark"] .diagram svg [fill="#1e5e76"] { fill: #79b3c5; }
+[data-theme="dark"] .diagram svg [stroke="#1e5e76"] { stroke: #79b3c5; }
+[data-theme="dark"] .diagram svg [fill="#7a2b3a"] { fill: #d98b97; }
+[data-theme="dark"] .diagram svg [stroke="#7a2b3a"] { stroke: #d98b97; }
+[data-theme="dark"] .diagram svg [fill="#b3402f"] { fill: #e8917b; }
+[data-theme="dark"] .diagram svg [stroke="#b3402f"] { stroke: #e8917b; }
+/* その他の配色 */
+[data-theme="dark"] .diagram svg [fill="#a8a39b"] { fill: #5a564f; }
+[data-theme="dark"] .diagram svg [stroke="#a8a39b"] { stroke: #5a564f; }
+[data-theme="dark"] .diagram svg [fill="#8a4d00"] { fill: #e0a85a; }
+[data-theme="dark"] .diagram svg [stroke="#8a4d00"] { stroke: #e0a85a; }
+[data-theme="dark"] .diagram svg [fill="#dde9ec"] { fill: #25333a; }
+[data-theme="dark"] .diagram svg [fill="#dee9d9"] { fill: #2c3526; }
+[data-theme="dark"] .diagram svg [fill="#ecdadd"] { fill: #382a2d; }
+[data-theme="dark"] .diagram svg [fill="#ffe2c8"] { fill: #3d2e1a; }
+
+/* テーマ切替ボタン */
+.theme-toggle {
+  display: flex;
+  align-items: center;
+  gap: 0.45rem;
+  background: var(--bg);
+  border: 1px solid var(--border);
+  color: var(--fg);
+  border-radius: 8px;
+  padding: 0.4rem 0.7rem;
+  font-family: var(--mono);
+  font-size: 0.78rem;
+  cursor: pointer;
+  margin-bottom: 1rem;
+  width: 100%;
+  transition: background 0.15s ease;
+}
+.theme-toggle:hover { background: var(--bg-soft); }
+.theme-toggle .icon { font-size: 1rem; line-height: 1; }
+
+* { box-sizing: border-box; }
+
+body {
+  font-family: var(--sans);
+  color: var(--fg);
+  background: var(--bg);
+  line-height: 1.65;
+  -webkit-font-smoothing: antialiased;
+  margin: 0;
+  padding: 0;
+  min-height: 100vh;
+}
+/* サイドバー（aside.toc は theme.js が生成）がある時だけ 2 カラムグリッドにする。
+   生成前 / JS 無効時は単一カラムで本文が全幅表示され、レイアウトシフトを避けられる。 */
+body:has(aside.toc) {
+  display: grid;
+  grid-template-columns: 240px 1fr;
+}
+
+aside.toc {
+  position: sticky;
+  top: 0;
+  align-self: start;
+  height: 100vh;
+  overflow-y: auto;
+  background: var(--bg-soft);
+  border-right: 1px solid var(--border);
+  padding: 1.5rem 1rem;
+  font-size: 0.88rem;
+}
+
+aside.toc h2 {
+  font-size: 0.85rem;
+  text-transform: uppercase;
+  color: var(--muted);
+  letter-spacing: 0.05em;
+  border: none;
+  margin: 0 0 0.6rem;
+  padding: 0;
+}
+
+aside.toc ol {
+  list-style: none;
+  padding: 0;
+  margin: 0 0 1rem;
+}
+
+aside.toc ol ol {
+  padding-left: 0.9rem;
+  margin: 0.15rem 0 0.4rem;
+  border-left: 1px solid var(--border);
+}
+
+aside.toc li { margin: 0.25rem 0; }
+
+aside.toc a {
+  color: var(--fg);
+  text-decoration: none;
+  display: block;
+  padding: 0.15rem 0.3rem;
+  border-radius: 4px;
+}
+
+aside.toc a:hover {
+  background: var(--oat);
+  color: var(--slate);
+}
+
+/* サイドバー下部のナビゲーション（ドキュメントルート / 親ページへのリンク）。
+   theme.js が生成する。 */
+aside.toc .toc-nav {
+  margin-top: 1.25rem;
+  padding-top: 0.8rem;
+  border-top: 1px solid var(--border);
+  display: flex;
+  flex-direction: column;
+  gap: 0.1rem;
+  font-size: 0.85rem;
+}
+aside.toc .toc-nav a {
+  color: var(--muted);
+}
+aside.toc .toc-nav a:hover {
+  color: var(--slate);
+}
+
+main {
+  max-width: 1200px;
+  padding: 2rem 2rem 5rem;
+  width: 100%;
+}
+
+h1 {
+  font-family: var(--display);
+  font-weight: 700;
+  font-size: 2rem;
+  line-height: 1.25;
+  letter-spacing: -0.01em;
+  color: var(--slate);
+  border-bottom: 1.5px solid var(--border);
+  padding-bottom: 0.6rem;
+  margin-top: 0;
+}
+
+h2 {
+  font-family: var(--display);
+  font-weight: 700;
+  font-size: 1.5rem;
+  letter-spacing: -0.005em;
+  color: var(--slate);
+  border-bottom: 1px solid var(--border);
+  padding-bottom: 0.3rem;
+  margin-top: 3rem;
+  scroll-margin-top: 1rem;
+}
+
+h3 {
+  font-family: var(--display);
+  font-weight: 600;
+  font-size: 1.25rem;
+  color: var(--slate);
+  margin: 2rem 0 0.5rem;
+  scroll-margin-top: 1rem;
+}
+
+h4 {
+  font-family: var(--mono);
+  font-size: 1.05rem;
+  margin: 1.5rem 0 0.5rem;
+  color: var(--gray-700);
+  letter-spacing: 0.05em;
+  font-weight: 700;
+}
+
+blockquote {
+  border-left: 4px solid var(--accent);
+  background: var(--bg-soft);
+  padding: 0.8rem 1rem;
+  margin: 1rem 0;
+  color: var(--muted);
+}
+blockquote.callout {
+  border-left-color: var(--ok);
+  color: var(--fg);
+}
+blockquote.warn {
+  border-left-color: var(--warn);
+  background: var(--warn-soft);
+  color: var(--fg);
+}
+blockquote.question {
+  border-left-color: var(--purple);
+  background: var(--purple-soft);
+  color: var(--fg);
+}
+
+code {
+  font-family: var(--mono);
+  background: var(--code-bg);
+  padding: 0.1rem 0.45rem;
+  border-radius: 5px;
+  font-size: 0.95em;          /* 等幅フォントは字幅が狭めなので少し大きく */
+  letter-spacing: 0.01em;     /* 字間に余裕を持たせる */
+  color: var(--gray-700);
+  text-transform: none;       /* 識別子は親が uppercase でも変換しない（見出し内の code 対策） */
+}
+
+/* コピペ用コードブロック（コマンド / AI へのプロンプト）。テーマ変数でダーク追従。 */
+pre {
+  background: var(--code-bg);
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  padding: 0.9rem 1.1rem;
+  margin: 1rem 0;
+  overflow-x: auto;
+  font-family: var(--mono);
+  font-size: 0.9rem;
+  line-height: 1.6;
+  color: var(--gray-700);
+  white-space: pre;
+}
+pre code {
+  background: none;
+  padding: 0;
+  border-radius: 0;
+  font-size: inherit;
+  color: inherit;
+  letter-spacing: 0;
+}
+
+table {
+  border-collapse: collapse;
+  width: 100%;
+  margin: 1rem 0;
+  font-size: 0.93rem;
+}
+
+th, td {
+  border: 1px solid var(--border);
+  padding: 0.5rem 0.75rem;
+  text-align: left;
+  vertical-align: top;
+}
+
+th {
+  background: var(--bg-soft);
+  font-weight: 600;
+}
+
+/* 手動 opt-in: 任意のセル/列を nowrap 化 */
+td.nw, th.nw { white-space: nowrap; }
+
+/* リンク（本文・cta-link 等の独自スタイルは個別セレクタが上書き） */
+main a {
+  color: var(--accent-dark);
+  text-decoration: underline;
+  text-decoration-color: var(--accent);
+  text-decoration-thickness: 1px;
+  text-underline-offset: 0.18em;
+  transition: color 120ms ease, text-decoration-thickness 120ms ease;
+}
+main a:hover {
+  color: var(--accent);
+  text-decoration-color: var(--accent-dark);
+  text-decoration-thickness: 2px;
+}
+main a:visited {
+  color: var(--purple-dark);
+  text-decoration-color: var(--purple);
+}
+main a:visited:hover {
+  color: var(--purple);
+  text-decoration-color: var(--purple-dark);
+}
+
+ul, ol { padding-left: 1.5rem; }
+li { margin: 0.25rem 0; }
+
+/* 一般本文の行長を measure（~34em ≒ 66 字）に制限し、html-readability の
+   行長ターゲットを本文全体へ適用する。対象は main 直下の running prose のみ。
+   timeline / action-items（手順リスト）や table・card-grid 等の広い構造要素、
+   独自幅を持つ .summary-card / .hero は対象外（直下セレクタと :not で除外）。 */
+main > p,
+main > ul,
+main > ol:not(.timeline):not(.action-items),
+main > blockquote {
+  max-width: var(--measure);
+}
+
+.diagram {
+  margin: 1.5rem 0;
+  text-align: center;
+}
+.diagram svg {
+  max-width: 100%;
+  height: auto;
+}
+/* SVG 内の text にもページのフォントを継承させる */
+.diagram svg text {
+  font-family: var(--sans);
+}
+.diagram svg text[font-weight="700"],
+.diagram svg text.label {
+  font-family: var(--display);
+}
+/* fill 属性が無い text はテーマに追従する色で描画（黒固定回避） */
+.diagram svg text:not([fill]) {
+  fill: var(--fg);
+}
+
+.phase-card {
+  border: 1.5px solid var(--border);
+  border-radius: 12px;
+  margin: 1.5rem 0;
+  overflow: hidden;
+  background: var(--bg);
+}
+.phase-card > header {
+  padding: 0.9rem 1.1rem;
+  display: flex;
+  align-items: center;
+  gap: 0.6rem;
+  font-weight: 700;
+  font-size: 1.2rem;
+  font-family: var(--display);
+  color: var(--slate);
+  border-bottom: 1px solid var(--border);
+}
+/* ヘッダー内の見出しは padding で間隔を制御するためマージンを持たせない。
+   フォントはヘッダー自身の指定を継承させる。 */
+.phase-card > header h3 {
+  margin: 0;
+  font: inherit;
+  color: inherit;
+}
+.phase-card.designing > header { background: var(--accent-soft); }
+.phase-card.preparing > header { background: var(--accent-soft); }
+.phase-card.working > header { background: var(--accent-soft); }
+.phase-card.reviewing > header { background: var(--ok-soft); }
+.phase-card.requirements > header { background: var(--purple-soft); }
+
+.phase-card .body {
+  padding: 1rem;
+}
+
+.tag {
+  display: inline-block;
+  font-family: var(--mono);
+  font-size: 0.7rem;
+  padding: 0.15rem 0.55rem;
+  border-radius: 6px;
+  background: var(--bg-soft);
+  border: 1px solid var(--border);
+  color: var(--gray-700);
+  font-weight: 500;
+  letter-spacing: 0.04em;
+}
+.tag.status { background: var(--bg); }
+.tag.orch { background: var(--accent-soft); color: var(--accent-dark); border-color: var(--accent); }
+.tag.worker { background: var(--ok-soft); color: var(--ok-dark); border-color: var(--ok); }
+.tag.gate { background: var(--warn-soft); color: var(--warn-dark); border-color: var(--warn); }
+.tag.question { background: var(--purple-soft); color: var(--purple-dark); border-color: var(--purple); }
+/* 意味色の派生。.worker / .gate は「worker を表す」「人ゲートを表す」という
+   意味を持つラベルなので、単なる「良い＝緑」「注意＝警告色」の用途には流用しない。
+   .ok / .warn は .summary-card.ok / .summary-card.warn と同じ意味語彙をタグ側へ揃えたもの。 */
+.tag.ok { background: var(--ok-soft); color: var(--ok-dark); border-color: var(--ok); }
+.tag.warn { background: var(--warn-soft); color: var(--warn-dark); border-color: var(--warn); }
+
+.qbox {
+  border: 1.5px solid var(--purple);
+  background: var(--purple-soft);
+  border-radius: 12px;
+  padding: 0.7rem 1rem;
+  margin: 0.8rem 0;
+  font-size: 0.95rem;
+  color: var(--gray-700);
+}
+.qbox::before {
+  content: "Q";
+  display: inline-block;
+  width: 1.4rem;
+  height: 1.4rem;
+  background: var(--purple-dark);
+  color: var(--bg);
+  font-weight: 700;
+  text-align: center;
+  border-radius: 50%;
+  margin-right: 0.5rem;
+  line-height: 1.4rem;
+  font-size: 0.85rem;
+}
+/* 決定済の論点（緑系・✓バッジ）。CSS 変数ベースのためダークモードは自動追従 */
+.qbox.resolved {
+  border-color: var(--ok);
+  background: var(--ok-soft);
+}
+.qbox.resolved::before {
+  content: "✓";
+  background: var(--ok);
+}
+
+/* 処理フロー（番号付きリスト + 種別チップ） */
+.timeline {
+  list-style: none;
+  counter-reset: timeline;
+  padding: 0;
+  margin: 1rem 0 1.5rem;
+}
+.timeline li {
+  counter-increment: timeline;
+  position: relative;
+  padding: 0.35rem 0 0.35rem 2.2rem;
+}
+.timeline li::before {
+  content: counter(timeline) ".";
+  position: absolute;
+  left: 0;
+  top: 0.35rem;
+  width: 1.7rem;
+  text-align: right;
+  font-family: var(--mono);
+  font-size: 0.9rem;
+  color: var(--muted);
+  font-weight: 500;
+}
+.timeline .desc {
+  display: block;
+  color: var(--muted);
+  font-size: 0.88rem;
+  margin-top: 0.1rem;
+}
+.t-tag {
+  display: inline-block;
+  font-family: var(--mono);
+  font-size: 0.66rem;
+  padding: 0.1rem 0.5rem;
+  border-radius: 4px;
+  margin-right: 0.55rem;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  font-weight: 500;
+  vertical-align: 0.08em;
+  min-width: 3.2rem;
+  text-align: center;
+}
+.t-tag.status { background: var(--accent-soft); color: var(--accent-dark); }
+.t-tag.worker { background: var(--ok-soft);     color: var(--ok-dark); }
+.t-tag.check  { background: var(--bg-soft);     color: var(--muted); }
+.t-tag.task   { background: var(--bg-soft);     color: var(--muted); }
+.t-tag.ai     { background: var(--purple-soft); color: var(--purple-dark); }
+.t-tag.gate   { background: var(--oat);         color: var(--warn-dark); }
+.t-tag.post   { background: var(--warn-soft);   color: var(--warn-dark); }
+.t-tag.ok     { background: var(--ok-soft);     color: var(--ok-dark); }
+
+.meta {
+  font-size: 0.85rem;
+  color: var(--muted);
+  border-top: 1px solid var(--border);
+  margin-top: 3rem;
+  padding-top: 1rem;
+}
+
+@media (max-width: 900px) {
+  body:has(aside.toc) { grid-template-columns: 1fr; }
+  aside.toc {
+    position: static;
+    height: auto;
+    border-right: none;
+    border-bottom: 1px solid var(--border);
+  }
+  main { padding: 1.5rem 1rem 4rem; }
+
+  /* 11 節の構成パターンの 1 カラム化 */
+  .toc-grid     { grid-template-columns: 1fr; }
+  .card-grid    { grid-template-columns: 1fr; }
+  .code-visual  { grid-template-columns: 1fr; }
+  .before-after { grid-template-columns: 1fr; }
+
+  /* 報告系部品の 1〜2 カラム化 */
+  .milestone-timeline .card-grid { grid-template-columns: 1fr; }
+  .milestone-timeline .milestone { grid-template-columns: 80px 24px 1fr; gap: 0 12px; }
+  .milestone-timeline .when      { font-size: 0.72rem; }
+  .metric-grid                   { grid-template-columns: 1fr 1fr; }
+  .status-header dl              { grid-template-columns: 1fr 1fr; }
+
+  /* 12 節の部品（比較・吹き出し・構造・タイル）の 1〜2 カラム化 */
+  .tradeoffs   { grid-template-columns: 1fr; }
+  .bubble      { flex-direction: column; }
+  .repo-line   { grid-template-columns: 1fr; gap: 0.25rem; }
+  .tile-grid   { grid-template-columns: 1fr 1fr; }
+
+  /* 12 節の部品（意思決定・ボードほか）の 1 カラム化 */
+  .decision-deck { grid-template-columns: 1fr; }
+  .board         { grid-template-columns: 1fr; }
+  .artboards     { grid-template-columns: 1fr; }
+  .board-toolbar { flex-direction: column; align-items: stretch; }
+  .board-hintline { margin-left: 0; }
+}
+
+/* ========== SVG 拡大ダイアログ ========== */
+.diagram svg {
+  cursor: zoom-in;
+  transition: opacity 0.15s ease;
+}
+.diagram svg:hover { opacity: 0.85; }
+
+dialog.svg-zoom {
+  border: 1.5px solid var(--border);
+  border-radius: 12px;
+  padding: 0;
+  background: var(--bg);
+  color: var(--fg);
+  width: 96vw;                /* 固定サイズ：内容に縮まないように max-width ではなく width */
+  height: 96vh;
+  box-shadow: 0 12px 40px rgba(20, 20, 19, 0.25);
+}
+dialog.svg-zoom::backdrop {
+  background: rgba(20, 20, 19, 0.55);
+  backdrop-filter: blur(2px);
+}
+[data-theme="dark"] dialog.svg-zoom::backdrop {
+  background: rgba(0, 0, 0, 0.7);
+}
+dialog.svg-zoom .svg-zoom-body {
+  width: 100%;
+  height: 100%;
+  padding: 3rem 1.5rem 2.2rem;  /* top: close ボタン分 / bottom: hint 分 */
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  overflow: auto;
+  box-sizing: border-box;
+}
+dialog.svg-zoom .svg-zoom-body svg {
+  display: block;
+  width: 100%;
+  height: 100%;
+  max-width: none;             /* 元 SVG の max-width: 100% を解除 */
+  cursor: default;
+  /* viewBox + preserveAspectRatio (default xMidYMid meet) で
+     縦横比を保ったまま枠内最大表示される */
+}
+dialog.svg-zoom .svg-zoom-close {
+  position: absolute;
+  top: 0.5rem;
+  right: 0.75rem;
+  width: 2.2rem;
+  height: 2.2rem;
+  border: 1px solid var(--border);
+  background: var(--bg);
+  color: var(--muted);
+  font-family: var(--mono);
+  font-size: 1.2rem;
+  line-height: 1;
+  cursor: pointer;
+  border-radius: 50%;
+  transition: background 0.15s ease;
+  z-index: 2;
+}
+dialog.svg-zoom .svg-zoom-close:hover {
+  background: var(--bg-soft);
+  color: var(--fg);
+}
+dialog.svg-zoom .svg-zoom-hint {
+  position: absolute;
+  bottom: 0.5rem;
+  left: 50%;
+  transform: translateX(-50%);
+  font-family: var(--mono);
+  font-size: 0.72rem;
+  color: var(--muted);
+  letter-spacing: 0.05em;
+  pointer-events: none;
+}
+
+/* ===== 11. 構成パターン =====
+   色はすべて CSS 変数で指定する。 */
+
+/* 11-1. 章番号付き目次グリッド */
+.toc-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+  gap: 0.8rem;
+  margin: 1.2rem 0 2rem;
+  padding: 0;
+  list-style: none;
+}
+.toc-grid-item {
+  display: grid;
+  grid-template-columns: auto 1fr auto;
+  align-items: center;
+  gap: 0.7rem;
+  padding: 0.8rem 1rem;
+  background: var(--bg-soft);
+  border: 1px solid var(--border);
+  border-radius: 10px;
+  color: var(--fg);
+  text-decoration: none;
+  transition: border-color 150ms ease, background 150ms ease;
+}
+.toc-grid-item:hover {
+  border-color: var(--clay);
+  background: var(--bg);
+}
+.toc-grid-item .num {
+  font-family: var(--mono);
+  font-size: 1.05rem;
+  font-weight: 700;
+  color: var(--clay);
+  letter-spacing: 0.04em;
+  min-width: 2.2rem;
+}
+.toc-grid-item .title {
+  font-family: var(--display);
+  font-weight: 600;
+  color: var(--slate);
+  line-height: 1.35;
+}
+.toc-grid-item .count {
+  font-family: var(--mono);
+  font-size: 0.72rem;
+  padding: 0.15rem 0.55rem;
+  border-radius: 6px;
+  background: var(--oat);
+  color: var(--gray-700);
+  letter-spacing: 0.04em;
+  white-space: nowrap;
+}
+
+/* 11-2. ヒーローバナー */
+.hero {
+  background: var(--bg-soft);
+  border-left: 4px solid var(--clay);
+  border-radius: 0 10px 10px 0;
+  padding: 1.4rem 1.6rem;
+  margin: 1.5rem 0 2rem;
+}
+.hero .eyebrow {
+  display: inline-block;
+  font-family: var(--mono);
+  font-size: 0.78rem;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: var(--muted);
+  margin: 0 0 0.4rem;
+}
+.hero h1,
+.hero h2 {
+  margin: 0.1rem 0 0.5rem;
+  border-bottom: none;
+  padding-bottom: 0;
+}
+.hero .lead {
+  font-size: 1.05rem;
+  line-height: 1.7;
+  color: var(--fg);
+  margin: 0.4rem 0 0.6rem;
+}
+.hero .tags {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.35rem;
+  margin-top: 0.6rem;
+}
+
+/* 11-3. カード比較グリッド */
+.card-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
+  gap: 1rem;
+  margin: 1.2rem 0 1.8rem;
+}
+.card-grid .card {
+  background: var(--bg);
+  border: 1px solid var(--border);
+  border-radius: 10px;
+  padding: 1rem 1.1rem 1.1rem;
+  transition: border-color 150ms ease, background 150ms ease;
+}
+/* 推奨・採用案のカード（.summary-card.ok と同じ意味語彙） */
+.card-grid .card.ok {
+  background: var(--ok-soft);
+  border-color: var(--ok);
+}
+.card-grid .card:hover {
+  border-color: var(--clay);
+  background: var(--bg-soft);
+}
+.card-grid .card h3,
+.card-grid .card h4 {
+  font-family: var(--display);
+  font-weight: 600;
+  margin: 0 0 0.4rem;
+  color: var(--slate);
+  border-bottom: none;
+  padding-bottom: 0;
+  scroll-margin-top: 1rem;
+}
+.card-grid .card p {
+  margin: 0.3rem 0 0.6rem;
+  color: var(--fg);
+  font-size: 0.95rem;
+}
+
+/* 11-4. サマリーカード（warn / ok / neutral） */
+.summary-card {
+  display: block;
+  border-radius: 10px;
+  padding: 0.9rem 1.1rem;
+  margin: 1rem 0;
+  background: var(--bg-soft);
+  color: var(--fg);
+  border-left: 4px solid var(--border);
+}
+.summary-card.warn {
+  background: var(--warn-soft);
+  border-left-color: var(--warn);
+}
+.summary-card.ok {
+  background: var(--ok-soft);
+  border-left-color: var(--ok);
+}
+/* 能動的問い（.tag.question と同じ意味語彙） */
+.summary-card.question {
+  background: var(--purple-soft);
+  border-left-color: var(--purple);
+}
+.summary-card .label {
+  display: inline-block;
+  font-family: var(--mono);
+  font-size: 0.72rem;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: var(--muted);
+  margin: 0 0 0.3rem;
+}
+.summary-card.warn .label { color: var(--warn-dark); }
+.summary-card.ok .label   { color: var(--ok-dark); }
+.summary-card p {
+  margin: 0.2rem 0 0;
+}
+
+/* 11-5. 矢印 CTA リンク */
+.cta-link {
+  display: inline-block;
+  font-family: var(--display);
+  font-weight: 600;
+  color: var(--clay);
+  text-decoration: none;
+  transition: text-decoration-color 150ms ease;
+}
+.cta-link::after {
+  content: " →";
+  font-family: var(--mono);
+  letter-spacing: 0.02em;
+}
+.cta-link:hover {
+  text-decoration: underline;
+  text-decoration-color: var(--clay);
+  text-underline-offset: 0.2em;
+}
+
+/* 11-6. コード+ビジュアル並置 */
+.code-visual {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 1rem;
+  align-items: stretch;
+  margin: 1.2rem 0 1.8rem;
+}
+.code-visual pre {
+  background: var(--code-bg);
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  padding: 0.9rem 1rem;
+  margin: 0;
+  overflow-x: auto;
+  font-family: var(--mono);
+  font-size: 0.88rem;
+  line-height: 1.55;
+  color: var(--gray-700);
+}
+.code-visual .visual {
+  background: var(--bg-soft);
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  padding: 0.9rem 1rem;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  min-height: 6rem;
+}
+.code-visual .visual svg { max-width: 100%; height: auto; }
+
+/* 11-7. 折り畳み（details/summary） */
+details.collapse {
+  border: 1px solid var(--border);
+  border-radius: 10px;
+  background: var(--bg);
+  margin: 1rem 0;
+  overflow: hidden;
+}
+details.collapse > summary {
+  list-style: none;
+  cursor: pointer;
+  padding: 0.7rem 1rem;
+  background: var(--bg-soft);
+  font-family: var(--display);
+  font-weight: 600;
+  color: var(--slate);
+  display: flex;
+  align-items: center;
+  gap: 0.6rem;
+  user-select: none;
+}
+details.collapse > summary::marker,
+details.collapse > summary::-webkit-details-marker {
+  display: none;
+}
+details.collapse > summary::before {
+  content: "▶";
+  display: inline-block;
+  font-size: 0.75rem;
+  color: var(--muted);
+  transition: transform 0.2s ease;
+}
+details[open].collapse > summary::before {
+  transform: rotate(90deg);
+}
+details.collapse > *:not(summary) {
+  padding: 0.8rem 1.1rem 1rem;
+}
+details.collapse > pre {
+  margin: 0;
+  border-radius: 0;
+  border: none;
+  border-top: 1px solid var(--border);
+}
+
+/* 11-8. Before/After 比較 */
+.before-after {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 1rem;
+  margin: 1.2rem 0 1.8rem;
+}
+.before-after .before,
+.before-after .after {
+  border-radius: 10px;
+  padding: 0.9rem 1.1rem 1rem;
+  border-left: 4px solid var(--border);
+}
+.before-after .before {
+  background: var(--danger-soft);
+  border-left-color: var(--danger);
+}
+.before-after .after {
+  background: var(--ok-soft);
+  border-left-color: var(--ok);
+}
+.before-after h4 {
+  font-family: var(--mono);
+  margin: 0 0 0.4rem;
+  font-size: 0.85rem;
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+}
+.before-after .before h4 { color: var(--danger-dark); }
+.before-after .after  h4 { color: var(--ok-dark); }
+.before-after p,
+.before-after pre {
+  margin: 0.3rem 0 0;
+}
+
+/* ===== 12. 報告系部品 =====
+   レビュー結果 / ポストモーテム / 実装計画レポート用の構成部品。
+   色はすべて CSS 変数で指定する。 */
+
+/* 12-1. レビュースコアカード（PASS / FAIL / NEEDS_REVISION） */
+.review-score-card {
+  display: block;
+  border-radius: 12px;
+  padding: 1rem 1.2rem;
+  margin: 1.2rem 0 1.5rem;
+  background: var(--bg-soft);
+  border-left: 4px solid var(--border);
+  color: var(--fg);
+}
+.review-score-card .label {
+  display: inline-block;
+  font-family: var(--mono);
+  font-size: 0.72rem;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: var(--muted);
+  margin: 0 0 0.35rem;
+}
+.review-score-card .score {
+  font-family: var(--display);
+  font-weight: 700;
+  font-size: 1.8rem;
+  line-height: 1.1;
+  margin: 0.1rem 0 0.3rem;
+  color: var(--slate);
+  letter-spacing: 0.02em;
+}
+.review-score-card .hint {
+  margin: 0;
+  font-size: 0.95rem;
+  color: var(--fg);
+}
+.review-score-card.pass {
+  background: var(--ok-soft);
+  border-left-color: var(--ok);
+}
+.review-score-card.pass .label { color: var(--ok-dark); }
+.review-score-card.fail {
+  background: var(--danger-soft);
+  border-left-color: var(--danger);
+}
+.review-score-card.fail .label { color: var(--danger-dark); }
+.review-score-card.warn {
+  background: var(--warn-soft);
+  border-left-color: var(--warn);
+}
+.review-score-card.warn .label { color: var(--warn-dark); }
+
+/* 12-2. 問題リストテーブル（標準 <table> のバリアント） */
+.issue-list-table {
+  /* 標準 <table> の枠線・パディング・ヘッダー背景を継承。
+     深刻度バッジ列の幅を抑えるための微調整のみ追加。 */
+}
+.issue-list-table tbody tr:hover {
+  background: var(--bg-soft);
+}
+.issue-list-table td:first-child {
+  white-space: nowrap;
+  text-align: center;
+}
+.issue-list-table code {
+  font-size: 0.88em;
+  word-break: break-all;
+}
+
+/* 12-3. 推奨アクションリスト（番号付き ol + 優先度チップ） */
+.action-items {
+  list-style: none;
+  counter-reset: action-items;
+  padding: 0;
+  margin: 1rem 0 1.5rem;
+}
+.action-items > li {
+  counter-increment: action-items;
+  position: relative;
+  padding: 0.5rem 0 0.5rem 2.5rem;
+  border-bottom: 1px solid var(--border);
+}
+.action-items > li:last-child { border-bottom: none; }
+.action-items > li::before {
+  content: counter(action-items) ".";
+  position: absolute;
+  left: 0;
+  top: 0.5rem;
+  width: 2rem;
+  text-align: right;
+  font-family: var(--mono);
+  font-size: 0.95rem;
+  font-weight: 600;
+  color: var(--clay);
+}
+/* 優先度チップ（.tag バリアント） */
+.tag.priority-high {
+  background: var(--danger-soft);
+  color: var(--danger-dark);
+  border-color: var(--danger);
+}
+.tag.priority-medium {
+  background: var(--warn-soft);
+  color: var(--warn-dark);
+  border-color: var(--warn);
+}
+.tag.priority-low {
+  background: var(--bg-soft);
+  color: var(--muted);
+  border-color: var(--border);
+}
+
+/* 12-4. ステータスヘッダー（postmortem ID/SEV/Status/Duration） */
+.status-header {
+  background: var(--bg-soft);
+  border-left: 4px solid var(--clay);
+  border-radius: 0 10px 10px 0;
+  padding: 1rem 1.2rem;
+  margin: 1.2rem 0 1.5rem;
+}
+.status-header dl {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 0.9rem 1.5rem;
+  margin: 0;
+  padding: 0;
+}
+.status-header dl > div {
+  display: flex;
+  flex-direction: column;
+  gap: 0.2rem;
+}
+.status-header dt {
+  font-family: var(--mono);
+  font-size: 0.72rem;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: var(--muted);
+  margin: 0;
+}
+.status-header dd {
+  font-family: var(--display);
+  font-weight: 600;
+  font-size: 1.1rem;
+  color: var(--slate);
+  margin: 0;
+  letter-spacing: 0.01em;
+}
+
+/* 12-5. 時刻スタンプ型タイムライン（event-log） */
+.event-log {
+  position: relative;
+  padding: 4px 0 4px 16px;
+  margin: 1.2rem 0 1.5rem;
+}
+.event-log::before {
+  content: "";
+  position: absolute;
+  left: 16px;
+  top: 8px;
+  bottom: 8px;
+  width: 2px;
+  background: var(--border);
+}
+.event-log .entry {
+  position: relative;
+  padding: 0 0 1.4rem 1.75rem;
+}
+.event-log .entry:last-child { padding-bottom: 0; }
+.event-log .dot {
+  position: absolute;
+  left: -5px;
+  top: 0.45rem;
+  width: 12px;
+  height: 12px;
+  border-radius: 50%;
+  background: var(--bg);
+  border: 3px solid var(--clay);
+  box-sizing: border-box;
+}
+.event-log .dot.impact { background: var(--clay); border-color: var(--clay); }
+.event-log .dot.mitigated, .event-log .dot.resolved {
+  background: var(--olive);
+  border-color: var(--olive);
+}
+.event-log .time {
+  display: inline-block;
+  font-family: var(--mono);
+  font-size: 0.78rem;
+  color: var(--gray-700);
+  background: var(--bg-soft);
+  border: 1.5px solid var(--border);
+  border-radius: 6px;
+  padding: 0.15rem 0.55rem;
+  letter-spacing: 0.04em;
+  margin-bottom: 0.35rem;
+}
+.event-log .body {
+  font-size: 0.95rem;
+  color: var(--fg);
+  line-height: 1.55;
+}
+.event-log .body strong { color: var(--slate); font-weight: 700; }
+
+/* 12-6. 期間グルーピング型タイムライン（milestone-timeline） */
+.milestone-timeline {
+  display: flex;
+  flex-direction: column;
+  gap: 0;
+  margin: 1.4rem 0 1.6rem;
+}
+.milestone-timeline .milestone {
+  display: grid;
+  grid-template-columns: 120px 28px 1fr;
+  gap: 0 18px;
+  position: relative;
+}
+.milestone-timeline .when {
+  text-align: right;
+  font-family: var(--mono);
+  font-size: 0.78rem;
+  color: var(--muted);
+  padding-top: 6px;
+  letter-spacing: 0.04em;
+}
+.milestone-timeline .dot-col {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+}
+.milestone-timeline .dot {
+  width: 14px;
+  height: 14px;
+  border-radius: 50%;
+  background: var(--bg);
+  border: 3px solid var(--clay);
+  margin-top: 4px;
+  flex-shrink: 0;
+  box-sizing: border-box;
+}
+.milestone-timeline .dot.done {
+  background: var(--olive);
+  border-color: var(--olive);
+}
+.milestone-timeline .dot.current {
+  background: var(--clay);
+}
+.milestone-timeline .line {
+  width: 2px;
+  flex: 1;
+  background: var(--border);
+  margin-top: 4px;
+}
+.milestone-timeline .body {
+  padding-bottom: 2.2rem;
+}
+.milestone-timeline .body h3 {
+  font-family: var(--display);
+  font-weight: 700;
+  font-size: 1.15rem;
+  margin: 0 0 0.4rem;
+  color: var(--slate);
+}
+.milestone-timeline .body p {
+  font-size: 0.95rem;
+  color: var(--muted);
+  margin: 0 0 0.6rem;
+  max-width: var(--measure);
+}
+.milestone-timeline .body .tags {
+  display: flex;
+  gap: 0.5rem;
+  flex-wrap: wrap;
+}
+
+/* 12-7. メトリクスグリッド（数値カード） */
+.metric-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+  gap: 0.9rem;
+  margin: 1.2rem 0 1.8rem;
+}
+.metric-grid .metric-card {
+  background: var(--bg);
+  border: 1px solid var(--border);
+  border-radius: 10px;
+  padding: 0.9rem 1rem 1rem;
+  display: flex;
+  flex-direction: column;
+  gap: 0.15rem;
+  transition: border-color 150ms ease;
+}
+.metric-grid .metric-card:hover {
+  border-color: var(--clay);
+}
+.metric-grid .metric-card .number {
+  font-family: var(--display);
+  font-weight: 700;
+  font-size: 1.9rem;
+  line-height: 1.1;
+  color: var(--clay);
+  letter-spacing: 0.01em;
+  margin: 0;
+}
+.metric-grid .metric-card .unit {
+  font-family: var(--mono);
+  font-size: 0.78rem;
+  color: var(--muted);
+  letter-spacing: 0.06em;
+  text-transform: lowercase;
+  margin: 0.1rem 0 0.2rem;
+}
+.metric-grid .metric-card .label {
+  font-family: var(--sans);
+  font-size: 0.92rem;
+  color: var(--fg);
+  margin: 0;
+  line-height: 1.4;
+}
+
+/* 12-8. コード差分行（diff-line） */
+.diff-block {
+  background: var(--bg-soft);
+  border: 1.5px solid var(--border);
+  border-radius: 8px;
+  padding: 0.8rem 1rem;
+  margin: 1rem 0;
+  overflow-x: auto;
+  font-family: var(--mono);
+  font-size: 0.82rem;
+  line-height: 1.55;
+}
+.diff-line {
+  white-space: pre;
+  display: block;
+}
+.diff-line.ctx { color: var(--gray-500); }
+.diff-line.del { color: var(--danger-dark); }
+.diff-line.add { color: var(--ok-dark); }
+
+/* 12-9. 選択肢比較カード（.approach / .tradeoffs）
+   複数の選択肢を「番号 + タイトル + 説明 + pros/cons」で並列比較する。
+   .pro / .con は 11-8 の .before-after（.before / .after）と同系の色分けで、左ボーダーで素早く識別する。 */
+.approach {
+  border: 1.5px solid var(--border);
+  border-radius: 12px;
+  padding: 1.1rem 1.2rem 1.2rem;
+  margin: 1rem 0 1.4rem;
+  background: var(--bg);
+}
+.approach + .approach { margin-top: 1rem; }
+.approach-head {
+  display: flex;
+  align-items: center;
+  gap: 0.6rem;
+  margin-bottom: 0.5rem;
+}
+.approach-head .num {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-width: 1.8rem;
+  height: 1.8rem;
+  padding: 0 0.5rem;
+  font-family: var(--mono);
+  font-size: 0.85rem;
+  font-weight: 700;
+  background: var(--oat);
+  color: var(--slate);
+  border-radius: 8px;
+  letter-spacing: 0.04em;
+}
+.approach-head h3 {
+  font-family: var(--display);
+  font-weight: 700;
+  font-size: 1.15rem;
+  color: var(--slate);
+  margin: 0;
+}
+.approach > p {
+  font-size: 0.95rem;
+  color: var(--fg);
+  margin: 0 0 0.9rem;
+  max-width: var(--measure);
+}
+.tradeoffs {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 0.8rem;
+  margin-top: 0.4rem;
+}
+.tradeoffs .pro,
+.tradeoffs .con {
+  border-radius: 8px;
+  padding: 0.7rem 0.9rem;
+  font-size: 0.92rem;
+}
+.tradeoffs .pro {
+  background: var(--ok-soft);
+  border-left: 3px solid var(--ok);
+  color: var(--ok-dark);
+}
+.tradeoffs .con {
+  background: var(--danger-soft);
+  border-left: 3px solid var(--danger);
+  color: var(--danger-dark);
+}
+.tradeoffs h4 {
+  font-family: var(--mono);
+  font-size: 0.72rem;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  margin: 0 0 0.4rem;
+  font-weight: 700;
+}
+.tradeoffs ul {
+  list-style: disc;
+  padding-left: 1.1rem;
+  margin: 0;
+}
+.tradeoffs li + li { margin-top: 0.2rem; }
+
+/* 12-10. レビューコメント吹き出し（.bubble / .avatar / .checklist）
+   レビューコメントやチャット風のフィードバックを、avatar + 本文カードの 2 カラムで提示する。
+   .chip は基本部品の .tag と類似の pill 形だが、メタ行（line 番号・blocking 等）専用バリアントとして独立して持つ。 */
+.bubble {
+  display: flex;
+  align-items: flex-start;
+  gap: 0.75rem;
+  margin: 0.8rem 0 1rem;
+}
+.bubble + .bubble { margin-top: 0.6rem; }
+.bubble .avatar {
+  flex-shrink: 0;
+  width: 36px;
+  height: 36px;
+  border-radius: 50%;
+  background: var(--oat);
+  color: var(--slate);
+  font-family: var(--mono);
+  font-size: 0.78rem;
+  font-weight: 700;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  letter-spacing: 0.02em;
+}
+.bubble .bubble-body {
+  flex: 1;
+  background: var(--bg-soft);
+  border: 1px solid var(--border);
+  border-radius: 10px;
+  padding: 0.7rem 0.9rem 0.8rem;
+  min-width: 0;
+}
+.bubble .bubble-head {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  flex-wrap: wrap;
+  margin-bottom: 0.35rem;
+}
+.bubble .author-name {
+  font-family: var(--display);
+  font-weight: 700;
+  font-size: 0.92rem;
+  color: var(--slate);
+}
+.bubble .bubble-body p {
+  font-size: 0.92rem;
+  color: var(--fg);
+  margin: 0;
+  line-height: 1.55;
+}
+.bubble .bubble-body p + p { margin-top: 0.4rem; }
+.bubble .bubble-body code {
+  font-family: var(--mono);
+  font-size: 0.82rem;
+  background: var(--bg);
+  border: 1px solid var(--border);
+  padding: 0.05rem 0.3rem;
+  border-radius: 4px;
+}
+.chip {
+  display: inline-flex;
+  align-items: center;
+  font-family: var(--mono);
+  font-size: 0.7rem;
+  padding: 0.1rem 0.45rem;
+  border-radius: 999px;
+  background: var(--bg);
+  color: var(--gray-700);
+  border: 1px solid var(--border);
+  letter-spacing: 0.04em;
+}
+.chip.blocking {
+  background: var(--danger-soft);
+  color: var(--danger-dark);
+  border-color: var(--danger);
+  font-weight: 700;
+  text-transform: uppercase;
+}
+.checklist {
+  margin: 0.6rem 0 0;
+  padding: 0;
+  list-style: none;
+  display: flex;
+  flex-direction: column;
+  gap: 0.3rem;
+}
+.checklist label {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.45rem;
+  font-size: 0.9rem;
+  color: var(--fg);
+  cursor: pointer;
+}
+.checklist input[type="checkbox"] {
+  width: 14px;
+  height: 14px;
+  accent-color: var(--olive);
+  margin: 0;
+  cursor: pointer;
+}
+
+/* 12-11. コードベース構造カード（.diagram-panel / .repo-line）
+   フロー図 / ファイル一覧 / 呼び出し関係を太枠カードで囲み、内部に .repo-line（path | range | snippet の 3 カラム grid）を並べる。
+   .hot バリアントで注目行を強調する。 */
+.diagram-panel {
+  border: 1.5px solid var(--border);
+  border-radius: 12px;
+  background: var(--bg-soft);
+  padding: 1rem 1.1rem 1.1rem;
+  margin: 1rem 0 1.4rem;
+  overflow-x: auto;
+}
+.diagram-panel > h3 {
+  font-family: var(--display);
+  font-weight: 700;
+  font-size: 1.05rem;
+  color: var(--slate);
+  margin: 0 0 0.6rem;
+}
+.diagram-panel .flow {
+  display: flex;
+  flex-direction: column;
+  gap: 0.35rem;
+}
+.repo-line {
+  display: grid;
+  grid-template-columns: minmax(180px, 1.4fr) auto 2fr;
+  gap: 0.75rem;
+  align-items: center;
+  padding: 0.4rem 0.6rem;
+  background: var(--bg);
+  border: 1px solid var(--border);
+  border-radius: 6px;
+  font-size: 0.86rem;
+  line-height: 1.45;
+}
+.repo-line .path {
+  font-family: var(--mono);
+  font-size: 0.82rem;
+  color: var(--clay);
+  word-break: break-all;
+}
+.repo-line .range {
+  font-family: var(--mono);
+  font-size: 0.74rem;
+  color: var(--muted);
+  letter-spacing: 0.03em;
+  white-space: nowrap;
+}
+.repo-line .snippet {
+  font-size: 0.88rem;
+  color: var(--fg);
+  min-width: 0;
+}
+.repo-line.hot {
+  background: var(--warn-soft);
+  border-color: var(--warn);
+}
+.repo-line.hot .path { color: var(--warn-dark); }
+.repo-line.hot .range { color: var(--warn-dark); }
+
+/* 12-12. ステータスバッジ（.badge 5 バリアント）
+   .tag が「インライン本文中のラベル」用なのに対し、.badge は「独立した状態・カテゴリ表示」用。
+   pill 形で 5 種の意味色を持つ。`<span class="badge accent">` のようにバリアント class を必須にする。 */
+.badge {
+  display: inline-flex;
+  align-items: center;
+  font-family: var(--mono);
+  font-size: 0.72rem;
+  padding: 0.15rem 0.6rem;
+  border-radius: 6px;
+  border: 1px solid transparent;
+  letter-spacing: 0.04em;
+  font-weight: 600;
+  line-height: 1.4;
+}
+.badge.accent {
+  background: var(--oat);
+  color: var(--clay-dark);
+  border-color: var(--clay-dark);
+}
+.badge.neutral {
+  background: var(--bg-soft);
+  color: var(--gray-700);
+  border-color: var(--border);
+}
+.badge.success {
+  background: var(--ok-soft);
+  color: var(--ok-dark);
+  border-color: var(--ok);
+}
+.badge.warning {
+  background: var(--warn-soft);
+  color: var(--warn-dark);
+  border-color: var(--warn);
+}
+.badge.danger {
+  background: var(--danger-soft);
+  color: var(--danger-dark);
+  border-color: var(--danger);
+}
+
+/* 12-13. メトリクスタイル（.tile / .tile-grid）
+   .metric-grid (§12-7) より詳細なステータス報告向け。number に加えて delta（増減）と spark（sparkline SVG）を持つ。
+   .delta.up / .delta.down で増減方向を色分けする。 */
+.tile-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+  gap: 0.9rem;
+  margin: 1.2rem 0 1.6rem;
+}
+.tile {
+  background: var(--bg-soft);
+  border: 1.5px solid var(--border);
+  border-radius: 10px;
+  padding: 0.85rem 1rem 1rem;
+  display: flex;
+  flex-direction: column;
+  gap: 0.25rem;
+}
+.tile .label {
+  font-family: var(--mono);
+  font-size: 0.72rem;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: var(--muted);
+  margin: 0;
+}
+.tile .number {
+  font-family: var(--display);
+  font-weight: 700;
+  font-size: 2.5rem;
+  line-height: 1.05;
+  color: var(--slate);
+  letter-spacing: 0.01em;
+  margin: 0.15rem 0 0.1rem;
+}
+.tile .delta {
+  font-family: var(--mono);
+  font-size: 0.78rem;
+  margin: 0;
+  letter-spacing: 0.03em;
+  color: var(--muted);
+}
+.tile .delta.up { color: var(--ok-dark); }
+.tile .delta.down { color: var(--danger-dark); }
+.tile .spark {
+  margin-top: 0.4rem;
+  height: 30px;
+  display: block;
+}
+.tile .spark svg {
+  width: 100%;
+  height: 100%;
+  display: block;
+}
+
+/* 12-14. 意思決定カード（.decision-deck / .decision-card）
+   weekly status / planning レビュー / retro で、決定事項を「カード単位」で並べて見せる。
+   eyebrow（日付・カテゴリ）+ タイトル + コンテキスト + Q/A + byline の 5 要素構成。
+   .lean バリアントは短縮版（context 省略、padding 縮小）。 */
+.decision-deck {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+  gap: 1rem;
+  margin: 1.2rem 0 1.8rem;
+}
+.decision-card {
+  background: var(--bg);
+  border: 1.5px solid var(--border);
+  border-radius: 12px;
+  padding: 1.4rem 1.4rem 1.2rem;
+  display: flex;
+  flex-direction: column;
+  gap: 0.45rem;
+}
+.decision-card .eyebrow {
+  font-family: var(--mono);
+  font-size: 0.72rem;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: var(--muted);
+  margin: 0;
+}
+.decision-card h3 {
+  font-family: var(--display);
+  font-weight: 700;
+  font-size: 1.15rem;
+  color: var(--slate);
+  margin: 0;
+  border-bottom: none;
+  padding-bottom: 0;
+}
+.decision-card .decision-context {
+  font-family: var(--sans);
+  font-style: italic;
+  font-size: 0.88rem;
+  color: var(--muted);
+  margin: 0;
+  line-height: 1.55;
+}
+.decision-card .decision-q {
+  font-size: 0.95rem;
+  color: var(--clay);
+  margin: 0.2rem 0 0;
+  line-height: 1.5;
+}
+.decision-card .decision-q strong {
+  color: var(--clay);
+  font-weight: 700;
+}
+.decision-card p {
+  margin: 0;
+  font-size: 0.95rem;
+  line-height: 1.55;
+}
+.decision-card .byline {
+  font-family: var(--mono);
+  font-size: 0.75rem;
+  color: var(--gray-500);
+  margin: 0.4rem 0 0;
+  text-align: right;
+}
+.decision-card.lean {
+  padding: 1rem 1.1rem 0.9rem;
+  gap: 0.35rem;
+}
+.decision-card.lean .decision-context { display: none; }
+
+/* 12-15. トリアージボード（.board / .board-toolbar / .board-lane）
+   Issue/PR をカンバン形式で複数レーンに配置。.board-toolbar で全体フィルタを、各 .board-lane で状態別グルーピングを表現する。
+   .filter-active は選択中フィルタの強調状態（var(--clay) + var(--ivory)）。 */
+.board-toolbar {
+  display: flex;
+  align-items: center;
+  gap: 0.6rem;
+  flex-wrap: wrap;
+  padding: 0.7rem 0 0.6rem;
+  border-bottom: 1.5px solid var(--border);
+  margin: 1rem 0 0.9rem;
+}
+.board-btn {
+  font-family: var(--mono);
+  font-size: 0.78rem;
+  color: var(--fg);
+  background: var(--bg-soft);
+  border: 1.5px solid var(--border);
+  border-radius: 999px;
+  padding: 0.25rem 0.75rem;
+  cursor: pointer;
+  letter-spacing: 0.02em;
+}
+.board-btn:hover { border-color: var(--clay); }
+.board-btn.filter-active {
+  background: var(--clay-dark);
+  color: var(--ivory);
+  border-color: var(--clay-dark);
+}
+.board-hintline {
+  font-family: var(--mono);
+  font-size: 0.72rem;
+  color: var(--muted);
+  margin-left: auto;
+}
+.board-hintline::before {
+  content: "›";
+  color: var(--clay);
+  margin-right: 0.35rem;
+}
+.board {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 1rem;
+  margin: 0.6rem 0 1.6rem;
+  align-items: start;
+}
+.board-lane {
+  background: var(--bg-soft);
+  border: 1.5px solid var(--border);
+  border-radius: 12px;
+  padding: 0.7rem 0.7rem 0.8rem;
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+}
+.board-lane-head {
+  display: flex;
+  align-items: baseline;
+  gap: 0.5rem;
+  padding: 0.1rem 0.2rem 0.5rem;
+  border-bottom: 1.5px solid var(--border);
+}
+.board-lane-head h3 {
+  font-family: var(--display);
+  font-weight: 600;
+  font-size: 0.95rem;
+  color: var(--slate);
+  margin: 0;
+  border-bottom: none;
+  padding-bottom: 0;
+}
+.board-lane-head .count {
+  margin-left: auto;
+  font-family: var(--mono);
+  font-size: 0.72rem;
+  color: var(--muted);
+  background: var(--bg);
+  border: 1.5px solid var(--border);
+  border-radius: 999px;
+  padding: 0.05rem 0.5rem;
+  min-width: 1.7rem;
+  text-align: center;
+}
+.board-item {
+  background: var(--bg);
+  border: 1.5px solid var(--border);
+  border-radius: 8px;
+  padding: 0.55rem 0.65rem;
+  display: flex;
+  flex-direction: column;
+  gap: 0.2rem;
+}
+.board-item:hover { border-color: var(--clay); }
+.board-item-title {
+  font-family: var(--sans);
+  font-size: 0.85rem;
+  color: var(--fg-strong);
+  margin: 0;
+  line-height: 1.35;
+}
+.board-item-meta {
+  font-family: var(--mono);
+  font-size: 0.7rem;
+  color: var(--muted);
+  margin: 0;
+  letter-spacing: 0.02em;
+}
+
+/* 12-16. アートボード（.artboards / .artboard / .es-{a,b,c,d}）
+   設計案を並列フレームで展示。1 枚あたり「フレーム + ラベル + 根拠」の 3 段構成。
+   .es-a / .es-b / .es-c / .es-d は意味付け色のバリアント（フレーム border-top を変える）。 */
+.artboards {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+  gap: 1.2rem;
+  margin: 1.2rem 0 1.8rem;
+}
+.artboard {
+  background: var(--bg);
+  border: 1.5px solid var(--border);
+  border-radius: 12px;
+  padding: 1rem 1.1rem 1.1rem;
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+}
+.artboard-frame {
+  aspect-ratio: 16 / 10;
+  background: var(--bg-soft);
+  border: 1.5px solid var(--border);
+  border-radius: 8px;
+  padding: 0.8rem;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  overflow: hidden;
+}
+.artboard-frame svg {
+  max-width: 100%;
+  max-height: 100%;
+  display: block;
+}
+.artboard-label {
+  font-family: var(--display);
+  font-weight: 700;
+  font-size: 0.95rem;
+  color: var(--slate);
+  margin: 0.4rem 0 0;
+}
+.artboard-rationale {
+  font-family: var(--sans);
+  font-size: 0.85rem;
+  color: var(--muted);
+  margin: 0;
+  line-height: 1.5;
+}
+.artboard.es-a .artboard-frame { border-top: 3px solid var(--clay); }
+.artboard.es-b .artboard-frame { border-top: 3px solid var(--olive); }
+.artboard.es-c .artboard-frame { border-top: 3px solid var(--purple); }
+.artboard.es-d .artboard-frame { border-top: 3px solid var(--accent); }
+
+/* 12-17. フィーチャーフラグ表示（.flag-list / .flag-info / .flag-key）
+   設定値・フィーチャーフラグ・config 項目を「key + value + description」の 3 要素で並べる。
+   .flag-key は inline code 風（mono + var(--clay)）、.flag-value は値の型に応じて色分け。 */
+.flag-list {
+  display: flex;
+  flex-direction: column;
+  gap: 0.6rem;
+  margin: 1rem 0 1.6rem;
+}
+.flag-info {
+  background: var(--bg-soft);
+  border: 1.5px solid var(--border);
+  border-radius: 10px;
+  padding: 0.7rem 0.95rem 0.75rem;
+  display: flex;
+  flex-direction: column;
+  gap: 0.3rem;
+}
+.flag-row {
+  display: flex;
+  align-items: baseline;
+  gap: 0.6rem;
+  flex-wrap: wrap;
+}
+.flag-key {
+  font-family: var(--mono);
+  font-size: 0.82rem;
+  color: var(--clay-dark);
+  background: var(--bg);
+  border: 1px solid var(--border);
+  border-radius: 6px;
+  padding: 0.1rem 0.45rem;
+}
+.flag-value {
+  font-family: var(--mono);
+  font-size: 0.82rem;
+  color: var(--ok-dark);
+  margin-left: auto;
+  letter-spacing: 0.02em;
+}
+.flag-desc {
+  font-family: var(--sans);
+  font-size: 0.82rem;
+  color: var(--muted);
+  margin: 0;
+  line-height: 1.5;
+}
+
+/* 12-18. カード見出し階層（.card.variant .card-titles）
+   .card-grid .card の見出し部を「タイトル + サブタイトル + メタ」の 3 階層で強化したバリアント。
+   .card.variant を付けた場合のみ階層見出しが有効になり、通常の .card には影響しない。 */
+.card-grid .card.variant .card-titles {
+  display: flex;
+  flex-direction: column;
+  gap: 0.15rem;
+  border-bottom: 1.5px solid var(--border);
+  padding-bottom: 0.55rem;
+  margin-bottom: 0.7rem;
+}
+.card-grid .card.variant .card-title {
+  font-family: var(--display);
+  font-weight: 600;
+  font-size: 1rem;
+  color: var(--slate);
+  margin: 0;
+  line-height: 1.3;
+}
+.card-grid .card.variant .card-sub {
+  font-family: var(--sans);
+  font-style: italic;
+  font-size: 0.82rem;
+  color: var(--muted);
+  margin: 0;
+}
+.card-grid .card.variant .card-head-meta {
+  font-family: var(--mono);
+  font-size: 0.7rem;
+  color: var(--gray-500);
+  letter-spacing: 0.03em;
+  margin: 0.1rem 0 0;
+}
+.card-grid .card.variant .card-body {
+  font-size: 0.92rem;
+}
+
+/* ===== 13. ユーティリティ =====
+   インライン style の代わりに使う
+   最小ユーティリティ／コンポーネント。色はテーマ変数のみ（HEX 直書きしない）。 */
+
+/* 13-1. テキスト中央寄せ（.diagram 内のキャプション eyebrow 等） */
+.text-center { text-align: center; }
+
+/* 13-2. 段落の上余白（hero .lead の補足行など） */
+.mt-1 { margin-top: 1rem; }
+
+/* 13-3. スクリーンショット画像枠（レビュービューの確認用キャプチャ）
+   幅いっぱい・薄い枠・角丸。枠色はテーマ変数で light/dark 追従する。 */
+.screenshot {
+  max-width: 100%;
+  border: 1px solid var(--border);
+  border-radius: 8px;
+}

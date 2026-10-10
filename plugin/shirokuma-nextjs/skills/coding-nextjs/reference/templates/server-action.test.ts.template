@@ -1,0 +1,121 @@
+/**
+ * {{Name}} server action のユニットテスト。
+ *
+ * TDD: 実装より先にこのテストを書き、red を確認してから実装する
+ * （刻み方はコア implement-flow の reference/docs/tdd.md）。
+ * 各テストに @testdoc 必須（`shirokuma-flow lint areas tests` の検査対象）。
+ */
+// テンプレート変数: {{name}}=小文字単数形 / {{Name}}=PascalCase 単数形
+// - Vitest の API で記述する（推奨スタックのテストランナー）。
+// - モックは外部依存（next/*・認証層・データ層）のみ。action 本体はモックしない。
+
+import { beforeEach, describe, expect, it, vi, type Mock } from "vitest"
+import { create{{Name}}, delete{{Name}} } from "@/lib/actions/{{name}}s"
+
+// --- Next.js ランタイムのモック -------------------------------------------
+vi.mock("next/cache", () => ({
+  revalidatePath: vi.fn(),
+}))
+
+// redirect は内部で throw する仕様なので、モックでも throw させる（重要）。
+vi.mock("next/navigation", () => ({
+  redirect: vi.fn((url: string) => {
+    throw new Error(`NEXT_REDIRECT:${url}`)
+  }),
+}))
+
+// --- プロジェクト層のモック（実装に合わせてパス・形を置き換える） ----------
+vi.mock("@/lib/auth", () => ({
+  requireUser: vi.fn(),
+}))
+vi.mock("@/lib/db", () => ({
+  db: {
+    {{name}}s: {
+      list: vi.fn(),
+      find: vi.fn(),
+      create: vi.fn(),
+      update: vi.fn(),
+      remove: vi.fn(),
+    },
+  },
+}))
+
+import { revalidatePath } from "next/cache"
+import { requireUser } from "@/lib/auth"
+import { db } from "@/lib/db"
+
+const mockRequireUser = requireUser as Mock
+
+function validFormData(): FormData {
+  const fd = new FormData()
+  fd.set("name", "Test {{Name}}")
+  return fd
+}
+
+beforeEach(() => {
+  vi.clearAllMocks()
+  mockRequireUser.mockResolvedValue({ id: "user-1" })
+})
+
+describe("create{{Name}}", () => {
+  /**
+   * @testdoc 有効な入力で {{name}} を作成し revalidate する
+   */
+  it("creates a {{name}} with valid input", async () => {
+    ;(db.{{name}}s.create as Mock).mockResolvedValue({ id: "{{name}}-1" })
+
+    const result = await create{{Name}}(validFormData())
+
+    expect(result).toEqual({ success: true, data: { id: "{{name}}-1" } })
+    expect(revalidatePath).toHaveBeenCalledWith("/{{name}}s")
+  })
+
+  /**
+   * @testdoc 未認証なら UNAUTHORIZED を返し DB に触れない
+   */
+  it("returns UNAUTHORIZED when not authenticated", async () => {
+    mockRequireUser.mockResolvedValue(null)
+
+    const result = await create{{Name}}(validFormData())
+
+    expect(result).toMatchObject({ success: false, code: "UNAUTHORIZED" })
+    expect(db.{{name}}s.create).not.toHaveBeenCalled()
+  })
+
+  /**
+   * @testdoc 不正な入力なら VALIDATION_FAILED を返す
+   */
+  it("returns VALIDATION_FAILED for invalid input", async () => {
+    const fd = new FormData()
+    fd.set("name", "") // min(1) 違反
+
+    const result = await create{{Name}}(fd)
+
+    expect(result).toMatchObject({ success: false, code: "VALIDATION_FAILED" })
+    expect(db.{{name}}s.create).not.toHaveBeenCalled()
+  })
+})
+
+describe("delete{{Name}}", () => {
+  /**
+   * @testdoc 他人のリソースは FORBIDDEN で削除されない（所有権チェック）
+   */
+  it("returns FORBIDDEN for other user's resource", async () => {
+    ;(db.{{name}}s.find as Mock).mockResolvedValue({ id: "{{name}}-1", ownerId: "other" })
+
+    const result = await delete{{Name}}("{{name}}-1")
+
+    expect(result).toMatchObject({ success: false, code: "FORBIDDEN" })
+    expect(db.{{name}}s.remove).not.toHaveBeenCalled()
+  })
+
+  /**
+   * @testdoc 成功時は revalidate して一覧へ redirect する
+   */
+  it("redirects to list on success", async () => {
+    ;(db.{{name}}s.find as Mock).mockResolvedValue({ id: "{{name}}-1", ownerId: "user-1" })
+
+    await expect(delete{{Name}}("{{name}}-1")).rejects.toThrow("NEXT_REDIRECT:/{{name}}s")
+    expect(revalidatePath).toHaveBeenCalledWith("/{{name}}s")
+  })
+})

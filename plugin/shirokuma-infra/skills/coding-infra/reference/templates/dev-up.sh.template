@@ -1,0 +1,64 @@
+#!/bin/sh
+# dev 環境起動スクリプトテンプレート（起動 + 全 healthcheck 待ち + 接続情報表示）
+# 使用方法: scripts/dev-up.sh として展開し chmod +x する。
+#
+#   # 引数なし = docker-compose.yml 単独（db のみ構成でも動く・後方互換）
+#   ./scripts/dev-up.sh
+#
+#   # 合成構成 = -f 文字列を 1 引数で渡す（AWS エミュレーション断片を足すとき）
+#   ./scripts/dev-up.sh "-f docker-compose.yml -f compose.localstack.yml"
+#   ./scripts/dev-up.sh "-f docker-compose.yml -f compose.localstack.yml -f compose.mailpit.yml"
+#
+# 置換変数:
+#   {project}  - プロジェクト名（接続情報表示に使用）
+#   {db-name}  - データベース名
+#   {db-user}  - DB ユーザー名
+#
+# 動作: compose 引数で起動したサービスを `docker compose ps` で動的に列挙し、
+#   healthcheck を持つサービスだけ全 healthy になるまで待つ（固定サービス名に依存しない）。
+set -e
+
+# 引数（-f ... 文字列）。省略時は docker-compose.yml 単独。
+COMPOSE_ARGS="${1:--f docker-compose.yml}"
+
+# shellcheck disable=SC2086  # COMPOSE_ARGS は複数トークン（-f a -f b）として展開させる
+echo "Starting {project} services..."
+docker compose $COMPOSE_ARGS up -d
+
+# 起動したサービス名を列挙
+services="$(docker compose $COMPOSE_ARGS ps --services)"
+
+# healthcheck を持つサービスだけ全 healthy になるまで待つ（2 秒 x 60 回 = 最大 120 秒）
+WAIT_RETRIES=60
+for svc in $services; do
+  cid="$(docker compose $COMPOSE_ARGS ps -q "$svc")"
+  [ -n "$cid" ] || continue
+  # healthcheck 未定義のサービスは .State.Health が無い → スキップ
+  has_health="$(docker inspect --format '{{if .State.Health}}yes{{end}}' "$cid" 2>/dev/null || echo "")"
+  [ "$has_health" = "yes" ] || continue
+
+  printf "Waiting for %s to become healthy" "$svc"
+  status="starting"
+  i=0
+  while [ $i -lt $WAIT_RETRIES ]; do
+    status="$(docker inspect --format '{{.State.Health.Status}}' "$cid" 2>/dev/null || echo starting)"
+    [ "$status" = "healthy" ] && break
+    printf "."
+    sleep 2
+    i=$((i + 1))
+  done
+  echo ""
+
+  if [ "$status" != "healthy" ]; then
+    echo "ERROR: $svc did not become healthy. Inspect logs:" >&2
+    echo "  docker compose $COMPOSE_ARGS logs $svc" >&2
+    exit 1
+  fi
+done
+
+docker compose $COMPOSE_ARGS ps
+
+echo ""
+echo "All services are ready. DB connection info:"
+echo "  host=localhost port=${DB_PORT:-5432} db={db-name} user={db-user}"
+echo "  DATABASE_URL=postgresql://{db-user}:<DB_PASSWORD>@localhost:${DB_PORT:-5432}/{db-name}"

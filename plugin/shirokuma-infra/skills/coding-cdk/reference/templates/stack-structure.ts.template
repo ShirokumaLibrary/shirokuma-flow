@@ -1,0 +1,302 @@
+// stack-structure.ts.template
+// Multi-stack CDK application template: Network / Stateful / Stateless
+//
+// 経路: 「汎用コンテナ経路」（cdk-nextjs を使わず ECS Fargate + ALB + RDS で組む構成）の出発点。
+// フレームワーク非依存で、**Next.js アプリでも cdk-nextjs を使わないと決めたならこれが出発点**。
+// cdk-nextjs をデプロイ先にする場合（コンテナフレーバー `Nextjs*Containers` を選ぶ場合も含む）は
+// `web-rds-split-stack.ts.template` を使う。語の定義と互換契約の帰結は designing-aws の
+// `reference/patterns/nextjs-deploy.md`「2 つのコンテナ経路」節が正本。
+//
+// Replace {ProjectName} with your project name (PascalCase)
+// Replace {project-name} with your project name (kebab-case)
+
+import * as cdk from 'aws-cdk-lib';
+import * as ec2 from 'aws-cdk-lib/aws-ec2';
+import * as rds from 'aws-cdk-lib/aws-rds';
+import * as ecs from 'aws-cdk-lib/aws-ecs';
+import * as elbv2 from 'aws-cdk-lib/aws-elasticloadbalancingv2';
+import * as ecr from 'aws-cdk-lib/aws-ecr';
+import { Construct } from 'constructs';
+
+// ============================================================
+// Shared types
+// ============================================================
+
+type Environment = 'dev' | 'staging' | 'prod';
+
+interface BaseStackProps extends cdk.StackProps {
+  readonly environment: Environment;
+}
+
+// ============================================================
+// Stack 1: NetworkStack
+// Responsibility: VPC, subnets, security groups, NAT gateway
+// ============================================================
+
+export interface NetworkStackProps extends BaseStackProps {
+  readonly vpcCidr?: string;
+  readonly maxAzs?: number;
+}
+
+export class NetworkStack extends cdk.Stack {
+  public readonly vpc: ec2.Vpc;
+  public readonly appSecurityGroup: ec2.SecurityGroup;
+  public readonly dbSecurityGroup: ec2.SecurityGroup;
+
+  constructor(scope: Construct, id: string, props: NetworkStackProps) {
+    super(scope, id, props);
+
+    const vpcCidr = props.vpcCidr ?? '10.0.0.0/16';
+    const maxAzs = props.maxAzs ?? (props.environment === 'prod' ? 3 : 2);
+
+    // VPC with public, private, and isolated subnets
+    this.vpc = new ec2.Vpc(this, 'Vpc', {
+      ipAddresses: ec2.IpAddresses.cidr(vpcCidr),
+      maxAzs,
+      subnetConfiguration: [
+        {
+          cidrMask: 24,
+          name: 'Public',
+          subnetType: ec2.SubnetType.PUBLIC,
+        },
+        {
+          cidrMask: 24,
+          name: 'Private',
+          subnetType: ec2.SubnetType.PRIVATE_WITH_EGRESS,
+        },
+        {
+          cidrMask: 28,
+          name: 'Isolated',
+          subnetType: ec2.SubnetType.PRIVATE_ISOLATED,
+        },
+      ],
+      // Reduce costs in non-prod by using fewer NAT gateways
+      natGateways: props.environment === 'prod' ? maxAzs : 1,
+    });
+
+    // Security group for application tier (ECS, Lambda, etc.)
+    this.appSecurityGroup = new ec2.SecurityGroup(this, 'AppSg', {
+      vpc: this.vpc,
+      description: 'Security group for application tier',
+      allowAllOutbound: true,
+    });
+    this.appSecurityGroup.addIngressRule(
+      ec2.Peer.anyIpv4(),
+      ec2.Port.tcp(443),
+      'Allow HTTPS from internet',
+    );
+
+    // Security group for database tier
+    this.dbSecurityGroup = new ec2.SecurityGroup(this, 'DbSg', {
+      vpc: this.vpc,
+      description: 'Security group for database tier',
+      allowAllOutbound: false,
+    });
+    this.dbSecurityGroup.addIngressRule(
+      this.appSecurityGroup,
+      ec2.Port.tcp(5432),
+      'Allow PostgreSQL from app tier',
+    );
+
+    // Outputs for cross-stack reference
+    new cdk.CfnOutput(this, 'VpcId', {
+      exportName: `{project-name}-${props.environment}-vpc-id`,
+      value: this.vpc.vpcId,
+    });
+  }
+}
+
+// ============================================================
+// Stack 2: StatefulStack (Database tier)
+// Responsibility: RDS, ElastiCache, S3 (stateful resources)
+// ============================================================
+
+export interface StatefulStackProps extends BaseStackProps {
+  readonly vpc: ec2.IVpc;
+  readonly dbSecurityGroup: ec2.ISecurityGroup;
+}
+
+export class StatefulStack extends cdk.Stack {
+  public readonly dbCluster: rds.DatabaseCluster;
+  public readonly dbSecret: rds.DatabaseSecret;
+
+  constructor(scope: Construct, id: string, props: StatefulStackProps) {
+    super(scope, id, props);
+
+    const isProd = props.environment === 'prod';
+
+    // RDS credentials managed by Secrets Manager
+    this.dbSecret = new rds.DatabaseSecret(this, 'DbSecret', {
+      username: 'admin',
+      secretName: `/{project-name}/${props.environment}/db-credentials`,
+    });
+
+    // Aurora Serverless v2 for dev/staging, provisioned for prod
+    this.dbCluster = new rds.DatabaseCluster(this, 'DbCluster', {
+      engine: rds.DatabaseClusterEngine.auroraPostgres({
+        // Aurora 18.3 GA（2026-06-11）。CDK に VER_18_3 enum 追加後は差し替え可。
+        version: rds.AuroraPostgresEngineVersion.of('18.3', '18'),
+      }),
+      credentials: rds.Credentials.fromSecret(this.dbSecret),
+      vpc: props.vpc,
+      vpcSubnets: { subnetType: ec2.SubnetType.PRIVATE_ISOLATED },
+      securityGroups: [props.dbSecurityGroup],
+      deletionProtection: isProd,
+      removalPolicy: isProd ? cdk.RemovalPolicy.RETAIN : cdk.RemovalPolicy.DESTROY,
+      serverlessV2MinCapacity: 0.5,
+      serverlessV2MaxCapacity: isProd ? 16 : 4,
+      writer: rds.ClusterInstance.serverlessV2('Writer'),
+      readers: isProd
+        ? [rds.ClusterInstance.serverlessV2('Reader', { scaleWithWriter: true })]
+        : [],
+      backup: {
+        retention: isProd ? cdk.Duration.days(35) : cdk.Duration.days(7),
+      },
+    });
+  }
+}
+
+// ============================================================
+// Stack 3: StatelessStack (Application tier)
+// Responsibility: ECS, Lambda, API Gateway (stateless compute)
+// ============================================================
+
+export interface StatelessStackProps extends BaseStackProps {
+  readonly vpc: ec2.IVpc;
+  readonly appSecurityGroup: ec2.ISecurityGroup;
+  readonly dbCluster: rds.IDatabaseCluster;
+  readonly dbSecret: rds.ISecret;
+  readonly ecrRepository?: ecr.IRepository;
+  readonly desiredCount?: number;
+}
+
+export class StatelessStack extends cdk.Stack {
+  public readonly loadBalancer: elbv2.ApplicationLoadBalancer;
+
+  constructor(scope: Construct, id: string, props: StatelessStackProps) {
+    super(scope, id, props);
+
+    const isProd = props.environment === 'prod';
+
+    // ECS Cluster
+    const cluster = new ecs.Cluster(this, 'Cluster', {
+      vpc: props.vpc,
+      containerInsights: isProd,
+    });
+
+    // Fargate Task Definition
+    const taskDefinition = new ecs.FargateTaskDefinition(this, 'TaskDef', {
+      memoryLimitMiB: isProd ? 2048 : 512,
+      cpu: isProd ? 1024 : 256,
+    });
+
+    // Grant DB access to task role
+    props.dbSecret.grantRead(taskDefinition.taskRole);
+
+    const container = taskDefinition.addContainer('App', {
+      image: props.ecrRepository
+        ? ecs.ContainerImage.fromEcrRepository(props.ecrRepository, 'latest')
+        : ecs.ContainerImage.fromRegistry('public.ecr.aws/nginx/nginx:latest'),
+      environment: {
+        NODE_ENV: props.environment,
+        DB_HOST: props.dbCluster.clusterEndpoint.hostname,
+      },
+      secrets: {
+        DB_SECRET: ecs.Secret.fromSecretsManager(props.dbSecret),
+      },
+      logging: ecs.LogDrivers.awsLogs({
+        streamPrefix: '{project-name}',
+      }),
+    });
+
+    container.addPortMappings({ containerPort: 3000 });
+
+    // ALB
+    this.loadBalancer = new elbv2.ApplicationLoadBalancer(this, 'Alb', {
+      vpc: props.vpc,
+      internetFacing: true,
+      securityGroup: props.appSecurityGroup,
+    });
+
+    const listener = this.loadBalancer.addListener('HttpsListener', {
+      port: 443,
+      // Note: add certificate here for production
+      // certificates: [cert],
+      defaultAction: elbv2.ListenerAction.fixedResponse(503),
+    });
+
+    // Fargate Service
+    const service = new ecs.FargateService(this, 'Service', {
+      cluster,
+      taskDefinition,
+      desiredCount: props.desiredCount ?? (isProd ? 2 : 1),
+      vpcSubnets: { subnetType: ec2.SubnetType.PRIVATE_WITH_EGRESS },
+      securityGroups: [props.appSecurityGroup],
+      enableExecuteCommand: !isProd, // ECS Exec for debugging in non-prod
+    });
+
+    listener.addTargets('AppTarget', {
+      port: 3000,
+      protocol: elbv2.ApplicationProtocol.HTTP,
+      targets: [service],
+      healthCheck: {
+        path: '/health',
+        healthyHttpCodes: '200',
+        interval: cdk.Duration.seconds(30),
+      },
+    });
+
+    // Auto-scaling
+    const scaling = service.autoScaleTaskCount({
+      minCapacity: isProd ? 2 : 1,
+      maxCapacity: isProd ? 20 : 4,
+    });
+
+    scaling.scaleOnCpuUtilization('CpuScaling', {
+      targetUtilizationPercent: 70,
+    });
+
+    scaling.scaleOnMemoryUtilization('MemoryScaling', {
+      targetUtilizationPercent: 80,
+    });
+
+    // Outputs
+    new cdk.CfnOutput(this, 'LoadBalancerDns', {
+      value: this.loadBalancer.loadBalancerDnsName,
+    });
+  }
+}
+
+// ============================================================
+// bin/app.ts entry point
+// ============================================================
+//
+// const app = new cdk.App();
+// const env = (app.node.tryGetContext('env') as string) ?? 'dev';
+// const awsEnv = {
+//   account: process.env.CDK_DEFAULT_ACCOUNT,
+//   region: process.env.CDK_DEFAULT_REGION, // 既定のリージョンを持たない（CDK の解決に任せる）
+// };
+//
+// const networkStack = new NetworkStack(app, `{ProjectName}-Network-${env}`, {
+//   env: awsEnv,
+//   environment: env as 'dev' | 'staging' | 'prod',
+// });
+//
+// const statefulStack = new StatefulStack(app, `{ProjectName}-Stateful-${env}`, {
+//   env: awsEnv,
+//   environment: env as 'dev' | 'staging' | 'prod',
+//   vpc: networkStack.vpc,
+//   dbSecurityGroup: networkStack.dbSecurityGroup,
+// });
+// statefulStack.addDependency(networkStack);
+//
+// const statelessStack = new StatelessStack(app, `{ProjectName}-Stateless-${env}`, {
+//   env: awsEnv,
+//   environment: env as 'dev' | 'staging' | 'prod',
+//   vpc: networkStack.vpc,
+//   appSecurityGroup: networkStack.appSecurityGroup,
+//   dbCluster: statefulStack.dbCluster,
+//   dbSecret: statefulStack.dbSecret,
+// });
+// statelessStack.addDependency(statefulStack);

@@ -1,0 +1,30 @@
+{
+  "name": "shirokuma-flow",
+  "version": "0.16.0",
+  "owner": {
+    "name": "ShirokumaLibrary"
+  },
+  "homepage": "https://github.com/ShirokumaLibrary/shirokuma-flow",
+  "plugins": [
+    {
+      "name": "shirokuma-flow",
+      "source": "./plugin/shirokuma-flow",
+      "description": "AI と人が協業する開発ワークフロー — orchestrator skill（*-flow）と worker。flow CLI（@shirokuma-library/flow）の状態機械を駆動する。"
+    },
+    {
+      "name": "shirokuma-nextjs",
+      "source": "./plugin/shirokuma-nextjs",
+      "description": "Next.js（App Router）支援 — designing/coding/reviewing-nextjs スキル。コア shirokuma-flow の opt-in 拡張。CLI 拡張 @shirokuma-library/nextjs と対。"
+    },
+    {
+      "name": "shirokuma-infra",
+      "source": "./plugin/shirokuma-infra",
+      "description": "ローカル開発インフラ（docker-compose）/ AWS / CDK / CI-CD 運用スキル（designing/coding/reviewing × 4 領域とセットアップ）。opt-in フレームワーク拡張。"
+    },
+    {
+      "name": "shirokuma-hooks",
+      "source": "./plugin/shirokuma-hooks",
+      "description": "安全フック — 破壊的 git/GitHub 操作のブロック・ワークフロー連鎖の途中停止防止（flow hooks CLI と対）。高影響のため opt-in（有効化は利用者判断）。"
+    }
+  ]
+}

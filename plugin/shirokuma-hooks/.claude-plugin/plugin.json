@@ -1,0 +1,17 @@
+{
+  "name": "shirokuma-hooks",
+  "description": "Safety hooks for destructive git/GitHub operations",
+  "version": "0.16.0",
+  "author": {
+    "name": "ShirokumaLibrary"
+  },
+  "homepage": "https://github.com/ShirokumaLibrary/shirokuma-flow",
+  "repository": "https://github.com/ShirokumaLibrary/shirokuma-flow",
+  "keywords": [
+    "claude-code",
+    "hooks",
+    "safety",
+    "git"
+  ],
+  "license": "Apache-2.0"
+}

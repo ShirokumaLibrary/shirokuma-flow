@@ -1,0 +1,18 @@
+{
+  "name": "shirokuma-flow",
+  "description": "AI と人が協業する開発ワークフロー — フェーズ orchestrator（*-flow）と worker。flow CLI の状態機械を駆動する。",
+  "version": "0.16.0",
+  "author": {
+    "name": "ShirokumaLibrary"
+  },
+  "homepage": "https://github.com/ShirokumaLibrary/shirokuma-flow",
+  "repository": "https://github.com/ShirokumaLibrary/shirokuma-flow",
+  "keywords": [
+    "claude-code",
+    "workflow",
+    "orchestrator",
+    "github",
+    "skills"
+  ],
+  "license": "Apache-2.0"
+}

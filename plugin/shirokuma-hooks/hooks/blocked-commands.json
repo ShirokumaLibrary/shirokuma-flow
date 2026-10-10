@@ -1,0 +1,223 @@
+{
+  "description": "Default blocked command patterns for the PreToolUse hook. Configure exceptions via hooks.allow in .shirokuma/config.yaml. gh api WRITES (-X POST/PATCH/PUT/DELETE, graphql mutation) are blocked to prevent bypassing the flow CLI; reads (GET, graphql query) are allowed. Inline-script blocking (inline-script-*) matches on WHERE the script body comes from - the eval flag (-c / -e, clustered spellings such as -uc / -pe included), a heredoc, a here-string (<<<), a pipe, /dev/stdin or -s - rather than on one spelling; it is still a second line of defence, so spellings it does not reach stay allowed (fail-open). Reasons name the flow CLI verbs to use instead (issue: create/comment/context/push; pr: create/comments/reply/resolve/show; merge is a top-level transition). The gh write/read rules here are the machine expression of two GitHub-integration rules: writes always go through the flow CLI; reads use a verb when one exists.",
+  "rules": [
+    {
+      "id": "pr-merge",
+      "pattern": "gh pr merge",
+      "reason": "Use `shirokuma-flow merge <number>` instead of `gh pr merge`. This performs the Review → Done transition with Project status sync.",
+      "enabled": true
+    },
+    {
+      "id": "adr-publish",
+      "pattern": "(shirokuma-flow|cli\\.js)(\\s+-[^\\s;&|(){}]*)*\\s+adr\\s+publish(\\s|$)",
+      "reason": "`shirokuma-flow adr publish` (and the same verb spelled `node .../cli.js adr publish`) confirms an ADR candidate: it writes the numbered ADR file, appends the ADR index and mirrors the record as a Discussion cross-linked with the candidate issue, then closes the candidate issue as Done (completed) unless it is already closed. That cannot be undone, so by default it is reserved for a human -- see `.shirokuma/rules/permission-boundary.md` (search for: approve \u306e\u516c\u958b). The form the human types is the bare `shirokuma-flow adr publish <number>`; for a candidate whose body declares that the decision loosens the autonomy boundary, it is `shirokuma-flow adr publish <number> --accept-boundary-loosening` instead (that option lets only the loosening declaration through -- unlike `--force`, it does not drop the decision-section check -- and the AI is never let through with it, authorized or not). A project can authorize the AI to run it: the authorization is `adr.publishAuthorizedFor` in `.shirokuma/config.yaml` (the line below names its allowed value), and a human decides whether to put it there -- do not add or change it yourself. This rule's guard (adr-publish-authorization) lets the command through only when all of these hold: the key, read from the command's working directory the way the CLI resolves its config, holds an allowed value; the whole command line is exactly the bare form `shirokuma-flow adr publish <number>` (or `node <path>/cli.js adr publish <number>`) on its own -- no other options such as `--force` / `--amend` / `--accept-boundary-loosening` / `--dir` / `--index` / `--bc`, no other commands, wrappers, environment-variable prefixes, quoting, expansions, globs, braces or redirection; the candidate's body declares that the decision does not loosen the autonomy boundary; and the candidate is not confirmed yet (the issue is open, and it is either not listed in the ADR id map or listed with no Discussion recorded in either the ADR id map or its ADR file -- a publish that stopped before creating the Discussion, or after creating it but before recording it, which may be resumed). Anything else denies (fail-closed): the config cannot be read, the key is missing or out of range, the hook runs with `SHIROKUMA_CONFIG` set, the hook input carries no working directory, the command has any other shape, the declaration is missing, loosening or unreadable, or the candidate is closed, already has its Discussion recorded in the ADR id map or its ADR file, or its state cannot be read. Which of those applied, and what to do about it, is stated on the line below; do not infer the cause from this line. Reading is not blocked -- `shirokuma-flow issue show <number>` and the other `adr` read verbs still work.",
+      "enabled": true,
+      "guard": "adr-publish-authorization",
+      "guardUnknown": "deny"
+    },
+    {
+      "id": "force-push",
+      "pattern": "git push.*(--force|--force-with-lease|-f($|\\s))",
+      "reason": "Force push requires explicit user approval. This can overwrite remote history.",
+      "enabled": true
+    },
+    {
+      "id": "push-refspec-force",
+      "pattern": "git push\\s+\\S+\\s+\\+",
+      "reason": "Refspec-based force push (`git push <remote> +<ref>`) is a force push without the --force flag. Use a normal push, or ask a human if history must be overwritten.",
+      "enabled": true
+    },
+    {
+      "id": "push-refspec-delete",
+      "pattern": "git push\\s+\\S+\\s+:",
+      "reason": "Refspec-based branch deletion (`git push <remote> :<branch>`) removes a remote branch. Deleting a merged head is done by `shirokuma-flow merge`; anything else needs a human.",
+      "enabled": true
+    },
+    {
+      "id": "push-mirror-delete",
+      "pattern": "git push.*(--mirror|--delete($|\\s)|\\s-d($|\\s))",
+      "reason": "`--mirror` / `--delete` remove remote refs. Deleting a merged head is done by `shirokuma-flow merge`; anything else needs a human.",
+      "enabled": true
+    },
+    {
+      "id": "push-to-mainline",
+      "pattern": "git (-\\S+\\s+\\S+\\s+)*push\\s+(-\\S+\\s+)*\\S+\\s+(HEAD:)?(main|master|develop)($|\\s)",
+      "reason": "Direct push to the mainline bypasses the human merge gate (`branch-workflow`). Land changes through a PR and `shirokuma-flow merge`. The pages gitlink bump is the only exception and it goes through `shirokuma-flow pages push`, not a raw git push.",
+      "enabled": true
+    },
+    {
+      "id": "merge-override",
+      "pattern": "(shirokuma-flow|cli\\.js)(\\s+-[^\\s;&|(){}]*)*\\s+merge(\\s[^;&|]*)?\\s(--override|--force)(\\s|=|$)",
+      "reason": "`shirokuma-flow merge` with `--override` or `--force` (and the same verb spelled `node .../cli.js merge`) crosses merge conditions that the merge verb evaluates itself -- the code review record, local verification, the criteria-file gate and the CI conclusion (`--force` is the alias that crosses the CI condition only). Deciding to cross them is a human call: the human types that command with a leading `!`. Do not add this rule to `hooks.allow` to get around it. To satisfy the conditions instead, follow the `nextActions` of `shirokuma-flow pr checks <number>` (its `merge_conditions` field names what is unmet). The bare `shirokuma-flow merge <number>`, and the form with `--expected-head <sha>`, are not stopped by this rule.",
+      "enabled": true
+    },
+    {
+      "id": "merge-base-guard",
+      "pattern": "shirokuma-flow\\s+merge(\\s|$)",
+      "reason": "`shirokuma-flow merge` was stopped by the PR base gate (merge-base-guard). This rule only fires on `shirokuma-flow merge`: it resolves the target PR's base through the flow CLI and lets the merge through only when that base is the repository mainline (`project.defaultBranch` in .shirokuma/config.yaml) or an integration branch (`epic/...`); merging into anything else is a release intake, which the norm reserves for a human -- see `.shirokuma/rules/branch-workflow.md` (search for: release intake). If that section is missing, the installed norms may be stale: run `shirokuma-flow rules install --check` (update with `--force`, which overwrites only the rule files whose content differs from the bundled copy -- local edits count as differing and are overwritten too. Use `--only <names...>` to name the files to update. Running `--force` is a human call -- do not run it on your own; ask). Every other outcome -- the base cannot be resolved, the PR number cannot be read, several `merge` calls are chained, the mainline is unknown, or the check does not fit in the hook's time budget -- also denies (fail-closed). Which of those applied, and what to do about it, is stated on the line below; do not infer the cause from this line.",
+      "enabled": true,
+      "guard": "pr-base"
+    },
+    {
+      "id": "approve-adr-publish",
+      "pattern": "(shirokuma-flow|cli\\.js)(\\s+-[^\\s;&|(){}]*)*\\s+approve(\\s|$)",
+      "reason": "`shirokuma-flow approve` was stopped by the ADR publication gate (approve-adr-publish). This rule fires on `shirokuma-flow approve` and on the interpreter spelling of the same verb (`node .../cli.js approve`): it resolves the target issue's IssueType through the flow CLI and, for ADR candidates, also reads the candidate body's autonomy-boundary declaration; anything that is not an ADR candidate is let through. An `approve` on an ADR issue in Review is not just a Status move -- it publishes the issue body as a Discussion, cross-links them, appends the ADR index and closes the issue. ADR candidates are not denied as a class: the gate reads the candidate body's autonomy-boundary declaration line (a closed two-value field; run `shirokuma-flow gate vocab --field adr-autonomy-boundary` for its name and values) and lets the approve through when the candidate declares that it does not loosen the autonomy boundary itself. Candidates that do loosen it stay a human Accept -- a self-approving gate would open its own gate -- see `.shirokuma/rules/permission-boundary.md` (search for: approve \u306e\u516c\u958b). Every other outcome -- the declaration is missing, outside the value set or duplicated, the body or the IssueType cannot be resolved, the issue number cannot be read, several `approve` calls are chained, the command carries `--force` on an ADR candidate (it would drop both the decision-section check and the publish-time re-read of the declaration), or the check does not fit in the hook's time budget -- also denies (fail-closed). Which of those applied, and what to do about it, is stated on the line below; do not infer the cause from this line. Do not work around this by running `shirokuma-flow adr publish` (blocked by adr-publish unless the project has authorized the AI to confirm candidates -- and even where it has, adr-publish reads the same declaration and lets only the bare form through for candidates that declare they do not loosen the boundary, so it is not a way past this gate), by adding `--force`, or by adding a hooks.allow carve-out.",
+      "enabled": true,
+      "guard": "approve-issuetype",
+      "guardUnknown": "deny"
+    },
+    {
+      "id": "hard-reset",
+      "pattern": "git reset --hard",
+      "reason": "Hard reset requires explicit user approval. This discards all uncommitted changes.",
+      "enabled": true
+    },
+    {
+      "id": "discard-worktree",
+      "pattern": "git (checkout|restore)(\\s+--\\s*|\\s+)\\.\\s*$",
+      "reason": "Discarding all working tree changes requires explicit user approval.",
+      "enabled": true
+    },
+    {
+      "id": "clean-untracked",
+      "pattern": "git clean.*(--force|-f)",
+      "reason": "Deleting untracked files requires explicit user approval.",
+      "enabled": true
+    },
+    {
+      "id": "force-delete-branch",
+      "pattern": "git branch (-D|--delete --force|--force --delete)",
+      "reason": "Force deleting a branch requires explicit user approval.",
+      "enabled": true
+    },
+    {
+      "id": "push-implicit-target",
+      "pattern": "(^|[\\s;&|(){}])([^\\s;&|(){}<>]*/)?git($|[\\s;&|)<>#])",
+      "reason": "A `git` command that the push destination gate (push-target) cannot prove is safe was stopped. This rule matches EVERY `git` invocation on purpose, in any spelling the shell accepts (quoted, backslash-escaped, absolute or relative path to the binary, flags before or after the operands, an environment-variable prefix, a configuration injection, or a subcommand that is an alias): the command string does not say what a `git` invocation does, so the pattern does not try to read it and the decision is left to the gate. The gate ALLOWS outright, without observing local git, in two cases: (1) it can read the subcommand as a literal and that subcommand is one it knows does not write remote refs (`git status`, `git log --grep push`, `git checkout <branch>`, `git fetch` ...), and (2) the push names its own destination and that destination does not reach a protected branch (`git push origin <topic>` / `git push origin HEAD:<topic>`) -- pushing a named topic branch is NOT denied by this rule, whichever branch is checked out. Everything else is denied unless the gate can prove the push cannot reach a protected branch (`main` / `master` / `develop`, plus `project.defaultBranch` from .shirokuma/config.yaml). Proving that requires all of: the `git push` is the first word of its own command with no wrapper and no environment-variable prefix; the only global option between `git` and the subcommand is `-C <plain path>`; every token of that invocation is a literal the gate can classify as safe (no unknown or abbreviated flag, no expansion, no quoted argument it cannot read); the working directory of that push is fixed; no other `git` invocation in the same command line can move the checked-out branch or the `remote.*` / `push.*` configuration; every `remote.*` / `push.*` key present is one the gate can prove is harmless; and the checked-out branch, the upstream and any push refspec stay off the protected branches. Because the gate proves safety rather than spelling out danger, it also stops commands that are harmless in themselves -- measured classes: a `git` invocation whose subcommand the gate cannot read as a non-pushing one (any local alias, `git subtree ...`, `git submodule foreach ...`), a subcommand that writes the very state this gate observes (`git config ...`, `git remote ...`, including their read forms), and a global option other than `-C <path>` (`git --no-pager log`, `git -c core.quotePath=false ls-files`). Which condition applied, and what to do about it, is stated on the line below; do not infer the cause from this line.",
+      "enabled": true,
+      "guard": "push-target",
+      "guardUnknown": "pattern-only"
+    },
+    {
+      "id": "gh-issue-view",
+      "pattern": "gh issue view",
+      "reason": "Read verbs come in two tracks: a pure-read track and an edit-then-push track. To just read, use `shirokuma-flow issue show <number>` (pure read; add `--comments` for comment bodies; it never touches the cache and by design returns no comment ids). To edit the issue body and write it back, use `shirokuma-flow issue context <number>` (caches body.md) then `shirokuma-flow issue push <number>`. To edit a comment, use `shirokuma-flow issue comments <number>` -- that is the only verb that returns ids for comments on an issue (database_id); `pr comments` returns ids too, but only for comments on a pull request. It caches the bodies whose id it could read as {database_id}.md -- then `shirokuma-flow issue push <number> <comment-id>`, which pushes that comment only and does not touch the issue body. These read verbs also work in the bootstrap stage (`project.number` still blank in .shirokuma/config.yaml); there `issue show` returns `status: null`, which means no project is configured -- and nothing else. Do not use `gh issue view`.",
+      "enabled": true
+    },
+    {
+      "id": "gh-issue-create",
+      "pattern": "gh issue create",
+      "reason": "Use `shirokuma-flow issue create --title ... --body ...` instead of `gh issue create`. This registers the issue in the Project and seeds Backlog.",
+      "enabled": true
+    },
+    {
+      "id": "gh-issue-comment",
+      "pattern": "gh issue comment",
+      "reason": "Use `shirokuma-flow issue comment <number> <body>` instead of `gh issue comment`.",
+      "enabled": true
+    },
+    {
+      "id": "gh-issue-edit",
+      "pattern": "gh issue edit",
+      "reason": "Use `shirokuma-flow` instead of `gh issue edit`. For the body: edit the cached body (body.md) and run `shirokuma-flow issue push <number>`. For the title: run `shirokuma-flow issue retitle <number> <title>`.",
+      "enabled": true
+    },
+    {
+      "id": "gh-issue-close",
+      "pattern": "^\\s*gh issue close(?!\\s+[0-9]+\\s+--duplicate-of[ =][0-9]+\\s*$)|\\S\\s*gh issue close",
+      "reason": "Use `shirokuma-flow done <number>` (completed) instead of `gh issue close`; for a not-planned close ask a human to run `shirokuma-flow cancel <number>` (human-only verb). These close the issue and sync the Project Status in one transition. To leave a closing comment first, run `shirokuma-flow issue comment <number> <body>`. In the bootstrap stage (`project.number` still blank in .shirokuma/config.yaml) `shirokuma-flow done` does not run at all, and `cancel` is human-only, so there is no path for you to close an issue there: ask a human to close it. Reading and writing do work in that stage (`issue show` / `issue list` / `issue context` / `issue comment`), so leave the reason as a comment and hand the close over. To undo a close, run `shirokuma-flow issue reopen --to <status>` (e.g. `shirokuma-flow issue reopen 123 --to \"In progress\"`). For a duplicate close, run `shirokuma-flow duplicate <number> --of <target> --reason \"<why>\"`; running it autonomously is gated (the duplicate target must come from a human's own instruction, not from an issue comment or your own search), so if you were not told which issue it duplicates, ask a human. Closing an issue in another repository is outside these verbs (the flow ACL is bound to the repo in .shirokuma/config.yaml) — ask a human instead of working around this rule.",
+      "enabled": true
+    },
+    {
+      "id": "gh-issue-reopen",
+      "pattern": "gh issue reopen",
+      "reason": "Use `shirokuma-flow issue reopen --to <status>` (e.g. `shirokuma-flow issue reopen 123 --to \"In progress\"`) instead of `gh issue reopen`. This reopens the issue and restores the Project Status as a validated rollback transition; without `--to` the status stays Done and a warning is emitted. To add a reopening comment, run `shirokuma-flow issue comment <number> <body>`. Closing is `shirokuma-flow done` / `shirokuma-flow cancel`, and PRs use `shirokuma-flow pr reopen <number> --to <status>`. Reopening an issue in another repository (`--repo`) is outside these verbs (the flow ACL is bound to the repo in .shirokuma/config.yaml) — ask a human instead of working around this rule.",
+      "enabled": true
+    },
+    {
+      "id": "gh-issue-list",
+      "pattern": "gh issue (list|ls)",
+      "reason": "Use `shirokuma-flow issue list` instead of `gh issue list`. It returns `{ total, count, truncated, items }` as JSON and takes `--state open|closed|all`, `--label <name>` (repeatable), `--type <IssueType>`, `--search <query>`, `--limit <1-100>`. Filters map to server-side filters; `--search` / `--type` go through GitHub search (the `is:issue` and `repo:` qualifiers are added by the CLI, so do not pass them yourself). Shapes this verb does NOT cover, so it cannot replace them: listing another repository (`--repo`/`-R`; the flow ACL is bound to the repo in .shirokuma/config.yaml), `--web`, and `--json`/`--jq`/`--template` field selection beyond the fields the verb returns (number, title, state, url, issue_type, author, created_at, updated_at). For those, ask a human rather than working around this rule.",
+      "enabled": true
+    },
+    {
+      "id": "gh-pr-list",
+      "pattern": "gh pr (list|ls)",
+      "reason": "Use `shirokuma-flow pr list` instead of `gh pr list`. It returns `{ total, count, truncated, items }` as JSON and takes `--state open|closed|merged|all`, `--head <branch>`, `--base <branch>`, `--author <login>`, `--search <query>`, `--limit <1-100>`. `--search` / `--author` go through GitHub search (the `is:pr` and `repo:` qualifiers are added by the CLI, so do not pass them yourself). Shapes this verb does NOT cover, so it cannot replace them: listing another repository (`--repo`/`-R`; the flow ACL is bound to the repo in .shirokuma/config.yaml), `--web`, and `--json`/`--jq`/`--template` field selection beyond the fields the verb returns (number, title, state, url, head, base, draft, author, created_at, updated_at). For those, ask a human rather than working around this rule.",
+      "enabled": true
+    },
+    {
+      "id": "gh-pr-diff",
+      "pattern": "gh pr diff",
+      "reason": "Use `shirokuma-flow pr diff <number>` instead of `gh pr diff`. It returns `{ number, changed_files, additions, deletions, name_only, files_truncated, files: [{ path, status, additions, deletions, patch, patch_omitted }] }` as JSON, and `--name-only` omits the patches (same meaning as `gh pr diff --name-only`). The unified diff of each file is in `files[].patch`, so extract that field first when you need line-oriented grepping; `files_truncated: true` means some changed files are NOT listed. Shapes this verb does NOT cover, so it cannot replace them: another repository (`--repo`/`-R`; the flow ACL is bound to the repo in .shirokuma/config.yaml), `--web`, `--exclude <glob>` (filter the returned JSON yourself instead), `--color` (JSON output carries no ANSI colors), and selecting the PR by URL, by branch name, or implicitly by the current branch (run `shirokuma-flow pr list --head <branch>` first to get the number). For those, ask a human rather than working around this rule.",
+      "enabled": true
+    },
+    {
+      "id": "gh-pr-create",
+      "pattern": "gh pr create",
+      "reason": "Use `shirokuma-flow pr create --head ... --base ... --title ...` instead of `gh pr create`. This adds Closes #N, registers the PR in the Project, and seeds Backlog.",
+      "enabled": true
+    },
+    {
+      "id": "gh-pr-view",
+      "pattern": "gh pr view",
+      "reason": "Use `shirokuma-flow pr show <number>` instead of `gh pr view`.",
+      "enabled": true
+    },
+    {
+      "id": "gh-pr-review",
+      "pattern": "gh pr review",
+      "reason": "Use `shirokuma-flow pr comments`, `pr reply`, and `pr resolve` instead of `gh pr review`.",
+      "enabled": true
+    },
+    {
+      "id": "gh-pr-comment",
+      "pattern": "gh pr comment",
+      "reason": "Use `shirokuma-flow pr reply <number> <body> --reply-to <id>` for review comments, or `shirokuma-flow issue comment` for general comments, instead of `gh pr comment`.",
+      "enabled": true
+    },
+    {
+      "id": "gh-pr-edit",
+      "pattern": "gh pr edit.*(--title|--base|--body|\\s-[tbBF])",
+      "reason": "Use `shirokuma-flow` instead of `gh pr edit` for the parts that have a verb. For the title: `shirokuma-flow pr retitle <number> <title>` (no-op when the title already matches). For the base branch: `shirokuma-flow pr retarget <number> <base>` (returns previous_base). For the body (`--body` / `--body-file`): run `shirokuma-flow pr context <number>`, edit the cached prs/<number>/body.md, then `shirokuma-flow pr push <number>`. This rule is a PARTIAL block: it matches only `gh pr edit` commands that carry `--title` / `--base` / `--body` / `--body-file` (or their short forms -t / -B / -b / -F). Other `gh pr edit` flags have no verb and stay unblocked, so run them on their own: labels (`gh pr edit <number> --add-label ...` / `--remove-label`), assignees, reviewers, projects and milestones. A COMBINED command such as `gh pr edit 1 --title x --add-label y` is blocked on purpose (fail-closed): split it into `shirokuma-flow pr retitle 1 \"x\"` plus a standalone `gh pr edit 1 --add-label y`. Editing a pull request in another repository (`--repo`/`-R`) is outside these verbs (the flow ACL is bound to the repo in .shirokuma/config.yaml) — ask a human instead of working around this rule.",
+      "enabled": true
+    },
+    {
+      "id": "gh-api-write",
+      "pattern": "gh api .*(-X|--method) *(POST|PATCH|PUT|DELETE)",
+      "reason": "Raw `gh api` writes bypass the flow CLI. Use the matching `shirokuma-flow` verb (issue/pr/discussion/status/adr). If no verb exists for the operation, ask a human to run it (or add the operation through a CLI extension package) rather than scripting around it. Reads (GET) are allowed.",
+      "enabled": true
+    },
+    {
+      "id": "gh-api-graphql-mutation",
+      "pattern": "gh api graphql.*mutation",
+      "reason": "GraphQL mutations via raw `gh api` bypass the flow CLI. Use a `shirokuma-flow` verb (status verbs for transitions; for ADR confirmation, `approve` on an ADR candidate that declares it does not loosen the autonomy boundary). GraphQL reads (query) are allowed; if a write op has no verb, ask a human to run it (or add the operation through a CLI extension package).",
+      "enabled": true,
+      "matchRaw": true
+    },
+    {
+      "id": "inline-script-python",
+      "pattern": "python3? +-c|(^|[\\s;&|(){`]\\s*)(?:\\S*/)?python[0-9.]*\\s+((-{1,2}[A-Za-z][A-Za-z0-9_-]*(=\\S+)?)(\\s+[^-\\s]\\S*)?\\s+)*(-[A-Za-z]*c(\\s|$|['\"]|__SHIROKUMA_QUOTED__)|-(\\s|$))|(^|[\\s;&|(){`]\\s*)(?:\\S*/)?python[0-9.]*\\s*((-{1,2}[A-Za-z][A-Za-z0-9_-]*(=\\S+)?)(\\s+[^-\\s]\\S*)?\\s*)*(<<HEREDOC|<<<|/dev/(stdin|fd/[0-9]+)(\\s|$))|\\|\\s*(([A-Za-z_][A-Za-z0-9_]*=\\S*|(time|env|nohup|sudo|command|timeout|stdbuf|then|do|else)(\\s+(-\\S+(\\s+[^-\\s]\\S*)?|[0-9]+[smhd]?))*)\\s+)*(?:\\S*/)?python[0-9.]*(\\s+-[A-Za-z-]+)*\\s*(\\d*[<>]|$|[;&|)#])",
+      "reason": "Inline `python` scripts bypass the CLI/tools, no matter how the script body is fed in: `-c` (including clustered short options such as `-uc`), a heredoc (`python3 - <<'PY'`, also when the previous command sits on the line above), a here-string (`python3 <<< 'print(1)'`, also without the space: `python3<<<'print(1)'`), a pipe (`cat x | python3 -u`, with or without trailing flags and redirections, and behind a bare assignment or one of the ten wrapper words: `cat x | timeout 5 python3`; a newline after the pipeline does not lift it, and neither does folding the pipeline across lines - a trailing `|`, `|&`, `||`, `&&` or backslash is a CONTINUATION, so those lines are joined back into one before matching, and `|&` is normalised to `|`; a comment after the operator does not lift it either (bash keeps the pipeline going, so the trailing comment is dropped before the continuation test), and a backslash joins the two lines with NO separator, so `| ba\\` + newline + `sh` is the single word `bash`) and `/dev/stdin` are all the same thing. A leading path is part of the command word, so `/usr/bin/python3 -uc` is matched too. Use Edit/Write/Read for files, `gh ... --jq` for JSON reads, and `shirokuma-flow` verbs for GitHub. If a transform isn't covered by a command, ask a human to run it (or add the operation through a CLI extension package) rather than scripting around it. Running a .py file or tests is fine (`python3 scripts/foo.py`).",
+      "enabled": true
+    },
+    {
+      "id": "inline-script-node",
+      "pattern": "node +(-e|--eval)|(^|[\\s;&|(){`]\\s*)(?:\\S*/)?(node|nodejs)\\s+((-{1,2}[A-Za-z][A-Za-z0-9_-]*(=\\S+)?)(\\s+[^-\\s]\\S*)?\\s+)*(-[A-Za-z]*[ep](\\s|$|['\"]|__SHIROKUMA_QUOTED__)|--eval(\\s|=|$)|--print(\\s|=|$)|-(\\s|$))|(^|[\\s;&|(){`]\\s*)(?:\\S*/)?(node|nodejs)\\s*((-{1,2}[A-Za-z][A-Za-z0-9_-]*(=\\S+)?)(\\s+[^-\\s]\\S*)?\\s*)*(<<HEREDOC|<<<|/dev/(stdin|fd/[0-9]+)(\\s|$))|\\|\\s*(([A-Za-z_][A-Za-z0-9_]*=\\S*|(time|env|nohup|sudo|command|timeout|stdbuf|then|do|else)(\\s+(-\\S+(\\s+[^-\\s]\\S*)?|[0-9]+[smhd]?))*)\\s+)*(?:\\S*/)?(node|nodejs)(\\s+-[A-Za-z-]+)*\\s*(\\d*[<>]|$|[;&|)#])",
+      "reason": "Inline `node` scripts bypass the CLI/tools, no matter how the script body is fed in: `-e` / `--eval` / `-p` (including clustered short options such as `-pe`), a heredoc (`node - <<'JS'`, also when the previous command sits on the line above), a here-string (`node <<< 'console.log(1)'`, also without the space: `node<<<'console.log(1)'`), a pipe (`echo ... | node --no-warnings`, with or without trailing flags and redirections, and behind a bare assignment or one of the ten wrapper words: `echo 1 | command node`; a newline after the pipeline does not lift it, and neither does folding the pipeline across lines - a trailing `|`, `|&`, `||`, `&&` or backslash is a CONTINUATION, so those lines are joined back into one before matching, and `|&` is normalised to `|`; a comment after the operator does not lift it either (bash keeps the pipeline going, so the trailing comment is dropped before the continuation test), and a backslash joins the two lines with NO separator, so `| ba\\` + newline + `sh` is the single word `bash`) and `/dev/stdin` are all the same thing. A leading path is part of the command word, so `/usr/bin/node -pe 1` is matched too. Use Edit/Write/Read for files, `gh ... --jq` for JSON reads, and `shirokuma-flow` verbs for GitHub; otherwise ask a human to run it (or add the operation through a CLI extension package). Running a .js file or tests is fine (`node scripts/foo.mjs`).",
+      "enabled": true
+    },
+    {
+      "id": "inline-script-perl",
+      "pattern": "perl +.*-e($|\\s)|(^|[\\s;&|(){`]\\s*)(?:\\S*/)?perl\\s+((-{1,2}[A-Za-z][A-Za-z0-9_-]*(=\\S+)?)(\\s+[^-\\s]\\S*)?\\s+)*(-[A-Za-z]*e(\\s|$|['\"]|__SHIROKUMA_QUOTED__)|-(\\s|$))|(^|[\\s;&|(){`]\\s*)(?:\\S*/)?perl\\s*((-{1,2}[A-Za-z][A-Za-z0-9_-]*(=\\S+)?)(\\s+[^-\\s]\\S*)?\\s*)*(<<HEREDOC|<<<|/dev/(stdin|fd/[0-9]+)(\\s|$))|\\|\\s*(([A-Za-z_][A-Za-z0-9_]*=\\S*|(time|env|nohup|sudo|command|timeout|stdbuf|then|do|else)(\\s+(-\\S+(\\s+[^-\\s]\\S*)?|[0-9]+[smhd]?))*)\\s+)*(?:\\S*/)?perl(\\s+-[A-Za-z-]+)*\\s*(\\d*[<>]|$|[;&|)#])",
+      "reason": "Inline `perl` one-liners (incl. -pi -e and the clustered spelling -pie) bypass file/CLI tools, and so do the stdin spellings (`perl - <<'PL'`, `perl <<< '...'` and the spaceless `perl<<<'...'`, `... | perl -n` including behind a bare assignment or one of the ten wrapper words and with another line after the pipeline as well as with the pipeline folded across lines behind a trailing `|` / `|&` / backslash, `perl /dev/stdin`, `/usr/bin/perl -e 1`). Use Edit/Write for file edits and `shirokuma-flow` verbs; otherwise ask a human to run it (or add the operation through a CLI extension package). Running a .pl file is fine.",
+      "enabled": true
+    },
+    {
+      "id": "inline-script-stdin",
+      "pattern": "(^|[\\s;&|(){`]\\s*)(?:\\S*/)?(bash|sh|zsh|ksh|dash|ruby|php|tclsh[0-9.]*)\\s+((-{1,2}[A-Za-z][A-Za-z0-9_-]*(=\\S+)?)(\\s+[^-\\s]\\S*)?\\s+)*(-[A-Za-z]*s(\\s|$|['\"]|__SHIROKUMA_QUOTED__)|-(\\s|$))|(^|[\\s;&|(){`]\\s*)(?:\\S*/)?(bash|sh|zsh|ksh|dash|ruby|php|tclsh[0-9.]*)\\s*((-{1,2}[A-Za-z][A-Za-z0-9_-]*(=\\S+)?)(\\s+[^-\\s]\\S*)?\\s*)*(<<HEREDOC|<<<|/dev/(stdin|fd/[0-9]+)(\\s|$))|\\|\\s*(([A-Za-z_][A-Za-z0-9_]*=\\S*|(time|env|nohup|sudo|command|timeout|stdbuf|then|do|else)(\\s+(-\\S+(\\s+[^-\\s]\\S*)?|[0-9]+[smhd]?))*)\\s+)*(?:\\S*/)?(bash|sh|zsh|ksh|dash|ruby|php|tclsh[0-9.]*)(\\s+-[A-Za-z-]+)*\\s*(\\d*[<>]|$|[;&|)#])|(^|[\\s;&|(){`]\\s*)(?:\\S*/)?ruby\\s+((-{1,2}[A-Za-z][A-Za-z0-9_-]*(=\\S+)?)(\\s+[^-\\s]\\S*)?\\s+)*(-[A-Za-z]*e(\\s|$|['\"]|__SHIROKUMA_QUOTED__)|--eval(\\s|=|$))|(^|[\\s;&|(){`]\\s*)(?:\\S*/)?php\\s+((-{1,2}[A-Za-z][A-Za-z0-9_-]*(=\\S+)?)(\\s+[^-\\s]\\S*)?\\s+)*(-[A-Za-z]*[rRBE](\\s|$|['\"]|__SHIROKUMA_QUOTED__)|--run(\\s|=|$))|(^|[\\s;&|(){`])(?:\\S*/)?(g|m|n|original-)?awk\\s+((-{1,2}[A-Za-z]\\S*)\\s+([^-\\s]\\S*\\s+)?)*(-[fEi]\\s*|--(fil(e)?|e(x(ec?)?)?|i(n(c(l(u(de?)?)?)?)?)?)(=|\\s+))(-|/+dev/+(\\./+)*(stdin|fd/+[0-9]+)|/+proc/+[^/\\s]+/+fd/+[0-9]+)(\\s|$)",
+      "reason": "Feeding a script body into an interpreter through stdin (`bash -s`, `sh - <<'SH'`, `bash <<< '...'`, `curl ... | bash > /dev/null`, `ruby /dev/stdin`) is the same bypass as `python -c`: the rule is about WHERE the script body comes from, not about the spelling of the flag (.shirokuma/rules/orchestration-discipline.md C5). Use Edit/Write/Read for files and `shirokuma-flow` verbs for GitHub; run stored scripts by name instead (`bash scripts/foo.sh`). `bash -c '...'` is unchanged - it is re-evaluated with the same rules rather than blocked here. The eval flag differs per interpreter: ruby uses `-e` / `--eval`, php uses `-r` / `--run` / `-R` / `-B` / `-E` (php's `-e` and `-F` do NOT run code given on the command line, so they are not what this rule is about). A here-string needs no space in front of it, so `bash<<<'x'` and `python3 -u<<<'x'` are covered too. Spelling the interpreter as a PATH does not lift the rule either - a leading `/bin/`, `/usr/bin/` or `./` is part of the command word, so `/bin/bash -s`, `./sh -`, `cat x | /bin/bash` and `/usr/bin/python3 -uc` are matched (running a stored script by path stays fine: `/bin/bash scripts/foo.sh`). A NEWLINE is a command separator, not a token separator, so putting another line after the pipeline does not lift it either (`curl ... | bash` followed by `echo done` on the next line is still denied). Folding the pipeline itself across lines does not lift it either: a trailing `|`, `|&`, `||`, `&&` or backslash CONTINUES the command, so those lines are joined back into one line before matching (`curl ... |` / newline / `bash` / newline / `echo done` is denied), and `|&` - bash's short form of `2>&1 |` - is normalised to `|` so it takes the pipe branch as well. Lines that START with `#` are dropped instead, since bash does not execute them. Words in front of the interpreter do not lift the rule, but WHERE they are matters: at the command-word position any preceding token is allowed for (the anchor only needs whitespace or one of `;&|(){` + backtick), so `X=1 python3 -uc`, `sudo -u root bash -s` and `exec node -pe 1` are all matched; in the PIPE position only bare assignments and the ten wrapper words `time` / `env` / `nohup` / `sudo` / `command` / `timeout` / `stdbuf` / `then` / `do` / `else` are matched (`cat s.sh | env bash`). Next: use Edit/Write/Read for files and run stored scripts by name (`bash scripts/foo.sh`). Do not feed a script body through stdin. A long option or an option that takes its argument as a separate token in front of the eval flag does not lift the rule either (`python3 -X utf8 -c`, `node -r pkg -e`). `tclsh` (also a versioned name such as `tclsh8.6`) is one of the shell-like interpreters here (`echo 'puts 1' | tclsh8.6`, `tclsh <<'TCL'`). For `awk` (also `gawk` / `mawk` / `nawk` / `original-awk`) only reading the PROGRAM from stdin is denied: a program-file flag (`-f` / `--file`, gawk's `-E` / `--exec` and `-i` / `--include`, including the unique abbreviations gawk accepts such as `--exe=`, `--inc=` and `--fil=`) pointing at stdin in any spelling (`-`, `/dev/stdin`, `/dev/fd/0`, `/proc/self/fd/0`, also with doubled slashes or `/./`), e.g. `awk -f -`, `gawk -E -`, `gawk --include=/dev/stdin`; an awk program written on the command line (`awk '{print $1}' file`) and piping DATA into awk (`cat f | awk '{print}'`) are fine, and so is `awk -f scripts/x.awk`.",
+      "enabled": true
+    }
+  ]
+}

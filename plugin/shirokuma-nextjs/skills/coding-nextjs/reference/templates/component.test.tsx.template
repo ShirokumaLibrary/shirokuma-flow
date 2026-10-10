@@ -1,0 +1,60 @@
+/**
+ * {{Name}}Form コンポーネントのユニットテスト（Testing Library）。
+ *
+ * 振る舞い（ユーザーに見えるもの）をテストし、内部実装はテストしない。
+ * セレクタはセマンティック（getByRole / getByLabelText）を優先する。
+ * 各テストに @testdoc 必須（`shirokuma-flow lint areas tests` の検査対象）。
+ */
+// テンプレート変数: {{name}}=小文字単数形 / {{Name}}=PascalCase 単数形
+// - Vitest の API で記述する。`toHaveTextContent` は `@testing-library/jest-dom` の matcher で、
+//   テストの setup で `@testing-library/jest-dom/vitest` を読み込んでおく。
+
+import { beforeEach, describe, expect, it, vi, type Mock } from "vitest"
+import { render, screen, waitFor } from "@testing-library/react"
+import userEvent from "@testing-library/user-event"
+
+// server action は外部依存としてモックする（throw でなく ActionResult を返す形）
+vi.mock("@/lib/actions/{{name}}s", () => ({
+  create{{Name}}: vi.fn(),
+}))
+
+import { create{{Name}} } from "@/lib/actions/{{name}}s"
+import { {{Name}}Form } from "@/components/{{name}}-form"
+
+const mockCreate = create{{Name}} as Mock
+
+beforeEach(() => {
+  vi.clearAllMocks()
+})
+
+describe("{{Name}}Form", () => {
+  /**
+   * @testdoc 入力して送信すると server action が呼ばれる
+   */
+  it("submits form data to the server action", async () => {
+    mockCreate.mockResolvedValue({ success: true })
+    const user = userEvent.setup()
+
+    render(<{{Name}}Form />)
+    await user.type(screen.getByLabelText(/name/i), "Test {{Name}}")
+    await user.click(screen.getByRole("button"))
+
+    await waitFor(() => expect(mockCreate).toHaveBeenCalledTimes(1))
+    const formData = mockCreate.mock.calls[0][0] as FormData
+    expect(formData.get("name")).toBe("Test {{Name}}")
+  })
+
+  /**
+   * @testdoc action が失敗を返したらエラーメッセージを表示する
+   */
+  it("shows error message when the action fails", async () => {
+    mockCreate.mockResolvedValue({ success: false, error: "Operation failed", code: "INTERNAL_ERROR" })
+    const user = userEvent.setup()
+
+    render(<{{Name}}Form />)
+    await user.type(screen.getByLabelText(/name/i), "Test {{Name}}")
+    await user.click(screen.getByRole("button"))
+
+    expect(await screen.findByRole("alert")).toHaveTextContent("Operation failed")
+  })
+})
