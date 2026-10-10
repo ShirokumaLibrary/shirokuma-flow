@@ -1,0 +1,124 @@
+"use server"
+
+/**
+ * {{Name}} の server action 群。
+ *
+ * 構造の順序（SKILL.md 規約 2）: 認証 → 入力検証（zod 等）→ 処理 → revalidate/redirect。
+ *
+ * @usedActions list{{Name}}s, create{{Name}}, update{{Name}}, delete{{Name}}
+ */
+// テンプレート変数: {{name}}=小文字単数形 / {{Name}}=PascalCase 単数形
+// - 認証（requireUser）とデータ層（db）はプロジェクトの実装に置き換える。
+// - client 入力（formData / 引数）は信頼しない。検証前に使わない。
+// - 300 行 or 8 関数を超えたら queries / mutations に分割する（criteria/checklist.md 参照）。
+
+import { revalidatePath } from "next/cache"
+import { redirect } from "next/navigation"
+import { z } from "zod" // スキーマ検証の例。別ライブラリなら読み替え
+
+// ↓ プロジェクトの認証層・データ層に置き換える（パスは例）
+import { requireUser } from "@/lib/auth"
+import { db } from "@/lib/db"
+
+/** エラーコード（プログラムによるハンドリング用。client 表示の出し分けに使う）。 */
+export type ActionErrorCode =
+  | "UNAUTHORIZED"
+  | "VALIDATION_FAILED"
+  | "NOT_FOUND"
+  | "FORBIDDEN"
+  | "INTERNAL_ERROR"
+
+/** 全 action 共通の戻り値型。throw でなく構造化レスポンスで失敗を返す。 */
+export type ActionResult<T = void> =
+  | { success: true; data?: T }
+  | { success: false; error: string; code: ActionErrorCode }
+
+const Create{{Name}}Schema = z.object({
+  name: z.string().min(1).max(100),
+})
+
+/**
+ * {{Name}} を一覧取得する（読み取り）。
+ */
+export async function list{{Name}}s(page: number): Promise<ActionResult<{ id: string; name: string }[]>> {
+  // 1. 認証（読み取りでも最初に行う）
+  const user = await requireUser()
+  if (!user) return { success: false, error: "Unauthorized", code: "UNAUTHORIZED" }
+
+  // 2. 入力検証（client 由来の引数も検証する）
+  const safePage = Number.isInteger(page) && page > 0 ? page : 1
+
+  // 3. 処理
+  const items = await db.{{name}}s.list({ page: safePage })
+  return { success: true, data: items }
+}
+
+/**
+ * {{Name}} を新規作成する（ミューテーション）。
+ */
+export async function create{{Name}}(formData: FormData): Promise<ActionResult<{ id: string }>> {
+  // 1. 認証
+  const user = await requireUser()
+  if (!user) return { success: false, error: "Unauthorized", code: "UNAUTHORIZED" }
+
+  // 2. 入力検証（検証済みフィールドだけを使う。formData の丸ごと展開＝マスアサインメント禁止）
+  const validated = Create{{Name}}Schema.safeParse({ name: formData.get("name") })
+  if (!validated.success) {
+    return { success: false, error: validated.error.issues[0].message, code: "VALIDATION_FAILED" }
+  }
+
+  // 3. 処理（try/catch・内部エラー詳細は client に返さない）
+  try {
+    const created = await db.{{name}}s.create({ ...validated.data, ownerId: user.id })
+
+    // 4. revalidate / redirect（ミューテーション後は必ずキャッシュを無効化する）
+    revalidatePath("/{{name}}s")
+    return { success: true, data: { id: created.id } }
+  } catch (error) {
+    console.error("create{{Name}} failed:", error)
+    return { success: false, error: "Operation failed", code: "INTERNAL_ERROR" }
+  }
+}
+
+/**
+ * {{Name}} を更新する（ミューテーション・所有権チェック付き）。
+ */
+export async function update{{Name}}(id: string, formData: FormData): Promise<ActionResult> {
+  const user = await requireUser()
+  if (!user) return { success: false, error: "Unauthorized", code: "UNAUTHORIZED" }
+
+  const validated = Create{{Name}}Schema.safeParse({ name: formData.get("name") })
+  if (!validated.success) {
+    return { success: false, error: validated.error.issues[0].message, code: "VALIDATION_FAILED" }
+  }
+
+  // 所有権チェック（更新/削除の前に必ず行う。IDOR 防止）
+  const existing = await db.{{name}}s.find(id)
+  if (!existing) return { success: false, error: "Not found", code: "NOT_FOUND" }
+  if (existing.ownerId !== user.id) return { success: false, error: "Forbidden", code: "FORBIDDEN" }
+
+  try {
+    await db.{{name}}s.update(id, validated.data)
+    revalidatePath("/{{name}}s")
+    return { success: true }
+  } catch (error) {
+    console.error("update{{Name}} failed:", error)
+    return { success: false, error: "Operation failed", code: "INTERNAL_ERROR" }
+  }
+}
+
+/**
+ * {{Name}} を削除し一覧へ戻る（redirect する action の例）。
+ */
+export async function delete{{Name}}(id: string): Promise<ActionResult | never> {
+  const user = await requireUser()
+  if (!user) return { success: false, error: "Unauthorized", code: "UNAUTHORIZED" }
+
+  const existing = await db.{{name}}s.find(id)
+  if (!existing) return { success: false, error: "Not found", code: "NOT_FOUND" }
+  if (existing.ownerId !== user.id) return { success: false, error: "Forbidden", code: "FORBIDDEN" }
+
+  await db.{{name}}s.remove(id)
+  revalidatePath("/{{name}}s")
+  redirect("/{{name}}s") // redirect は内部で throw する（catch で握りつぶさない）
+}

@@ -1,0 +1,47 @@
+<!DOCTYPE html>
+<!-- pages 確認ビューの雛形。{...} を置換し .shirokuma/pages/{category}/{topic}/index.html として保存する。
+     共有アセット（style.css / theme.js / modern-normalize.css）は pages ルート直下の assets/ に
+     1 組だけ置き、各ページからは絶対パス（/assets/...）で参照する。ページごとに assets/ を複製しない。
+     assets/ が未配置なら、本スキル同梱の assets/ を .shirokuma/pages/assets/ へコピーしてから使う
+     （手順は SKILL.md「初回（pages を一から作るとき・assets が未配置のとき）」）。
+     ?v=N はキャッシュバスタ。この雛形の値は同梱アセットに対応しているので、初回セットアップ直後は
+     そのまま一致する。assets/ を更新して ?v=N を上げたら、この雛形と全ページを同じ値に揃える。
+     部品（summary-card / card-grid / tag / timeline / table / SVG）は reference/snippets.md から貼る。 -->
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>{タイトル}（確認用）</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Kosugi+Maru&family=M+PLUS+Rounded+1c:wght@500;700&family=M+PLUS+1+Code:wght@400;500;700&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="/assets/style.css?v=26">
+</head>
+<body data-parent-href="/{親カテゴリ}/" data-parent-label="{親ラベル}">
+<!-- Issue #N の確認ビュー（.shirokuma/pages/issues/{N}/index.html）では、元 Issue 本文の sha256 を
+     次の形式で 1 行埋め込む（drift lint の正本）。本文を要約・再構成しても
+     hash は「生成時に参照した元 Issue 本文」の sha256（node:crypto, utf8）にする:
+       issue-body-sha256: <64桁hex>   (HTML コメントとして埋め込む)
+     これにより lint docs（pages-issue-drift）が、現 Issue 本文
+     （.shirokuma/github/<owner>/<repo>/issues/{N}/body.md）との乖離を warning で気づかせる。
+     Issue 番号に紐づかないページ（specs/explainers 等）では不要。 -->
+<main>
+
+<section class="hero">
+  <p class="eyebrow">{種別} / {Issue・PR 番号} / {日付}</p>
+  <h1>{見出し}</h1>
+  <p class="lead">{1〜2 文のリード}</p>
+  <p class="tags"><span class="tag">{タグ}</span><span class="tag ok">{推奨タグ}</span></p>
+</section>
+
+<!-- 本文: 見出し（h2）＋ summary-card / card-grid>card / table / SVG 図 を snippets.md から貼る -->
+
+<div class="meta">
+  <strong>用途</strong>: {用途}<br>
+  <strong>出典</strong>: {出典}
+</div>
+
+</main>
+<script src="/assets/theme.js?v=5"></script>
+</body>
+</html>

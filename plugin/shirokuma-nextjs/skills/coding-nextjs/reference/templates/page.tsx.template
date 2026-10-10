@@ -1,0 +1,42 @@
+/**
+ * {{Name}} 一覧画面（server component・既定）。
+ *
+ * @screen {{Name}}List
+ * @route /{{name}}s
+ * @screenshot
+ * @screenshot-viewport 1280x720
+ * @screenshot-auth required
+ */
+// テンプレート変数: {{name}}=小文字単数形（例: post）/ {{Name}}=PascalCase 単数形（例: Post）
+// - @screen は PascalCase 必須（`shirokuma-flow nextjs lint` が検査する）。
+// - @screenshot 系は視覚確認が要る画面のみ（不要なら 3 行とも削除。
+//   @screenshot-auth は required|none|optional、@screenshot-waitFor <値> も指定可）。
+// - データ取得は server component で直接行い、client へは props で渡す。
+
+import { Suspense } from "react"
+
+import { {{Name}}Table } from "@/components/{{name}}-table"
+import { list{{Name}}s } from "@/lib/actions/{{name}}s"
+
+type Props = {
+  // Next.js（App Router 現行）では params / searchParams は Promise。await して使う。
+  params: Promise<Record<string, never>>
+  searchParams: Promise<{ page?: string }>
+}
+
+export default async function Page({ searchParams }: Props) {
+  const { page = "1" } = await searchParams
+
+  // データ取得は server で。独立した複数の取得は Promise.all で並列化する
+  // （patterns/server-client-boundary.md 参照）。
+  const result = await list{{Name}}s(Number(page))
+
+  return (
+    <main>
+      <h1>{{Name}} List</h1>
+      <Suspense fallback={<p>Loading…</p>}>
+        <{{Name}}Table items={result.success ? (result.data ?? []) : []} />
+      </Suspense>
+    </main>
+  )
+}

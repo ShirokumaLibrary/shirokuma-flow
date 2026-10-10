@@ -1,0 +1,25 @@
+-- DB 初期化 SQL テンプレート
+-- 使用方法: ./db/init/001-schema.sql として展開する（compose が
+--   /docker-entrypoint-initdb.d に ro マウントし、ボリューム初回作成時のみ実行される）。
+--   複数ファイルはファイル名の辞書順に実行（001-, 002-, ... と番号を振る）。
+--
+-- 置換変数:
+--   {db-name}  - データベース名（compose の POSTGRES_DB と一致させる）
+--   {db-user}  - DB ユーザー名（compose の POSTGRES_USER と一致させる）
+--   {table}    - 最初のテーブル名 (例: tasks)
+--
+-- 注意: 既存ボリュームがあると再実行されない。スキーマを作り直すときは
+--   `docker compose down -v` でボリュームごと削除してから起動する。
+
+-- 実行コンテキストは POSTGRES_DB（= {db-name}）。スキーマをプロジェクトに合わせて書き換える。
+CREATE TABLE IF NOT EXISTS {table} (
+  id SERIAL PRIMARY KEY,
+  title TEXT NOT NULL,
+  status TEXT NOT NULL DEFAULT 'todo',
+  created_at TIMESTAMPTZ NOT NULL DEFAULT now(),
+  updated_at TIMESTAMPTZ NOT NULL DEFAULT now()
+);
+
+-- 追加 DB が必要な場合の例（test 用など・不要なら削除）:
+-- CREATE DATABASE {db-name}_test OWNER {db-user};
+-- GRANT ALL PRIVILEGES ON DATABASE {db-name}_test TO {db-user};

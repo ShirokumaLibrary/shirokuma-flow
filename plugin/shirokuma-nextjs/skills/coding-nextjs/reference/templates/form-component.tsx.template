@@ -1,0 +1,46 @@
+"use client"
+
+/**
+ * {{Name}} 作成フォーム（client component・境界の葉）。
+ *
+ * client にするのは state / event handler が要るこの部品だけ。
+ * 親（page / 上位レイアウト）は server component のまま保つ。
+ *
+ * @usedComponents SubmitButton
+ */
+// テンプレート変数: {{name}}=小文字単数形 / {{Name}}=PascalCase 単数形
+// - server action は import して form の action / submit ハンドラから呼ぶ。
+// - ローディング状態（isPending）とエラー表示を必ず付ける。
+
+import { useState, useTransition } from "react"
+
+import { create{{Name}} } from "@/lib/actions/{{name}}s"
+import { SubmitButton } from "@/components/submit-button"
+
+export function {{Name}}Form() {
+  const [isPending, startTransition] = useTransition()
+  const [error, setError] = useState<string | null>(null)
+
+  const handleSubmit = (e: React.FormEvent<HTMLFormElement>) => {
+    e.preventDefault()
+    setError(null)
+    const formData = new FormData(e.currentTarget)
+
+    startTransition(async () => {
+      const result = await create{{Name}}(formData)
+      if (!result.success) setError(result.error)
+      // 成功時の遷移は action 側の redirect、または router.push をここで行う
+    })
+  }
+
+  return (
+    <form onSubmit={handleSubmit}>
+      {error && <p role="alert">{error}</p>}
+      <label>
+        Name
+        <input name="name" required disabled={isPending} />
+      </label>
+      <SubmitButton isPending={isPending} />
+    </form>
+  )
+}

@@ -1,0 +1,346 @@
+# github-actions-cdk.yml.template
+# CDK deploy workflow with OIDC authentication
+#
+# Prerequisites:
+#   1. Create an IAM OIDC Identity Provider for GitHub Actions:
+#      - Provider URL: https://token.actions.githubusercontent.com
+#      - Audience: sts.amazonaws.com
+#
+#   2. Create an IAM Role with the following trust policy.
+#      The "sub" condition must list EVERY branch that assumes this role.
+#      This template assumes the role from both the mainline branch
+#      ({MAIN_BRANCH}: staging / prod) and the dev branch (dev environment),
+#      so enumerate both -- IAM condition values accept an array:
+#      {
+#        "Version": "2012-10-17",
+#        "Statement": [{
+#          "Effect": "Allow",
+#          "Principal": { "Federated": "arn:aws:iam::{ACCOUNT_ID}:oidc-provider/token.actions.githubusercontent.com" },
+#          "Action": "sts:AssumeRoleWithWebIdentity",
+#          "Condition": {
+#            "StringEquals": {
+#              "token.actions.githubusercontent.com:aud": "sts.amazonaws.com",
+#              "token.actions.githubusercontent.com:sub": [
+#                "repo:{ORG}/{REPO}:ref:refs/heads/{MAIN_BRANCH}",
+#                "repo:{ORG}/{REPO}:ref:refs/heads/{DEV_BRANCH}"
+#              ]
+#            }
+#          }
+#        }]
+#      }
+#
+#      Preferred, in this order:
+#        1. Use a SEPARATE role per environment (dev / staging / prod), each with
+#           a "sub" condition limited to the branch that deploys it. This keeps
+#           the production deploy role unreachable from the dev branch.
+#        2. If you use one shared role, enumerate the branches with StringEquals
+#           as shown above.
+#        3. NOT RECOMMENDED: a StringLike wildcard such as
+#           "repo:{ORG}/{REPO}:ref:refs/heads/*". This lets ANY branch in the
+#           repository assume the deploy role (anyone who can push a branch can
+#           reach production) and violates least privilege. Only consider it if
+#           the branch set is genuinely unbounded, and then scope the role's
+#           permissions down instead.
+#
+#   3. Attach AdministratorAccess or a scoped CDK deploy policy to the role.
+#      Minimal policy for CDK: cloudformation:*, iam:*, s3:*, ssm:GetParameter
+#
+#   4. Add the following GitHub Actions secrets / variables:
+#      - AWS_ACCOUNT_ID (secret or variable)
+#      - AWS_REGION (variable, required: the region you deploy to; there is no default)
+#      - CDK_DEPLOY_ROLE_ARN (secret: arn:aws:iam::{ACCOUNT_ID}:role/{ROLE_NAME})
+#
+# Placeholders (ALL must be replaced):
+#   - {ORG} / {REPO}: GitHub org and repository name (trust policy comment above)
+#   - {ACCOUNT_ID} / {ROLE_NAME}: AWS account id and IAM role name (comments above)
+#   - {MAIN_BRANCH}: the mainline branch name of THIS repository
+#       (main / master / develop / ...). Check with:
+#         gh repo view --json defaultBranchRef -q .defaultBranchRef.name
+#       It appears in three places that must all be replaced together:
+#         (a) the IAM trust policy "sub" condition above -- this is an AWS IAM
+#             string, GitHub Actions expressions are NOT evaluated there, so it
+#             must be a literal branch name after replacement;
+#         (b) on.push.branches / on.pull_request.branches below;
+#         (c) the `if:` conditions of deploy-staging / deploy-prod
+#             (refs/heads/{MAIN_BRANCH}).
+#   - {DEV_BRANCH}: the development branch that deploys to the dev environment
+#       (develop / dev / ...). It appears in the same three kinds of places:
+#       the trust policy "sub" list, on.*.branches, and the `if:` of the
+#       diff / deploy-dev jobs.
+#       ** It MUST differ from {MAIN_BRANCH}. If both are replaced with the same
+#          branch name, a single push to that branch satisfies the `if:` of
+#          deploy-dev AND deploy-staging AND deploy-prod at once, deploying all
+#          three environments -- including production.
+#       ** If you have no separate dev branch (single-branch repo), do NOT pick
+#          some other name: delete the dev path instead.
+#            1) remove the '{DEV_BRANCH}' entries from on.push.branches and
+#               on.pull_request.branches;
+#            2) delete the deploy-dev job (Job 2) entirely;
+#            3) drop `|| github.ref == 'refs/heads/{DEV_BRANCH}'` from the diff
+#               job's `if:` (it then runs on pull_request only);
+#            4) remove the {DEV_BRANCH} entry from the trust policy "sub" list
+#               above -- ALSO remove the trailing comma on the line before it,
+#               or collapse the array back to a single string. Deleting just the
+#               line leaves a dangling comma and the policy is invalid JSON,
+#               which AWS rejects;
+#            5) make sure no remaining `needs:` still points at deploy-dev;
+#            6) delete this {DEV_BRANCH} block from the header too. If you leave
+#               it, the "grep must return 0 matches" check below keeps matching
+#               {DEV_BRANCH} in these comments -- i.e. the people who followed
+#               this procedure correctly are exactly the ones the check fails.
+#
+# What actually happens if you leave a placeholder unreplaced (it differs per
+# placeholder -- do NOT assume "unreplaced" always means "silent"):
+#   - a branch-name placeholder in on.*.branches
+#       -> treated as a branch name that does not exist; the workflow is never
+#          triggered. Nothing goes red. This one is SILENT.
+#   - a branch-name placeholder in a job `if:`
+#       -> the condition is never true and the job is skipped. The check stays
+#          green. This one is SILENT too.
+#   - a branch-name placeholder, {ORG} or {REPO} in the IAM trust policy
+#       -> IF the workflow is triggered at all, AssumeRoleWithWebIdentity is
+#          denied and the job FAILS RED ("Not authorized to perform
+#          sts:AssumeRoleWithWebIdentity").
+#   - {ACCOUNT_ID} / {ROLE_NAME} in CDK_DEPLOY_ROLE_ARN
+#       -> IF the workflow is triggered at all, the ARN is malformed and
+#          configure-aws-credentials FAILS RED.
+#   => Note the precondition on both "FAILS RED" cases: the workflow has to be
+#      triggered first. In the most common failure (copy the file, replace
+#      nothing) on.*.branches is unreplaced too, so no event ever matches and
+#      the whole thing falls on the silent side before any red can appear.
+#      A green run does NOT prove the file is fully substituted, and a red run
+#      does NOT prove substitution is complete either.
+#   => The "FAILS RED" behaviour is inferred from how these actions handle bad
+#      input; it was NOT verified by running this workflow on GitHub Actions.
+#      After installing this file, land a change on the mainline branch (merge a
+#      PR) and confirm the deploy jobs actually produced a run.
+
+name: CDK Deploy
+
+on:
+  push:
+    branches:
+      - '{MAIN_BRANCH}'
+      - '{DEV_BRANCH}'
+    paths:
+      - 'infra/**'
+      - '.github/workflows/cdk-deploy.yml'
+  pull_request:
+    branches:
+      - '{MAIN_BRANCH}'
+      - '{DEV_BRANCH}'
+    paths:
+      - 'infra/**'
+      - '.github/workflows/cdk-deploy.yml'
+
+permissions:
+  id-token: write   # Required for OIDC token request
+  contents: read    # Required for checkout
+
+env:
+  AWS_REGION: ${{ vars.AWS_REGION }}  # No default region: an unset variable fails at credential setup
+  CDK_DIR: infra    # Change to your CDK project directory
+
+jobs:
+  # ============================================================
+  # Job 1: diff (runs on PR and on push to the dev branch)
+  # Shows what will change before actually deploying
+  # ============================================================
+  diff:
+    name: CDK Diff (${{ matrix.environment }})
+    runs-on: ubuntu-latest
+    if: github.event_name == 'pull_request' || github.ref == 'refs/heads/{DEV_BRANCH}'
+
+    strategy:
+      matrix:
+        environment: [dev]  # Add 'staging' if needed
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Configure AWS credentials (OIDC)
+        uses: aws-actions/configure-aws-credentials@v4
+        with:
+          role-to-assume: ${{ secrets.CDK_DEPLOY_ROLE_ARN }}
+          aws-region: ${{ env.AWS_REGION }}
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+          cache: 'npm'
+          cache-dependency-path: ${{ env.CDK_DIR }}/package-lock.json
+
+      - name: Install dependencies
+        working-directory: ${{ env.CDK_DIR }}
+        run: npm ci
+
+      - name: Type check
+        working-directory: ${{ env.CDK_DIR }}
+        run: npx tsc --noEmit
+
+      - name: CDK Diff
+        working-directory: ${{ env.CDK_DIR }}
+        run: |
+          npx cdk diff \
+            --context env=${{ matrix.environment }} \
+            --require-approval never \
+            2>&1 | tee /tmp/cdk-diff.txt
+
+      - name: Post diff to PR
+        if: github.event_name == 'pull_request'
+        uses: actions/github-script@v7
+        with:
+          script: |
+            const fs = require('fs');
+            const diff = fs.readFileSync('/tmp/cdk-diff.txt', 'utf8');
+            const body = `## CDK Diff (${{ matrix.environment }})\n\`\`\`\n${diff.slice(0, 60000)}\n\`\`\``;
+            await github.rest.issues.createComment({
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              issue_number: context.issue.number,
+              body,
+            });
+
+  # ============================================================
+  # Job 2: deploy-dev (runs on push to the dev branch {DEV_BRANCH})
+  # Delete this whole job if the repo has no separate dev branch (see header)
+  # ============================================================
+  deploy-dev:
+    name: Deploy to dev
+    runs-on: ubuntu-latest
+    needs: diff
+    if: github.ref == 'refs/heads/{DEV_BRANCH}' && github.event_name == 'push'
+    environment: dev
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Configure AWS credentials (OIDC)
+        uses: aws-actions/configure-aws-credentials@v4
+        with:
+          role-to-assume: ${{ secrets.CDK_DEPLOY_ROLE_ARN }}
+          aws-region: ${{ env.AWS_REGION }}
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+          cache: 'npm'
+          cache-dependency-path: ${{ env.CDK_DIR }}/package-lock.json
+
+      - name: Install dependencies
+        working-directory: ${{ env.CDK_DIR }}
+        run: npm ci
+
+      - name: CDK Deploy (dev)
+        working-directory: ${{ env.CDK_DIR }}
+        run: |
+          npx cdk deploy \
+            --all \
+            --context env=dev \
+            --require-approval never \
+            --outputs-file /tmp/cdk-outputs.json
+
+      - name: Upload CDK outputs
+        uses: actions/upload-artifact@v4
+        with:
+          name: cdk-outputs-dev
+          path: /tmp/cdk-outputs.json
+          retention-days: 7
+
+  # ============================================================
+  # Job 3: deploy-staging (runs on push to the mainline branch {MAIN_BRANCH}
+  # with staging gate)
+  # ============================================================
+  deploy-staging:
+    name: Deploy to staging
+    runs-on: ubuntu-latest
+    if: github.ref == 'refs/heads/{MAIN_BRANCH}' && github.event_name == 'push'
+    environment: staging  # Requires manual approval if configured in GitHub
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Configure AWS credentials (OIDC)
+        uses: aws-actions/configure-aws-credentials@v4
+        with:
+          role-to-assume: ${{ secrets.CDK_DEPLOY_ROLE_ARN }}
+          aws-region: ${{ env.AWS_REGION }}
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+          cache: 'npm'
+          cache-dependency-path: ${{ env.CDK_DIR }}/package-lock.json
+
+      - name: Install dependencies
+        working-directory: ${{ env.CDK_DIR }}
+        run: npm ci
+
+      - name: CDK Deploy (staging)
+        working-directory: ${{ env.CDK_DIR }}
+        run: |
+          npx cdk deploy \
+            --all \
+            --context env=staging \
+            --require-approval never \
+            --outputs-file /tmp/cdk-outputs-staging.json
+
+  # ============================================================
+  # Job 4: deploy-prod (runs after staging succeeds)
+  # ============================================================
+  deploy-prod:
+    name: Deploy to production
+    runs-on: ubuntu-latest
+    needs: deploy-staging
+    if: github.ref == 'refs/heads/{MAIN_BRANCH}' && github.event_name == 'push'
+    environment: production  # Requires manual approval in GitHub Environments
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Configure AWS credentials (OIDC)
+        uses: aws-actions/configure-aws-credentials@v4
+        with:
+          role-to-assume: ${{ secrets.CDK_DEPLOY_ROLE_ARN_PROD }}  # Separate prod role recommended
+          aws-region: ${{ env.AWS_REGION }}
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+          cache: 'npm'
+          cache-dependency-path: ${{ env.CDK_DIR }}/package-lock.json
+
+      - name: Install dependencies
+        working-directory: ${{ env.CDK_DIR }}
+        run: npm ci
+
+      - name: CDK Diff (final check before prod deploy)
+        working-directory: ${{ env.CDK_DIR }}
+        run: |
+          npx cdk diff \
+            --context env=prod \
+            --require-approval never
+
+      - name: CDK Deploy (prod)
+        working-directory: ${{ env.CDK_DIR }}
+        run: |
+          npx cdk deploy \
+            --all \
+            --context env=prod \
+            --require-approval never \
+            --outputs-file /tmp/cdk-outputs-prod.json
+
+      - name: Upload CDK outputs
+        uses: actions/upload-artifact@v4
+        with:
+          name: cdk-outputs-prod
+          path: /tmp/cdk-outputs-prod.json
+          retention-days: 30

@@ -1,0 +1,40 @@
+# Valkey service-fragment（AWS ElastiCache 相当のローカルキャッシュ／キュー）
+# base に -f で合成して使う。Redis 互換（valkey-cli / redis クライアントで接続）。
+# 使用方法:
+#   ./scripts/dev-up.sh "-f docker-compose.yml -f compose.valkey.yml"
+#
+# 置換変数:
+#   {project}   - プロジェクト名（base と一致させる）
+#
+# .env.example に置く項目:
+#   VALKEY_PORT=6379
+#
+# アプリ側: ホスト=valkey / ポート=6379（REDIS_URL=redis://valkey:6379）。
+#   本番 ElastiCache へは接続先ホストを env 切替。
+# compose-spec 準拠: `version:` キーは書かない。
+
+services:
+  valkey:
+    image: valkey/valkey:9-alpine   # バージョンピン（latest 禁止・メジャー固定）
+    container_name: {project}-valkey
+    restart: unless-stopped
+    command: ["valkey-server", "--save", "60", "1", "--appendonly", "no"]
+    ports:
+      - "127.0.0.1:${VALKEY_PORT:-6379}:6379"   # 競合時は .env でずらす
+    volumes:
+      - valkey-data:/data   # named volume（永続化が不要なら削除可）
+    healthcheck:
+      test: ["CMD", "valkey-cli", "ping"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+    networks:
+      - {project}-network
+
+volumes:
+  valkey-data:
+    name: {project}-valkey-data
+
+# ネットワークの top-level 宣言は base（docker-compose.yml）に任せ、fragment 側では宣言しない。
+# fragment 側で `external: true` 宣言するとマージで base を上書きし
+# ネットワーク事前作成が必須になる。宣言を省けば base が自動作成し合成 `up` がそのまま通る。

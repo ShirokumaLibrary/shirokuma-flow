@@ -1,0 +1,421 @@
+// web-rds-split-stack.ts.template
+// Web (cdk-nextjs) / Data (RDS) split-stack CDK template.
+// WebStack と DataStack を **別 CloudFormation スタック** に分離し、blast radius を抑える。
+// Web 側の `cdk destroy` / ロールバックが RDS（本番データ）へ波及しないようにする。
+// Replace {ProjectName} with your project name (PascalCase)
+// Replace {project-name} with your project name (kebab-case)
+//
+// 経路: cdk-nextjs をデプロイ先にする構成。本テンプレは cdk-nextjs（Next.js デプロイ既定）
+// + 分離 RDS を層で重ねる。cdk-nextjs の「コンテナフレーバー」（`Nextjs*Containers`。どの construct が
+// 該当するかは下記の節の表を見る）を選ぶ場合も cdk-nextjs の中の選択肢なので本テンプレのままでよい。
+//
+// 「汎用コンテナ経路」（cdk-nextjs を使わず ECS Fargate + ALB + VPC 3 分割で組む構成）の
+// 出発点は `stack-structure.ts.template`。**Next.js アプリでもこの経路を選べる**——
+// 分岐の軸はフレームワーク名ではなく「cdk-nextjs をデプロイ先にするか」。
+// 語の定義と互換契約の帰結は designing-aws の
+// `reference/patterns/nextjs-deploy.md`「2 つのコンテナ経路」節にある。
+//
+// ============================================================
+// 疎結合の原則（How）
+// ============================================================
+//
+// スタック間の受け渡しは **SSM Parameter Store / Secrets Manager の名前解決** で行い、
+// CFN export（`Fn.importValue` / `CfnOutput.exportName`）は使わない。
+//
+//   Why: CFN export は「参照している間は export 元のスタック更新/削除がロックされる」。
+//   Web 側を作り直す/壊すたびに Data 側がロックされ、独立ライフサイクルが壊れる。
+//   SSM/Secrets の名前解決はデプロイ時の動的参照で、この削除ロックが発生しない
+//   （＝Web を destroy しても Data スタックは無関係に存続できる）。
+//
+//   トレードオフ: 疎結合の代償として **デプロイ順の運用結合** が生じる。
+//   DataStack が先に deploy されて SSM/Secrets の名前が実在していないと、
+//   WebStack のデプロイ時解決が失敗する。デプロイ順は末尾「デプロイ順」を厳守する。
+
+import * as cdk from 'aws-cdk-lib';
+import * as ec2 from 'aws-cdk-lib/aws-ec2';
+import * as rds from 'aws-cdk-lib/aws-rds';
+import * as ssm from 'aws-cdk-lib/aws-ssm';
+import * as secretsmanager from 'aws-cdk-lib/aws-secretsmanager';
+import { Construct } from 'constructs';
+
+// ============================================================
+// Shared types
+// ============================================================
+
+type Environment = 'dev' | 'staging' | 'prod';
+
+interface BaseStackProps extends cdk.StackProps {
+  readonly environment: Environment;
+}
+
+// RDS 構築方式（エンジン × モード）。Props で 4 値から選べる。
+// 選定の目安: 読み取り負荷が高い／可変・断続負荷なら Aurora、予測可能・定常低負荷の
+// 小規模本番なら通常 RDS（シンプル・低額）。
+//   - aurora-*  : Aurora（Serverless v2）クラスター。可変・断続負荷／高可用に寄せられる。
+//   - rds-*     : 通常 RDS インスタンス。予測可能・定常低負荷の小規模本番でシンプル・低額。
+// 迷ったら `aurora-postgres`（既定の出発点・エンジン既定は PostgreSQL）。
+type DatabaseFlavor =
+  | 'aurora-postgres'
+  | 'aurora-mysql'
+  | 'rds-postgres'
+  | 'rds-mysql';
+
+// スタック間の名前解決キー（SSM Parameter / Secrets Manager 名）を一元管理する。
+// WebStack と DataStack が「同じ名前」を組み立てるための単一の真実。
+function dataParamNames(projectName: string, environment: Environment) {
+  const base = `/${projectName}/${environment}/data`;
+  return {
+    // SSM Parameter Store（接続情報・機微でない値）
+    dbEndpoint: `${base}/db-endpoint`,
+    dbPort: `${base}/db-port`,
+    vpcId: `${base}/vpc-id`,
+    dbSecurityGroupId: `${base}/db-security-group-id`,
+    // Secrets Manager（資格情報）
+    dbSecretName: `/${projectName}/${environment}/db-credentials`,
+  };
+}
+
+// エンジン既定ポート。
+function defaultPort(flavor: DatabaseFlavor): number {
+  return flavor.endsWith('postgres') ? 5432 : 3306;
+}
+
+// ============================================================
+// DataStack (RDS) — 低変更頻度・本番データ保護の中核
+// ============================================================
+//
+// 責務: VPC（低変更頻度のため Data 側に置く）・DB セキュリティグループ・
+//       RDS（Aurora クラスター or 通常インスタンス）・Secrets Manager 資格情報。
+//       接続情報を SSM / Secrets の「名前」で publish し、WebStack へ疎結合で渡す。
+//
+// 保護: prod は `deletionProtection: true` + `RemovalPolicy.RETAIN`。
+//       スタックを消しても DB は残す（誤削除・ロールバックからデータを守る）。
+
+export interface DataStackProps extends BaseStackProps {
+  readonly projectName: string;
+  // RDS 構築方式（エンジン × モード）。既定 `aurora-postgres`。
+  readonly databaseFlavor?: DatabaseFlavor;
+  readonly vpcCidr?: string;
+  readonly maxAzs?: number;
+  // Aurora Serverless v2 の ACU 範囲（aurora-* のときのみ有効）。
+  readonly serverlessV2MinCapacity?: number;
+  readonly serverlessV2MaxCapacity?: number;
+  // 通常 RDS インスタンスのインスタンスタイプ（rds-* のときのみ有効）。既定 t4g.micro/small。
+  readonly instanceType?: ec2.InstanceType;
+}
+
+export class DataStack extends cdk.Stack {
+  public readonly vpc: ec2.Vpc;
+  public readonly dbSecurityGroup: ec2.SecurityGroup;
+  public readonly dbSecret: rds.DatabaseSecret;
+
+  constructor(scope: Construct, id: string, props: DataStackProps) {
+    super(scope, id, props);
+
+    const isProd = props.environment === 'prod';
+    const flavor = props.databaseFlavor ?? 'aurora-postgres';
+    const port = defaultPort(flavor);
+    const names = dataParamNames(props.projectName, props.environment);
+
+    // --- VPC（Data 側に配置・低変更頻度）-----------------------------------
+    // DB は private isolated subnet に置く。
+    // cdk-nextjs の Lambda が RDS へ到達する必要がある場合のみ WebStack 側で
+    // この VPC に Lambda をアタッチする（VPC id は SSM で渡す）。
+    // NAT 要否・Interface エンドポイント要否は到達先サービスの VPC エンドポイント
+    // 種別で決まる:
+    //   - S3 / DynamoDB は Gateway 型エンドポイントで無料・NAT 不要。
+    //   - RDS へは同一 VPC 直結で到達でき NAT 不要。
+    //   - ただし VPC アタッチした Lambda が Secrets Manager から資格情報を引く場合、
+    //     Secrets Manager は **Interface 型 VPC エンドポイント（PrivateLink）** が要る
+    //     （時間課金 + データ処理料）。到達先のエンドポイント種別で設計する。
+    const maxAzs = props.maxAzs ?? (isProd ? 3 : 2);
+    this.vpc = new ec2.Vpc(this, 'Vpc', {
+      ipAddresses: ec2.IpAddresses.cidr(props.vpcCidr ?? '10.0.0.0/16'),
+      maxAzs,
+      subnetConfiguration: [
+        { cidrMask: 24, name: 'Public', subnetType: ec2.SubnetType.PUBLIC },
+        { cidrMask: 24, name: 'Private', subnetType: ec2.SubnetType.PRIVATE_WITH_EGRESS },
+        { cidrMask: 28, name: 'Isolated', subnetType: ec2.SubnetType.PRIVATE_ISOLATED },
+      ],
+      natGateways: isProd ? maxAzs : 1,
+    });
+
+    // --- DB セキュリティグループ ------------------------------------------
+    // WebStack 側の Lambda/ECS からの ingress は、WebStack で SSM 経由に解決した
+    // security group id / VPC id を使って自スタック側で addIngressRule する
+    // （疎結合を保つため DataStack はアプリ層 SG を知らない）。
+    this.dbSecurityGroup = new ec2.SecurityGroup(this, 'DbSg', {
+      vpc: this.vpc,
+      description: 'Security group for database tier',
+      allowAllOutbound: false,
+    });
+
+    // --- 資格情報（Secrets Manager）--------------------------------------
+    // 名前を固定し、WebStack は `fromSecretNameV2` で名前解決する（export 不使用）。
+    this.dbSecret = new rds.DatabaseSecret(this, 'DbSecret', {
+      username: 'admin',
+      secretName: names.dbSecretName,
+    });
+
+    // --- エンジン選択（4 値マトリクス）-----------------------------------
+    // 版照合（実装時に確認・experimental / 版依存）:
+    //   - `AuroraPostgresEngineVersion` / `AuroraMysqlEngineVersion` /
+    //     `PostgresEngineVersion` / `MysqlEngineVersion` の該当 enum 実在を
+    //     ピン版の型定義（`node_modules/aws-cdk-lib`）で照合する。
+    //   - Aurora Serverless v2 の `serverlessV2MinCapacity` 0 許容（アイドル時に
+    //     ACU 0 へ縮小）は cdk / エンジン版依存。ピン版で 0 許容を照合する。
+    //   - 下記の `.of(...)` によるバージョン明示は enum 未追加バージョンへの暫定策。
+    //     enum が実在するなら enum を使う。
+
+    // 名前解決で publish する接続情報（endpoint / port）。
+    let dbEndpoint: string;
+
+    const credentials = rds.Credentials.fromSecret(this.dbSecret);
+    const isAurora = flavor.startsWith('aurora-');
+    const isPostgres = flavor.endsWith('postgres');
+
+    if (isAurora) {
+      // --- Aurora Serverless v2 クラスター --------------------------------
+      const engine = isPostgres
+        ? rds.DatabaseClusterEngine.auroraPostgres({
+            // 版照合: enum 追加後は `AuroraPostgresEngineVersion.VER_x_y` へ差し替え。
+            version: rds.AuroraPostgresEngineVersion.of('16.4', '16'),
+          })
+        : rds.DatabaseClusterEngine.auroraMysql({
+            version: rds.AuroraMysqlEngineVersion.of('8.0.mysql_aurora.3.08.0', '8.0'),
+          });
+
+      const cluster = new rds.DatabaseCluster(this, 'DbCluster', {
+        engine,
+        credentials,
+        vpc: this.vpc,
+        vpcSubnets: { subnetType: ec2.SubnetType.PRIVATE_ISOLATED },
+        securityGroups: [this.dbSecurityGroup],
+        port,
+        deletionProtection: isProd,
+        removalPolicy: isProd ? cdk.RemovalPolicy.RETAIN : cdk.RemovalPolicy.DESTROY,
+        // ACU 最小運用。min 0 許容は版依存（上記版照合）。
+        serverlessV2MinCapacity: props.serverlessV2MinCapacity ?? 0.5,
+        serverlessV2MaxCapacity: props.serverlessV2MaxCapacity ?? (isProd ? 16 : 4),
+        writer: rds.ClusterInstance.serverlessV2('Writer'),
+        // 高可用・読み取りスケールが要る本番は reader を足す。
+        readers: isProd
+          ? [rds.ClusterInstance.serverlessV2('Reader', { scaleWithWriter: true })]
+          : [],
+        backup: { retention: isProd ? cdk.Duration.days(35) : cdk.Duration.days(7) },
+      });
+      dbEndpoint = cluster.clusterEndpoint.hostname;
+    } else {
+      // --- 通常 RDS インスタンス ------------------------------------------
+      // 予測可能・定常低負荷の小規模本番。
+      const engine = isPostgres
+        ? rds.DatabaseInstanceEngine.postgres({
+            version: rds.PostgresEngineVersion.of('16.4', '16'),
+          })
+        : rds.DatabaseInstanceEngine.mysql({
+            version: rds.MysqlEngineVersion.of('8.0.39', '8.0'),
+          });
+
+      const instance = new rds.DatabaseInstance(this, 'DbInstance', {
+        engine,
+        credentials,
+        vpc: this.vpc,
+        vpcSubnets: { subnetType: ec2.SubnetType.PRIVATE_ISOLATED },
+        securityGroups: [this.dbSecurityGroup],
+        port,
+        // 既定は t4g.micro（本番小規模は t4g.small へ）。
+        instanceType:
+          props.instanceType ??
+          ec2.InstanceType.of(
+            ec2.InstanceClass.T4G,
+            isProd ? ec2.InstanceSize.SMALL : ec2.InstanceSize.MICRO,
+          ),
+        multiAz: isProd,
+        deletionProtection: isProd,
+        removalPolicy: isProd ? cdk.RemovalPolicy.RETAIN : cdk.RemovalPolicy.DESTROY,
+        backupRetention: isProd ? cdk.Duration.days(35) : cdk.Duration.days(7),
+        storageEncrypted: true,
+      });
+      dbEndpoint = instance.dbInstanceEndpointAddress;
+    }
+
+    // --- 名前解決の publish（SSM Parameter Store）------------------------
+    // CFN export ではなく SSM に「名前」で書き出す。WebStack は同じ名前で読む。
+    // これにより export 削除ロックが発生せず、Web/Data のライフサイクルが独立する。
+    new ssm.StringParameter(this, 'DbEndpointParam', {
+      parameterName: names.dbEndpoint,
+      stringValue: dbEndpoint,
+    });
+    new ssm.StringParameter(this, 'DbPortParam', {
+      parameterName: names.dbPort,
+      stringValue: String(port),
+    });
+    new ssm.StringParameter(this, 'VpcIdParam', {
+      parameterName: names.vpcId,
+      stringValue: this.vpc.vpcId,
+    });
+    new ssm.StringParameter(this, 'DbSgIdParam', {
+      parameterName: names.dbSecurityGroupId,
+      stringValue: this.dbSecurityGroup.securityGroupId,
+    });
+    // 資格情報は Secrets Manager の「名前」でそのまま解決させる（SSM には書かない）。
+  }
+}
+
+// ============================================================
+// WebStack (cdk-nextjs) — Next.js デプロイ層
+// ============================================================
+//
+// 責務: cdk-nextjs construct（既定 `NextjsGlobalFunctions` = CloudFront + Lambda +
+//       S3 + S3/DynamoDB キャッシュ層）で Next.js をデプロイする。
+//       DB 接続情報は DataStack が publish した SSM / Secrets の **名前解決** で受け取る
+//       （`Fn.importValue` は使わない＝削除ロック回避）。
+//
+// 注意（本テンプレでの扱い）:
+//   cdk-nextjs は experimental v0.x。実 prop 名（`buildDirectory` 等）・construct 名・
+//   `overrides` の構造はピン版の型定義（`node_modules/cdk-nextjs`）を正として照合する
+//   （どの construct があるかは `nextjs-deploy.md` の「4 アーキテクチャ construct の選定マトリクス」を見る）
+//   （実照合は実装時〔coding-cdk〕に、実 prop 名・overrides 構造をピン版の型定義と突き合わせる）。
+//   本テンプレの WebStack は
+//   「cdk-nextjs construct を使う想定」の骨子と、DataStack との疎結合配線に注力する。
+
+export interface WebStackProps extends BaseStackProps {
+  readonly projectName: string;
+  readonly databaseFlavor?: DatabaseFlavor;
+  // Lambda を DataStack の VPC にアタッチして RDS へ到達させるか。
+  // 注意: 本基本形テンプレは VPC アタッチの **配線そのものは提供しない**
+  // （下記 WebStack の「Lambda VPC アタッチ（本テンプレの射程外）」節参照）。
+  // 到達が必要な場合はその節の拡張手順に従って実装する。
+  // 到達不要なら false のまま＝VPC/NAT 不要の最小構成。
+  readonly attachToDataVpc?: boolean;
+}
+
+export class WebStack extends cdk.Stack {
+  constructor(scope: Construct, id: string, props: WebStackProps) {
+    super(scope, id, props);
+
+    const names = dataParamNames(props.projectName, props.environment);
+
+    // --- DataStack の出力を名前解決で受け取る（疎結合・export 不使用）--------
+    // ssm.StringParameter.valueForStringParameter はデプロイ時に SSM を動的参照する
+    // （CFN import ではないため export 削除ロックが発生しない）。
+    // 前提: DataStack が先に deploy 済みで、これらの名前が実在すること（末尾デプロイ順）。
+    const dbEndpoint = ssm.StringParameter.valueForStringParameter(this, names.dbEndpoint);
+    const dbPort = ssm.StringParameter.valueForStringParameter(this, names.dbPort);
+    const dataVpcId = ssm.StringParameter.valueForStringParameter(this, names.vpcId);
+    const dbSecurityGroupId = ssm.StringParameter.valueForStringParameter(
+      this,
+      names.dbSecurityGroupId,
+    );
+
+    // 資格情報は Secrets Manager の「名前」から解決する（ARN の CFN export 不要）。
+    const dbSecret = secretsmanager.Secret.fromSecretNameV2(
+      this,
+      'DbSecret',
+      names.dbSecretName,
+    );
+
+    // --- cdk-nextjs construct（骨子）-------------------------------------
+    // 実 prop 名・overrides はピン版で照合（実装時・coding-cdk）。以下は配線の意図を示す骨子。
+    //
+    // import { NextjsGlobalFunctions } from 'cdk-nextjs';
+    //
+    // new NextjsGlobalFunctions(this, 'Site', {
+    //   // buildDirectory: 実 prop 名はピン版の型定義で照合する。
+    //   nextjsPath: '.',
+    //   environment: {
+    //     DATABASE_HOST: dbEndpoint,
+    //     DATABASE_PORT: dbPort,
+    //     // 資格情報は Secrets Manager 参照を Lambda 環境へ注入（値は実行時解決）。
+    //     DATABASE_SECRET_ARN: dbSecret.secretArn,
+    //   },
+    //   // overrides: { ... } // 構造はピン版の型定義で照合する。
+    // });
+
+    // --- Lambda VPC アタッチ（本テンプレの射程外・別途検討）------------------
+    // この基本形テンプレは「RDS を別スタックへ分離し、接続情報（endpoint / port /
+    // secret / security-group-id）を SSM/Secrets の名前解決で疎結合に渡す」ことに
+    // 焦点を絞る。Lambda を DataStack の VPC にアタッチして RDS へ到達させる配線は、
+    // 以下の理由で **本テンプレでは提供しない**（`attachToDataVpc` は将来拡張のための
+    // トグルであり、配線は下記手順で各自が足す前提）。
+    //
+    //   1. VPC の import には vpc-id だけでは足りない。CDK で既存 VPC を取り込むには
+    //      `ec2.Vpc.fromLookup` か `ec2.Vpc.fromVpcAttributes` を使うが:
+    //        - `fromLookup` は **具体値（非トークン）** の vpcId しか受け付けない。
+    //          本テンプレは SSM 名前解決（`valueForStringParameter`）で vpcId を
+    //          デプロイ時トークンとして受け取るため、`fromLookup(this, 'DataVpc',
+    //          { vpcId: dataVpcId })` は synth 時に `All arguments to
+    //          Vpc.fromLookup() must be concrete (no Tokens)` で必ず失敗する
+    //          （＝本テンプレの「CFN export 不使用・SSM 名前解決」設計と根本的に非互換）。
+    //        - トークン安全なのは `fromVpcAttributes` だが、vpcId に加えて
+    //          `availabilityZones` と（アタッチ先の）subnet id 群が要る。DataStack は
+    //          現状 vpc-id しか publish していないため、そのままでは import できない。
+    //
+    //   2. アタッチ自体に NAT / Interface エンドポイントのトレードオフが伴う
+    //      （到達先が Gateway 型で無料か Interface 型で課金かを見極める）。この判断は
+    //      接続情報の疎結合配線とは別レイヤの設計。
+    //
+    // 実際に Lambda を VPC アタッチする場合の拡張手順（本テンプレ外・要 fromVpcAttributes）:
+    //   a. `dataParamNames` にアタッチ先 private subnet id 群のキー
+    //      （例 `dbAttachSubnetIds`）を足し、DataStack 側で該当 subnet の id を
+    //      `ssm.StringListParameter` として publish する。
+    //   b. WebStack で `ec2.Vpc.fromVpcAttributes(this, 'DataVpc', {
+    //        vpcId: dataVpcId,
+    //        // 同一 account/region のスタック AZ を使う。SSM からトークンで読むと
+    //        // fromVpcAttributes の AZ 検証（非トークン必須）に通らないため。
+    //        availabilityZones: this.availabilityZones,
+    //        privateSubnetIds: <a. の SSM StringList を解決した id 群>,
+    //      })` で import し、cdk-nextjs の overrides から Lambda へ渡す。
+    //   c. 解決した dbSecurityGroupId 宛ての ingress を DataStack 側 SG に足す
+    //      （疎結合のため相互の SG 直接参照は避け、id ベースで解決）。
+
+    // 参照が未使用にならないよう明示（骨子段階の lint 回避・実装時は construct へ渡す）。
+    void dbEndpoint;
+    void dbPort;
+    void dataVpcId;
+    void dbSecurityGroupId;
+    void dbSecret;
+    void props.attachToDataVpc;
+  }
+}
+
+// ============================================================
+// bin/app.ts entry point — デプロイ順（DataStack 先行が必須）
+// ============================================================
+//
+// SSM / Secrets の名前解決（疎結合）は「名前が実在してから」解決する。
+// したがって **DataStack を先に deploy** し、SSM Parameter / Secret を作ってから
+// WebStack を deploy する。CFN export を使わないぶん、順序は運用で保証する。
+//
+//   1. cdk deploy {ProjectName}-Data-<env>   # 先行：VPC + RDS + SSM/Secrets を作成
+//   2. cdk deploy {ProjectName}-Web-<env>    # 後続：SSM/Secrets を名前解決して配線
+//
+// `--all` で一括 deploy する場合も、CDK は下記 `addDependency` で **DataStack →
+// WebStack の順** に並べる（export 依存ではなく明示依存で順序のみ担保）。
+// 破棄は逆順（Web を先に destroy）。prod の DataStack は deletionProtection +
+// RemovalPolicy.RETAIN のため、意図的な手順を踏まない限り DB は消えない。
+//
+// const app = new cdk.App();
+// const env = (app.node.tryGetContext('env') as Environment) ?? 'dev';
+// const awsEnv = {
+//   account: process.env.CDK_DEFAULT_ACCOUNT,
+//   region: process.env.CDK_DEFAULT_REGION, // 既定のリージョンを持たない（CDK の解決に任せる）
+// };
+//
+// const dataStack = new DataStack(app, `{ProjectName}-Data-${env}`, {
+//   env: awsEnv,
+//   environment: env,
+//   projectName: '{project-name}',
+//   databaseFlavor: 'aurora-postgres', // aurora-postgres | aurora-mysql | rds-postgres | rds-mysql
+// });
+//
+// const webStack = new WebStack(app, `{ProjectName}-Web-${env}`, {
+//   env: awsEnv,
+//   environment: env,
+//   projectName: '{project-name}',
+//   databaseFlavor: 'aurora-postgres',
+//   attachToDataVpc: false, // RDS へ到達するなら true（VPC アタッチ・NAT トレードオフ参照）
+// });
+//
+// // export/import ではなく明示依存で「順序のみ」を担保（削除ロックは発生しない）。
+// webStack.addDependency(dataStack);

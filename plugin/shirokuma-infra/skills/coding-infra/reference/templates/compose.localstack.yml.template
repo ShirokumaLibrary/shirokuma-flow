@@ -1,0 +1,57 @@
+# LocalStack service-fragment（S3 / SQS / SNS / Secrets Manager のエミュレーション）
+# base（docker-compose.dev.yml.template を展開した docker-compose.yml）に -f で合成して使う。
+# 使用方法:
+#   ./scripts/dev-up.sh "-f docker-compose.yml -f compose.localstack.yml"
+#   docker compose -f docker-compose.yml -f compose.localstack.yml up -d
+#
+# 置換変数:
+#   {project}   - プロジェクト名（base と一致させる。コンテナ・ボリューム名のプレフィックス）
+#
+# .env.example に置く項目:
+#   LOCALSTACK_PORT=4566
+#   AWS_DEFAULT_REGION=us-east-1
+#
+# init スクリプトは ./scripts/localstack/init/ に NN-*.sh で置く（localstack-init.sh.template 参照）。
+# compose-spec 準拠: `version:` キーは書かない。
+
+services:
+  localstack:
+    image: localstack/localstack:4   # バージョンピン（latest 禁止・メジャー固定）
+    container_name: {project}-localstack
+    restart: unless-stopped
+    environment:
+      # Secrets Manager（secretsmanager）を既定に含める。
+      # ses は localstack-init.sh.template の SES verify 実例が使う（メール送信本体は mailpit 断片だが、
+      # SES の identity 検証だけ localstack で行う構成のため ses も既定で有効化）。不要なら削る。
+      # lambda は既定 SERVICES に含まない（ARM64 ホストでは追加設定が要る）。
+      # 汎用 Lambda 関数（API Gateway 統合等）を試すときだけ `LOCALSTACK_SERVICES=lambda,s3,...` で足し、
+      # ARM64 ホストでは関数作成時に `--architectures arm64` を明示する（省略すると x86_64 前提のイメージが
+      # 使われ `exec format error` で起動タイムアウトする）。
+      # Next.js アプリ（cdk-nextjs の Lambda Web Adapter 方式）はこのエミュレーション自体が不要
+      # → designing-aws/reference/patterns/nextjs-deploy.md 参照。
+      - SERVICES=${LOCALSTACK_SERVICES:-s3,sqs,sns,secretsmanager,ses}
+      - AWS_DEFAULT_REGION=${AWS_DEFAULT_REGION:-us-east-1}
+      - LOCALSTACK_AUTH_TOKEN=${LOCALSTACK_AUTH_TOKEN:-}   # Pro 版のみ
+    ports:
+      - "127.0.0.1:${LOCALSTACK_PORT:-4566}:4566"      # 統合エンドポイント。競合時は .env でずらす
+    volumes:
+      - localstack-data:/var/lib/localstack
+      - ./scripts/localstack/init:/etc/localstack/init/ready.d:ro   # 起動後に自動実行（ready.d）
+      - /var/run/docker.sock:/var/run/docker.sock                  # 一部サービスで必要
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:4566/_localstack/health"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+    networks:
+      - {project}-network
+
+volumes:
+  localstack-data:
+    name: {project}-localstack-data
+
+# ネットワークの top-level 宣言は base（docker-compose.yml）に任せ、fragment 側では宣言しない。
+# fragment 側に `networks: {project}-network: external: true` を置くと
+# マージで base の宣言を上書きしネットワークが事前作成必須になる（`up` が "declared as external,
+# but could not be found" で失敗）。宣言を省けば base が name=`{project}-network` を自動作成し、
+# 事前 `docker network create` 不要で合成 `up` が通る。service の `networks:` 参照だけ残す。

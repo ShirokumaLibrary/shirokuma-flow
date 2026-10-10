@@ -1,0 +1,78 @@
+# dev 環境 docker-compose テンプレート（db + app の最小 2 サービス）
+# 使用方法: プロジェクトルート（または infra/ 配下）に docker-compose.yml として展開して編集する。
+#   サービスを足すときは reference/patterns/docker-compose.md（部品カタログ）と
+#   reference/templates/docker-compose-service.yml.template（サービス 1 個の雛形）を参照。
+#
+# 置換変数:
+#   {project}   - プロジェクト名 (例: myapp)。コンテナ・ボリューム・ネットワーク名の
+#                 プレフィックスに使う（reference/patterns/infra-conventions.md のプロジェクト名プレフィックス命名）
+#   {db-name}   - データベース名 (例: myapp)
+#   {db-user}   - DB ユーザー名 (例: app)
+#
+# .env.example に置く項目（このファイルが参照する環境変数・ファイルは増やさずここで提示）:
+#   DB_PORT=5432
+#   DB_PASSWORD=localdev
+#   APP_PORT=3000
+#
+# compose-spec 準拠: `version:` キーは書かない（v3.8+ で非推奨）
+
+services:
+  db:
+    image: postgres:18-alpine        # バージョンピン（latest 禁止・メジャー固定）
+    # ⚠ バージョンピンとマウント先は連動する。postgres 18 は PGDATA が
+    #   /var/lib/postgresql/18/docker へ移ったため、単一マウント先は /var/lib/postgresql。
+    #   17 のマウント先（/var/lib/postgresql/data）へ挿すと新規ボリュームでも起動しない
+    #   （上流エントリポイントのガードで Exited (1)・docker-library/postgres#1259）。
+    #   メジャーを上げるときは image と volumes: を必ず対で見直す（17→18 で実際に動いた。19 以降がどうなるかは
+    #   測っていないので、上げる人が実物の PGDATA を確かめること）。
+    #   ⚠ 既に旧マウント先（PGDATA が /var/lib/postgresql/data の版。17 で実測）で稼働している volume を、そのまま 18 の新マウント先へ当て替えても起動しない
+    #     （上流ガードが「there appears to be PostgreSQL data in: /var/lib/postgresql」で Exited (1)）。
+    #     データは消えないし空のクラスタも作られない——倒れる向きは fail-closed。移行は旧イメージで
+    #     起動して pg_dump で吸い出し、新構成へ restore する。
+    container_name: {project}-db
+    restart: unless-stopped
+    environment:
+      - POSTGRES_DB={db-name}
+      - POSTGRES_USER={db-user}
+      - POSTGRES_PASSWORD=${DB_PASSWORD:-localdev}
+    ports:
+      - "127.0.0.1:${DB_PORT:-5432}:5432"      # 競合時は .env の DB_PORT でずらす
+    volumes:
+      - db-data:/var/lib/postgresql                # named volume（データ永続化）。18 の単一マウント先（上記コメント）
+      - ./db/init:/docker-entrypoint-initdb.d:ro   # 初期化 SQL（db-init.sql.template を 001-schema.sql 等で配置）
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U {db-user} -d {db-name}"]
+      interval: 5s
+      timeout: 5s
+      retries: 10
+    networks:
+      - {project}-network
+
+  # app をホスト実行（db だけコンテナ）にする構成も可。その場合このサービスを削除し、
+  # ホスト側の DATABASE_URL を postgresql://{db-user}:<password>@localhost:${DB_PORT:-5432}/{db-name} にする。
+  app:
+    build:
+      context: .
+      target: dev                    # マルチステージ Dockerfile の dev ステージ（reference/patterns/dockerfile.md）
+    container_name: {project}-app
+    restart: unless-stopped
+    environment:
+      - DATABASE_URL=postgresql://{db-user}:${DB_PASSWORD:-localdev}@db:5432/{db-name}
+    ports:
+      - "${APP_PORT:-3000}:3000"
+    volumes:
+      - .:/app                       # ホットリロード用バインドマウント
+      - /app/node_modules            # ホストの node_modules で上書きしない
+    depends_on:
+      db:
+        condition: service_healthy   # healthcheck green を待ってから起動
+    networks:
+      - {project}-network
+
+volumes:
+  db-data:
+    name: {project}-db-data
+
+networks:
+  {project}-network:
+    name: {project}-network

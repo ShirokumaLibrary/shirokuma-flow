@@ -1,0 +1,20 @@
+{
+  "name": "shirokuma-infra",
+  "description": "ローカル開発インフラ（docker-compose・スクリプト）/ AWS / CDK / CI-CD 運用スキル。コア shirokuma-flow の opt-in フレームワーク拡張。",
+  "version": "0.16.0",
+  "author": {
+    "name": "ShirokumaLibrary"
+  },
+  "homepage": "https://github.com/ShirokumaLibrary/shirokuma-flow",
+  "repository": "https://github.com/ShirokumaLibrary/shirokuma-flow",
+  "keywords": [
+    "claude-code",
+    "skills",
+    "infra",
+    "docker-compose",
+    "aws",
+    "cdk",
+    "cicd"
+  ],
+  "license": "Apache-2.0"
+}
