@@ -27,7 +27,6 @@ UI の視覚確認が要るときは、`shirokuma-flow nextjs screenshots` で**
 2. 稼働中の Next.js アプリに対し、各エントリで: `browser_resize`（viewport があれば）→ `browser_navigate <route>` →（waitFor があれば）`browser_wait_for` → `browser_take_screenshot`。`auth: required` は認証セッションを用意してから撮る。
 3. 撮った画像をレビュー所見の根拠にする（必要なら確認ビュー HTML に貼る）。
 
-- **NG**: Playwright を `@shirokuma-library/nextjs` に bundle しない（MCP/tool 駆動が方針）。
 - **headless CI では MCP セッションが無く撮れない** → 撮影は MCP が使えるセッションで行う。
 - セットアップは opt-in: 導入先の `.mcp.json` に `@playwright/mcp` を MCP サーバーとして足し、ブラウザを導入する。設定の書式と導入コマンドは `@playwright/mcp` の README に従う。
 

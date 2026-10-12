@@ -77,6 +77,7 @@ CDK コンストラクト設計完了。次のステップ:
 
 ## 注意事項
 
+- 横断の決定を ADR に切り出したら、その What の着地は `docs-placement` 第 1 節の基準で判定し、カテゴリは `shirokuma-flow gate vocab --field adr-landing-category` から選ぶ（領域固有のカテゴリは無い）。
 - **実装コードを生成しない** — 設計ドキュメントのみを出力。コード実装は `coding-cdk` の責務
 - **AWS リソース選定には踏み込まない** — リソース種別の選択が必要な場合は `designing-aws` に委任
 - CDK v2 (`aws-cdk-lib`) を前提とする。v1 の場合は個別パッケージ名に注意

@@ -75,6 +75,7 @@ find . -name "Dockerfile*" | head -10
 
 ## 注意事項
 
+- 横断の決定を ADR に切り出したら、その What の着地は `docs-placement` 第 1 節の基準で判定し、カテゴリは `shirokuma-flow gate vocab --field adr-landing-category` から選ぶ（領域固有のカテゴリは無い）。
 - **実装ファイルを生成しない** — 設計ドキュメントのみを出力。docker-compose.yml 等の実装は `coding-infra` の責務
 - **AWS 本番設計には踏み込まない** — ローカル↔本番マッピングが必要な場合は `designing-aws` に委任
 - ローカル開発環境はポート競合が起きやすい。既存ポート割り当てを確認してから設計する

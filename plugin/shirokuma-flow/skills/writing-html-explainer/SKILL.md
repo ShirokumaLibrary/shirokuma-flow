@@ -153,7 +153,7 @@ SVG 推奨カラーペア（fill / stroke / text・いずれもダーク対応�
 1. **category / topic / タイトル / 親ページ**を確定（不明なら確認）。
 2. **生成**: §「生成（主経路・配布物だけで完結する）」の 1〜5。
 3. `.shirokuma/pages/{category}/{topic}/index.html` の `<main>` を埋める。各 `<h2>` に `id` を付ける（deep link 用）。
-4. SVG を入れたら**ダーク対応を機械検証**（`.shirokuma/pages/` を cwd にして実行）:
+4. SVG を入れたら**ダーク対応を自己検査する**（書いた本人がスクリプトで確かめる・`.shirokuma/pages/` を cwd にして実行）:
    ```bash
    for c in $(grep -oE '(fill|stroke)="#[0-9A-Fa-f]{3,6}"' {category}/{topic}/index.html \
                | grep -oE '#[0-9A-Fa-f]{3,6}' | sort -u); do
