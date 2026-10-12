@@ -26,8 +26,8 @@ SHIROKUMA_CLI_BASE=gh:ShirokumaLibrary/shirokuma-flow/cli bash -- "$d/install-cl
 shirokuma-flow --version
 ```
 
-`SHIROKUMA_CLI_BASE=gh:ShirokumaLibrary/shirokuma-flow/cli` は**必ず付ける**。同梱した `install-cli.sh` が内蔵する既定は
-正式公開先を指すので、指定しないとこの repo ではなくそちらから取りに行く。
+`SHIROKUMA_CLI_BASE=gh:ShirokumaLibrary/shirokuma-flow/cli` は**必ず付ける**。同梱した `install-cli.sh` は
+内蔵する既定の配信元から取りに行き、その既定はこの repo と同じとは限らない。
 
 ## プラグイン
 

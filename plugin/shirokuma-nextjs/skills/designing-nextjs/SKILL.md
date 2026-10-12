@@ -15,7 +15,7 @@ model: opus
 4. **アノテーション方針**: 各 `page.tsx` に `@screen <Name>`、コンポーネントに `@usedComponents` を付け、`shirokuma-flow nextjs feature-map` で画面↔部品を可視化できるようにする。
 
 ## 出力
-設計案（What）は HTML 可視化（writing-html-explainer）してから人に確認。状態遷移は design-flow の flow verb。
+設計案（What）は HTML 可視化（writing-html-explainer）してから人に確認。状態遷移は design-flow の flow verb。横断の決定を ADR に切り出したら、その What の着地は `docs-placement` 第 1 節の基準で判定し、カテゴリは `shirokuma-flow gate vocab --field adr-landing-category` から選ぶ（領域固有のカテゴリは無い）。
 
 ## リファレンスドキュメント
 

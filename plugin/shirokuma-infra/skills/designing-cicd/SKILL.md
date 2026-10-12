@@ -77,6 +77,7 @@ CI/CD パイプライン設計完了。次のステップ:
 
 ## 注意事項
 
+- 横断の決定を ADR に切り出したら、その What の着地は `docs-placement` 第 1 節の基準で判定し、カテゴリは `shirokuma-flow gate vocab --field adr-landing-category` から選ぶ（領域固有のカテゴリは無い）。
 - **ワークフローファイルを生成しない** — 設計ドキュメントのみを出力。YAML 実装は `coding-cicd` の責務
 - **CDK デプロイ詳細には踏み込まない** — CDK コンストラクト設計が必要な場合は `designing-cdk` に委任
 - prod 環境への自動デプロイ（manual approval なし）は設計段階でユーザーに確認する

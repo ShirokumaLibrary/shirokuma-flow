@@ -27,7 +27,7 @@ export const s3Client = new S3Client({
 要点:
 - エンドポイント・クレデンシャルは `AWS_ENDPOINT_URL` 環境変数パターンで切り替える（コードに条件をハードコードしない）。
 - `forcePathStyle: true` は LocalStack で S3 を使う場合に必須。
-- リージョンは `process.env.AWS_REGION` から取得（ハードコードしない）。
+- リージョンは `process.env.AWS_REGION` から取得（ハードコードしない）。SDK v3 は `AWS_DEFAULT_REGION` を読まないので、`.env` には `AWS_REGION` を置く（`coding-infra` の LocalStack の `.env` の雛形は両方を置く）。
 
 ## サービス別実装パターン（SDK v3 コマンド）
 

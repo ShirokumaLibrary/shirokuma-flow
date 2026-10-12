@@ -164,7 +164,7 @@ import { S3Client } from "@aws-sdk/client-s3";
 const isLocal = process.env.NODE_ENV === "development";
 
 export const s3Client = new S3Client({
-  region: process.env.AWS_DEFAULT_REGION, // 既定のリージョンを持たない（ローカルは .env の値を使う）
+  region: process.env.AWS_REGION, // 既定のリージョンを持たない（ローカルは .env の値を使う。SDK v3 は AWS_DEFAULT_REGION を読まない）
   ...(isLocal && {
     endpoint: process.env.AWS_ENDPOINT_URL ?? "http://localhost:4566",
     forcePathStyle: true,  // LocalStack S3 に必要
@@ -184,11 +184,13 @@ AWS_ENDPOINT_URL=http://localhost:4566
 AWS_ACCESS_KEY_ID=test
 AWS_SECRET_ACCESS_KEY=test
 AWS_DEFAULT_REGION=us-east-1
+AWS_REGION=us-east-1
 ```
 
 ```dotenv
 # .env.production（本番 — エンドポイント上書きなし）
 AWS_DEFAULT_REGION={region}
+AWS_REGION={region}
 # 認証情報は IAM Role / ECS Task Role で注入
 ```
 
@@ -197,7 +199,7 @@ AWS_DEFAULT_REGION={region}
 ```typescript
 // AWS_ENDPOINT_URL が設定されていれば自動的に使用される
 const client = new S3Client({
-  region: process.env.AWS_DEFAULT_REGION,
+  region: process.env.AWS_REGION,
   // SDK v3.x は AWS_ENDPOINT_URL 環境変数を自動認識
 });
 ```

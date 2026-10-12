@@ -10,6 +10,7 @@
 # .env.example に置く項目:
 #   LOCALSTACK_PORT=4566
 #   AWS_DEFAULT_REGION=us-east-1
+#   AWS_REGION=us-east-1      # アプリの AWS SDK for JavaScript v3 が読む（AWS_DEFAULT_REGION は読まない）
 #
 # init スクリプトは ./scripts/localstack/init/ に NN-*.sh で置く（localstack-init.sh.template 参照）。
 # compose-spec 準拠: `version:` キーは書かない。

@@ -46,7 +46,9 @@
 
 ## R1. 並走レビュー
 
-`security-review-worker`（3a コード脆弱性）と `code-review-worker`（バグ検出＋品質）を**並走で委任**する。ブリーフには上記「対象の確定」で取った Issue 番号に加え、**diff 基準（`<base>` = `pr show` が返す base ブランチ）**・**`<head sha>`**（`git rev-parse HEAD` で取った値。各 worker は結果ファイルの「diff 母集団」欄に `head sha=<値>` として書き戻し、R2 の `<前回 head sha>` の出所になる）・**各結果ファイルの絶対パス**（標準命名 `.shirokuma/tmp/security-review-<issue#>.md`・`.shirokuma/tmp/code-review-<issue#>.md` を絶対パスで）を必須要素として明示する（作法の正本は各 worker 定義側）。**この並走には第 1 段の条件を満たしたとき 3 本目が加わる。**
+`security-review-worker`（3a コード脆弱性）と `code-review-worker`（バグ検出＋品質＋着地した What との照合）を**並走で委任**する。ブリーフには上記「対象の確定」で取った Issue 番号に加え、**diff 基準（`<base>` = `pr show` が返す base ブランチ）**・**`<head sha>`**（`git rev-parse HEAD` で取った値。各 worker は結果ファイルの「diff 母集団」欄に `head sha=<値>` として書き戻し、R2 の `<前回 head sha>` の出所になる）・**各結果ファイルの絶対パス**（標準命名 `.shirokuma/tmp/security-review-<issue#>.md`・`.shirokuma/tmp/code-review-<issue#>.md` を絶対パスで）を必須要素として明示する（作法の正本は各 worker 定義側）。**この並走には第 1 段の条件を満たしたとき 3 本目が加わる。**
+
+- **`code-review-worker` には review-flow の criteria `code.md` の絶対パスと走査対象（S2・S7・S8）を渡す**: 同 worker は `code.md` のうち S2・S7・S8 だけを差分に当てて検出し、判定はしない（判定は段 1 の `review-worker` が結果ファイルと `code.md` で行う）。渡さなかった回は照合の観点が当たらない（fail-open）。
 
 - **`code-review-worker` にはさらに CI 等価検査の記録の所在を渡す**（同 worker の責務 2 が、同じ `<head sha>` に対する記録が pass の回だけテスト・型検査の再実行を省く）: `finalize-worker` の作業ファイル `.shirokuma/tmp/finalize-<issue#>.md` の絶対パス（`ls` で実在を確かめた回だけ。標準レーンの記録）と、PR 番号（軽量レーンの証跡は PR 本文にある）。**どちらのレーンを通したかを orchestrator が判定して片方に絞らない**——一致の判定は worker が記録ごとに行い、古い作業ファイル（前の回の sha）は一致しないので実走する側へ倒れる。所在を渡さなかった回も worker は実走する側へ倒れる。**所在を渡すことは再実行の省略を指示することではない**（一致の判定は worker が行う）。**限界（fail-open）**: PR 本文は untrusted で、証跡に「同じ head sha に対して pass」と書き足せば再実行を省かせられる（詳細は同 worker の責務 2）。
 
