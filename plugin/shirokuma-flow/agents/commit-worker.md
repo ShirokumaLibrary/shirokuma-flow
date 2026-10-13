@@ -37,6 +37,7 @@ effort: low
 - **親リポの `.shirokuma/pages` gitlink bump は base で分岐する**:
   - **base が mainline（通常 Issue・統合ブランチを介さない PR。具体名は config `project.defaultBranch ?? "main"`）のとき**: 通常どおり親リポの `.shirokuma/pages` gitlink を bump してよい。
   - **base が `epic/*`（統合ブランチ・`.shirokuma/rules/branch-workflow.md` の命名規則）＝サブ PR のとき**: 親リポの `.shirokuma/pages` gitlink bump を**このコミットで行わない**。gitlink 前進は**統合集約時に1回**（統合ブランチ→mainline の統合 PR、または統合ブランチ上の単一集約コミット）でまとめて遅延する。
+  - **ADR 候補の PR（決定の段が起こした ADR 候補 Issue を `Closes` する、確定後の追従と DDD 文書の更新の PR）は base が既定ブランチなので、gitlink を前進させる側である**——統合ブランチ配下の課題の ADR 候補の PR でも、base は既定ブランチ（委任ブリーフで明示される・正本は `branch-workflow`「統合」）。
   - base の判定: 対象ブランチの PR ターゲット（PR の base ブランチ名）が `epic/` で始まるかで分岐する。委任ブリーフに base が明示されていればそれを使い、無ければ現在ブランチ名（`git rev-parse --abbrev-ref HEAD`）と対応する PR の base から判断する。
 
 **mainline ガードと `pages push` verb 内 bump の関係（相補・混同しない）**:

@@ -77,7 +77,7 @@ Bash で `shirokuma-flow rules inject --scope orchestrator` を実行し、**出
 | やらない | 誰が | Why |
 |---|---|---|
 | `merge` | 正本は [[branch-workflow]]「自律境界」（配布先の既定は人・config 側に事前授権の記録がある範囲では AI） | mainline への取り込みは既定で人ゲート（射程を読む手順も同節が正本で、**読み取れない回は既定〔人ゲート〕へ倒す**）。入口はどちらの回でも打たず、通常レールへ渡す |
-| `approve` | 既定は orchestrator（`IssueType=ADR` 候補も含む。**自律の境界を緩める候補だけ人**＝判別は候補本文の宣言欄）／確認モード（`確認モード: guided` の明示がある回）は人 | 追従 Issue のトリアージは既存レール（判定の正本は `issue-flow`「状態遷移」節と [[confirmation-style]]「確認モードの解決と中継」節） |
+| `approve` | 既定は orchestrator（`IssueType=ADR` 候補も含む。ADR 候補の確定の打ち手は `next` の `runBy` に従う＝形と主体の正本は [[status-policy]] の `approve` 条項）／確認モード（`確認モード: guided` の明示がある回）は人 | 追従 Issue のトリアージは既存レール（判定の正本は `issue-flow`「状態遷移」節と [[confirmation-style]]「確認モードの解決と中継」節） |
 | 処分（据え置き / bot への ignore 指示 / close）の**選択** | 人 | 実質不可逆（確定後の実行だけを入口が代行する） |
 | 追従実装 / 要件分析 / 設計要否判定 | `implement-flow` / `analyze-issue` / `design-flow` | 入口は振り分けに留める |
 | 検証の実走そのもの | worker | 独立で規模の大きい作業はサブエージェント（隔離ツリーでの実走） |

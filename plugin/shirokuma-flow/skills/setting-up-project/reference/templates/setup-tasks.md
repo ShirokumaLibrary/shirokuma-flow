@@ -22,7 +22,7 @@ kind 導出は GitHub の **IssueType** を主経路にする。`https://github.
 | `Research` | nature/継続 | 新規追加 | 調査（継続型・子全 Done でも親を自動 close しない） | GREEN |
 | `Evolution` | nature | 新規追加 | 既存機能の進化・改善 | BLUE |
 | `EPIC` | 構造/継続 | 新規追加 | 束ね親（継続型・子全 Done でも自動 close しない） | ORANGE |
-| `ADR` | 決定 | 新規追加 | ADR 候補 Issue（審議→approve で Discussion へ publish） | PURPLE |
+| `ADR` | 決定 | 新規追加 | ADR 候補 Issue（審議→approve で ADR 正本ファイルへ確定） | PURPLE |
 
 - **色の基準**（既定 3 型の色を軸に意味で揃える）: BLUE=価値を作る（Feature/Evolution）・RED=問題を直す（Bug）・YELLOW=実行作業（Task）・GRAY=保守雑務（Chore）・GREEN=知識を増やす（Docs/Research）・PURPLE=意思決定/役割文書（Plan/Design/ADR）・ORANGE=構造/束ね（EPIC）。
 - 既定の `Feature` / `Bug` / `Task` も**説明（Description）が空や不適切なら上表に合わせて調整**する（無い org なら追加）。
@@ -67,29 +67,6 @@ kind 導出は GitHub の **IssueType** を主経路にする。`https://github.
 - 併せて、Projects v2 を読むトークンには `read:project` OAuth scope が必要（アクセス権と scope は別物・両方要る）。診断 ③ で `INSUFFICIENT_SCOPES` が出たらこの scope 欠如。
 
 完了条件: `[ ] Project の Manage access で {flow-account} を Write 以上で登録した（read:project scope も確認）`
-
----
-
-<!-- INCLUDE-IF: 診断 ④ Discussions/カテゴリが unknown（機械判定不可・確認として含める。ADR 必須型を使う以上カテゴリも必須）-->
-## 節 D: Discussions を有効化してカテゴリを追加（必須）
-
-確定 ADR と調査結果の置き場。**ADR IssueType（必須）を使う以上、ADR カテゴリが無いと確定 ADR の publish が失敗する**ため、この節も必須。
-
-1. **Discussions 機能を有効化する**: リポジトリ既定では**無効**になっている。リポの **Settings → General → Features** セクションの **Discussions** にチェックを入れる。
-2. Discussions タブ → **Edit categories**（鉛筆アイコン）で以下の 2 カテゴリを追加する:
-
-   | カテゴリ名 | アイコン（ピッカー検索名） | slug（自動生成を確認） | 用途 | Discussion Format |
-   |-----------|--------------------------|----------------------|------|-------------------|
-   | `ADR` | 📐（`triangular_ruler` で検索） | `adr` | 設計判断の記録（候補 Issue で Why を記録 → `approve` で公開。`adr publish` verb は既定で人専有・config の事前授権がある構成で AI に開く条件は [[permission-boundary]]「verb 名では見分けられない副作用」節が正本） | Open-ended discussion |
-   | `Research` | 🔍（`mag` で検索） | `research` | 調査依頼・結果（継続型） | Open-ended discussion |
-
-- アイコンはカテゴリ作成ダイアログの絵文字ピッカーで**英語名を検索**して指定する（📐=設計判断・🔍=調査。一覧での見分け用）。
-- slug は表示名から自動生成される（`ADR`→`adr`・`Research`→`research` になることを確認）。slug が `.github/DISCUSSION_TEMPLATE/{slug}.yml` と一致して初めてテンプレが「New discussion」に出る。
-- GitHub 既定カテゴリ（Announcements / General / Ideas 等）は**そのまま残す**（将来使う可能性があるため削除しない）。
-- カテゴリ作成も **API で行わない**（人の UI 操作）。
-- 入力テンプレート（`.github/DISCUSSION_TEMPLATE/adr.yml` / `research.yml`）は**任意**（無くてもカテゴリは機能する・本文が自由記述になるだけ）。使う場合は同じパスに自分で置けばよく、**後からでも追加できる**。
-
-完了条件: `[ ] Discussions を有効化した` / `[ ] ADR / Research カテゴリを追加した（アイコン・slug 確認込み）`
 
 ---
 

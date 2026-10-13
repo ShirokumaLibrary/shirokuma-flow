@@ -2,9 +2,9 @@
 
 requirements-worker が **ADR 候補 Issue（IssueType `ADR`）** を起案する際の本文雛形。埋めれば候補 Issue 本文になる。
 
-> ADR は **候補=Issue ／ 確定=正本ファイル（config `adr.dir`）＋公開ミラー=Discussion** で扱う。候補 Issue 本文は決定の枠（Why payload）を担い、Why の審議・却下トレイルは**コメント**に積む（対話駆動）。
-> 候補の状態は Issue の Status（状態機械: Backlog→Review→ToDo→Done）が正本。**本文に Status を書かない**（二重管理で drift する）。`approve`＝確定（副作用で ADR 正本ファイル `ADR-NNNN.md` を書き、確定版を Discussion へ公開する）。**打ち手は宣言欄で決まる**——「緩めない」と宣言した候補は orchestrator が `approve` を打ち、「緩める（人が Accept）」と宣言した候補は人が `shirokuma-flow adr publish <候補番号> --accept-boundary-loosening` で確定する（素の `approve` / 素の `adr publish` は人が打っても CLI が拒否する）。**`adr publish` verb の直打ちは既定では人専有**（config の事前授権がある構成で AI に開く条件は [[permission-boundary]]「verb 名では見分けられない副作用」節が正本。「緩めない」と宣言した候補の確定の正規経路は `approve` の副作用）。Status は正本ファイル（front matter）が持つ。状態遷移は orchestrator が flow verb で行う。worker は本文起案まで。
-> 番号は **ADR ID（`ADR-NNNN`）が正本**（対応表 `adr-id-map.json` が `origin_issue` から確定・冪等に採番）。Discussion 番号はそこからのミラー番号にすぎない。候補 Issue 段階ではどちらの番号も断定しない（公開時に採番）。
+> ADR は **候補=Issue ／ 確定=正本ファイル（config `adr.dir`）** で扱う。候補 Issue 本文は決定の枠（Why payload）を担い、Why の審議・却下トレイルは**コメント**に積む（対話駆動）。
+> 候補の状態は Issue の Status（状態機械: Backlog→Review→ToDo→Done）が正本。**本文に Status を書かない**（二重管理で drift する）。`approve`＝確定（副作用で ADR 正本ファイル `ADR-NNNN.md` を書き、索引に 1 行を足し、候補 Issue に確定コメントを書く）。**確定の形は宣言欄で決まり、打ち手は `shirokuma-flow next <候補番号>` の `runBy` に従う**——「緩めない」と宣言した候補は `approve` で確定し（既定は orchestrator が打つ）、「緩める（人が Accept）」と宣言した候補は `shirokuma-flow adr publish <候補番号> --accept-boundary-loosening` で確定する（素の `approve` / 素の `adr publish` は人が打っても CLI が拒否する。この形を打つのは既定では人で、緩める側の事前授権がある構成では AI も打つ。形と主体の正本は [[status-policy]] の `approve` 条項）。**`adr publish` verb の直打ちは既定では人専有**（config の事前授権がある構成で AI に開く条件は [[permission-boundary]]「verb 名では見分けられない副作用」節が正本。「緩めない」と宣言した候補の確定の正規経路は `approve` の副作用）。Status は正本ファイル（front matter）が持つ。状態遷移は orchestrator が flow verb で行う。worker は本文起案まで。
+> 番号は **ADR ID（`ADR-NNNN`）が正本**（対応表 `adr-id-map.json` が `origin_issue` から確定・冪等に採番）。候補 Issue 段階では番号を断定しない（確定時に採番）。
 
 ## 構造
 
@@ -104,7 +104,7 @@ requirements-worker が **ADR 候補 Issue（IssueType `ADR`）** を起案す�
 
 ## 書き方の要点
 
-- **決定文の要素を全部書く**: `approve`（＝公開）の内容検査は、候補本文に下のマーカー内の 4 要素が、対応する見出しの下に実際の内容として書かれていることを求める（判定の正本は `autonomous-flow` の `reference/criteria/irreversible-operations.md`「条件付き自動実行」§1）。
+- **決定文の要素を全部書く**: `approve`（＝確定）の内容検査は、候補本文に下のマーカー内の 4 要素が、対応する見出しの下に実際の内容として書かれていることを求める（判定の正本は `autonomous-flow` の `reference/criteria/irreversible-operations.md`「条件付き自動実行」§1）。
   <!-- gate-pin:adr-candidate-template/adr-decision-elements -->
   - ①決定 → `## 決定（What）`
   - ②背景 → `## コンテキスト（Why）`
@@ -113,7 +113,7 @@ requirements-worker が **ADR 候補 Issue（IssueType `ADR`）** を起案す�
   - **要素 id**: `decision` / `context` / `trade-off` / `consequences`
   <!-- /gate-pin:adr-candidate-template/adr-decision-elements -->
 
-  **軽量版でも 4 つとも、同じ見出しで要る**——軽量版が省けるのは粒度であって要素ではない。④は Nygard・MADR がともに必須とする Consequences に当たる。**遡及の射程は approve の時点で未公開の候補すべて**（公開済み ADR 正本ファイルには遡らない）。要素の集合の正本はコードのレジストリ（`shirokuma-flow gate vocab` の `adrDecisionElements`）で、上のマーカーに囲まれた範囲と上の雛形の見出し行はその写しである（正本との一致を照らす検査は配布物の外にしか無く、導入先では走らない）。
+  **軽量版でも 4 つとも、同じ見出しで要る**——軽量版が省けるのは粒度であって要素ではない。④は Nygard・MADR がともに必須とする Consequences に当たる。**遡及の射程は approve の時点で未確定の候補すべて**（確定済み ADR 正本ファイルには遡らない）。要素の集合の正本はコードのレジストリ（`shirokuma-flow gate vocab` の `adrDecisionElements`）で、上のマーカーに囲まれた範囲と上の雛形の見出し行はその写しである（正本との一致を照らす検査は配布物の外にしか無く、導入先では走らない）。
 - **Why-first**: コンテキスト（なぜ）を決定（なに）より先に・厚く書く。意思決定の理由が決定自体より重要。
 - **却下案は実績ベース**: 検討した代替案は実在の検討から書く。ストローマン（最初から却下ありきの弱い案）を並べない。
 - **1 候補 = 1 決定**: 複数の決定を 1 つの候補 Issue に混ぜない（個別に覆せなくなる）。

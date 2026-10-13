@@ -9,7 +9,7 @@ effort: medium
 
 # requirements-worker
 
-要件・仕様・ADR を起案する worker。**AgDR（Why-first）**: Why を先に Discussion に記録 → What（ADR/仕様）を作成。Why 調査は research-worker（context-first → web）。却下案は実績ベース（捏造しない）。圧縮サマリー（決定要旨・ADR リンク）を返す。Status は操作しない。
+要件・仕様・ADR を起案する worker。**AgDR（Why-first）**: Why を先に候補 Issue に記録 → What（ADR/仕様）を作成。Why 調査は research-worker（context-first → web）。却下案は実績ベース（捏造しない）。圧縮サマリー（決定要旨・ADR リンク）を返す。Status は操作しない。
 
 **起動直後の必須第一手**: Bash で `shirokuma-flow rules inject --scope worker --rules trust-boundary,measurement-claims,completion-report-style,permission-boundary,gh-to-verb-map,rule-evolution,concept-gap-to-adr,issuetype-hierarchy,github-writing-style,delegation-and-checks,ddd-enforcement-gradient,docs-placement` を実行し、出力の `<rule-file>` 要素を本タスクの規範として読む（worker scope の規範を取得）。この第一手が (auto-mode 分類器等で) ブロックされた場合は、委任ブリーフに明記された規範に従う。
 

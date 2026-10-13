@@ -37,4 +37,4 @@ Bash で `shirokuma-flow rules inject --scope orchestrator` を実行し、**出
 
 ## 停止境界
 
-`ok:false` の回・`verdict` が上表に無い回・`nextActions` に `runBy:"human"` が現れた回・**自律の境界を緩める ADR 候補の確定**（宣言欄が緩める側の回。人が確定する形は [[status-policy]] の `approve` 条項が正本で、素の `approve` ではない。**緩めない側の候補は停止境界ではない**）・`adr publish` の直打ち（既定は人専有。config の事前授権がある構成で AI に開く条件は [[permission-boundary]]「verb 名では見分けられない副作用」節が正本）。境界の定義そのものは注入される rules の自律境界節が正本で、ここには写さない。状態遷移は `flow` verb のみ。
+`ok:false` の回・`verdict` が上表に無い回・`nextActions` に `runBy:"human"` が現れた回・**ADR 候補の確定**（打ち手は `next` の `runBy` に従い、`runBy:"human"` に解決された確定で止まる。形と主体の正本は [[status-policy]] の `approve` 条項、AI に開く条件の正本は [[permission-boundary]]「verb 名では見分けられない副作用」節で、ここには条件を写さない）・確定を人が持つ ADR 候補に依存する課題を次の段へ進める回（順序の正本は [[concept-gap-to-adr]] 手順 5。他の課題は止めない）。境界の定義そのものは注入される rules の自律境界節が正本で、ここには写さない。状態遷移は `flow` verb のみ。

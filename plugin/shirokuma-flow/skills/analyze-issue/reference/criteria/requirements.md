@@ -35,9 +35,9 @@ analyze-issue が要件 Issue（課題本体）の起案品質を分析する際
 
 ADR の絞り込み手順:
 
-1. `shirokuma-flow adr list` で ADR タイトル一覧（number / title / url）を取得する
-2. Issue タイトル・`##` 見出し語から名詞キーワードを 3-5 個抽出（「追加」「修正」「対応」等の汎用語は除く）し、タイトルと照合する
-3. 関連が強い上位 5 件まで `shirokuma-flow adr get {discussion#}` で本文を確認する
+1. `shirokuma-flow adr list` で ADR の一覧（`adrs` の各要素の `id` / `title` / `status` / `path`）を取得する
+2. Issue タイトル・`##` 見出し語から名詞キーワードを 3-5 個抽出（「追加」「修正」「対応」等の汎用語は除く）し、`title` と照合して候補を絞る。`status` で Accepted と Deprecated / Superseded を分けて読む
+3. 関連が強い上位 5 件まで `shirokuma-flow adr get <ADR-NNNN>`（`id` の値。数字だけでは引けない）で取得し、`body` の決定と却下案を確認する
 
 チェック項目:
 

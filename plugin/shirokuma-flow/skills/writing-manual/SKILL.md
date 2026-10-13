@@ -23,7 +23,7 @@ Markdown で体系的なマニュアルを書く。
 - 情報密度が高く視覚整理（図・カラー分類・TOC）が読みやすさに直結 → **writing-html-explainer（HTML）**。
 
 ## 仕上げ
-`shirokuma-flow lint docs`（構造・リンク）を通す。意思決定の Why は ADR（Discussions）、用語は glossary。
+`shirokuma-flow lint docs`（構造・リンク）を通す。意思決定の Why は ADR（正本ファイル）、用語は glossary。
 
 > 関連: reviewing-manual / writing-html-explainer / lint docs。
 

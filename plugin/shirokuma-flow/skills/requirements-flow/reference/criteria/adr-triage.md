@@ -41,14 +41,14 @@ orchestrator が「この決定を **ADR 候補 Issue** にするか／通常進
 - **守らないと何が起きるか（親の kind で分かれる）**:
   - **課題（normal）・設計（design）の子**: kind が sub に倒れ、`reconcile` が `ambiguous` の逸脱として報告し続ける（親の直下に計画〔plan〕の兄弟がいれば `misplaced-sub`、いなければ `illegal-child-kind`。いずれも `--fix` では直らず人が毎回手で片付ける）。
   - **計画（plan）の子**: `plan > sub` は kind 階層上**合法**なので、`reconcile` も親子 kind ゲートも階層違反としては**何も言わない**（起票・型変更は次項の **ADR 配置ゲート**が別軸で止めるが、付け替えは素通りする）。代わりに、計画が承認済み（ToDo 以上）で ADR 候補が Backlog のままだと承認継承の取りこぼしと見なされ、`reconcile --fix` が ADR 候補を実装サブとして **ToDo へ昇格させる**（approve を経ていない Status 変化）。
-  - **3 つに共通（禁止の根拠はこちら）**: **親の完了が ADR の確定に縛られる**（確定を人が打つのは宣言欄が「自律の境界を緩める」と述べた候補だけで〔形は `shirokuma-flow adr publish <候補番号> --accept-boundary-loosening`。それ以外の候補は orchestrator が `approve` で確定する〕）。`done` / `cancel` の子未完ガードは子の kind を区別せず全子 Done を要求するため、ADR が確定するまで**親を閉じられない**（縛られるのは**親の close だけ**——設計・計画・実装は ADR 候補の状態に関係なく進む・射程の正本は [[concept-gap-to-adr]] 手順 5）。検知信号の有無は根拠ではない——むしろ計画の子は信号が出ないぶん気づきにくい。
+  - **3 つに共通（禁止の根拠はこちら）**: **親の完了が ADR の確定に縛られる**（確定の打ち手は候補ごとに `next` の `runBy` が決める〔宣言欄が「自律の境界を緩める」と述べた候補の形は `shirokuma-flow adr publish <候補番号> --accept-boundary-loosening`、それ以外の候補は `approve`。形と主体の正本は [[status-policy]] の `approve` 条項〕）。`done` / `cancel` の子未完ガードは子の kind を区別せず全子 Done を要求するため、ADR が確定するまで**親を閉じられない**（縛られるのは**親の close だけ**。次の段へ進む順序は配置からは導かず、[[concept-gap-to-adr]] 手順 5 が決める）。検知信号の有無は根拠ではない——むしろ計画の子は信号が出ないぶん気づきにくい。
 - **入口ゲートの射程は経路ごとに違う**: `IssueType=ADR` を子として置く操作のうち、**起票（`issue create --parent`）と型変更（`issue retype`）は ADR 配置ゲートが hard-block する**——継続型（EPIC / Research）以外のすべての親、つまり課題（normal）・設計（design）に加えて**計画（plan）も含めて**弾かれる（計画の子は kind 階層上は合法だが、IssueType を名指しする別軸のゲートが止める）。**素通りするのは付け替え（`issue reparent --parent`）**で、課題・設計親は親子 kind ゲートが kind 違反として止めるものの（文面は kind 階層違反であって ADR の合法配置は併記されない）、**計画親は `plan > sub` が合法なので今も通る**。共通の限界: ゲートは `issueTypes` を設定したプロジェクトでのみ有効・`--force` と `issue create --no-project`（bootstrap）ではスキップ・対象 IssueType 名は `ADR` 固定（別名で運用するプロジェクトでは静かに無効）。**「継続型かどうか」の判定は親の IssueType ではなく導出された kind**なので、タイトルが `EPIC:` で始まる親は型が Feature 等でも継続型として扱われ、その直下への ADR は通る。加えて**親側の型変更（親を継続型から外す向き）**と、flow を通らない経路（GitHub の Web UI で sub-issue を張る・`gh api` 直叩き）はそもそもゲートに当たらない。よって**起票時にここで正しく置くことが依然として実質の防波堤**になる。
 - トレーサビリティは親子関係でなく**番号参照**（起票元の課題・設計から ADR 番号を参照する）で取る。
 
 ## Why-first の運用原則
 
 1. **Why を先に記録する**: 決定（What）を確定する前に、動機・制約・却下案を候補 Issue に残す。質問は記録済みの Why から答える。
-   - **候補 Issue 本文に Status を書かない**（状態は Issue の Status（状態機械 Backlog→Review→ToDo→Done）が正本・二重管理禁止）。確定後は ADR 正本ファイル（`adr.dir` 配下）の front matter `status` が正本（Discussion はそのミラー）なので別扱い。
+   - **候補 Issue 本文に Status を書かない**（状態は Issue の Status（状態機械 Backlog→Review→ToDo→Done）が正本・二重管理禁止）。確定後は ADR 正本ファイル（`adr.dir` 配下）の front matter `status` が正本なので別扱い。
 2. **却下案は実績から**: 検討した代替案は実在の検討から書く。捏造した弱い対抗案を並べない。
 3. **ADR ひとつにつき決定ひとつ**: 複数の決定を混ぜない。個別にトレース・独立に覆せる単位を保つ。
 4. **履歴は不変**: 決定を削除しない。Deprecated / Superseded で履歴として残す（覆す時は新 ADR で Supersede）。
@@ -56,7 +56,7 @@ orchestrator が「この決定を **ADR 候補 Issue** にするか／通常進
 
 ## 配置の境界（ADR か reference/rule か）
 
-- **ADR**: 「なぜその決定をしたか」を長期に残す（正本は config `adr.dir` 配下の ADR 正本ファイル・Discussion は一方向ミラー）。
+- **ADR**: 「なぜその決定をしたか」を長期に残す（正本は config `adr.dir` 配下の ADR 正本ファイル）。
 - **rule（`.shirokuma/rules/`）**: 「守らないと壊れる規範」。常時注入される。
 - **reference**: 「判断の質を上げる知識」。必要時に読む。
 

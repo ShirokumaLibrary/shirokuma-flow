@@ -28,7 +28,7 @@ ADR 級と判定した決定表の行は、以下の導線で切り出す（経�
 
 1. **ADR 候補 Issue を最上位で起票**（IssueType = ADR・`--parent` を付けない）。その決定の Why（動機・制約・却下案・トレードオフの両側）を Issue 本文に残す。決定（What）は 1 ADR につき 1 つに保ち、複数の決定を混ぜない。
    - **配置**: **課題（normal）・設計（design）・計画（plan）の子にしない**。ADR 候補は最上位の独立決定として扱う。出典は 2 つに分かれる——**最上位 allowlist に `ADR` を含める線引きの正本が [[issuetype-hierarchy]]**、**子として置けない禁止そのものは rule ではなく kind 階層の実装（合法な子 kind の表）から導出**される（下記①）。継続型（EPIC / Research）の文脈で追跡したいときは、その直下に置くのは可。
-   - **なぜ**: ① 階層モデル上、課題（normal）の合法な子は design / plan・設計（design）の合法な子は plan だけで、ADR 候補をそれらの子にすると kind が sub に倒れて `reconcile` が逸脱として報告する（code は配置で分かれ、親の直下に計画〔plan〕の兄弟がいれば `misplaced-sub`、いなければ `illegal-child-kind`）——**いずれも `ambiguous` 分類**なので `--fix` では直らず、人が毎回手で片付けることになる。**ただし計画（plan）の子だけは `plan > sub` が合法**なので階層違反としては報告されない——代わりに、計画が承認済み（ToDo 以上）で ADR 候補が Backlog のままだと承認継承の取りこぼし（`approval-inheritance-missed`・**`deterministic`**）が立ち、`reconcile --fix` が ADR 候補を実装サブとして ToDo へ昇格させる。② **課題・設計・計画のいずれの子でも、親の完了が ADR の確定（approve）に縛られる**——`done` / `cancel` の子未完ガードと親 Done カスケードはいずれも子の kind を区別せず全子 Done を要求するため、ADR が確定（approve）するまで**親を閉じられない**（縛られるのは**親の close だけ**で、設計 submit・計画・実装は ADR 候補の状態に関係なく進む。[[concept-gap-to-adr]] 手順 5）。**禁止の根拠は②**（3 ケースすべてに効く）で、①の検知信号の有無ではない。
+   - **なぜ**: ① 階層モデル上、課題（normal）の合法な子は design / plan・設計（design）の合法な子は plan だけで、ADR 候補をそれらの子にすると kind が sub に倒れて `reconcile` が逸脱として報告する（code は配置で分かれ、親の直下に計画〔plan〕の兄弟がいれば `misplaced-sub`、いなければ `illegal-child-kind`）——**いずれも `ambiguous` 分類**なので `--fix` では直らず、人が毎回手で片付けることになる。**ただし計画（plan）の子だけは `plan > sub` が合法**なので階層違反としては報告されない——代わりに、計画が承認済み（ToDo 以上）で ADR 候補が Backlog のままだと承認継承の取りこぼし（`approval-inheritance-missed`・**`deterministic`**）が立ち、`reconcile --fix` が ADR 候補を実装サブとして ToDo へ昇格させる。② **課題・設計・計画のいずれの子でも、親の完了が ADR の確定（approve）に縛られる**——`done` / `cancel` の子未完ガードと親 Done カスケードはいずれも子の kind を区別せず全子 Done を要求するため、ADR が確定（approve）するまで**親を閉じられない**（縛られるのは**親の close だけ**。次の段へ進む順序は配置からは導かず、[[concept-gap-to-adr]] 手順 5 が決める）。**禁止の根拠は②**（3 ケースすべてに効く）で、①の検知信号の有無ではない。
    - **宣言欄の見込みを設計に書くときは、例外の 2 項目の両方を当てる**: ADR 候補の宣言欄が緩める側になるか緩めない側になるかの見込みを設計本文に書くなら、片方の項目だけで「緩めない」と見込まない（起草時に覆り、確定の打ち手が変わる）。2 項目の正本は `autonomous-flow` の `reference/criteria/irreversible-operations.md`「条件付き自動実行」§1 の「例外」（ここには写さない）。
    - **トレーサビリティは親子関係でなく番号参照で取る**（次の手順 2）。設計本文からの裸番号参照が ADR との紐付けを担う。
    - **`IssueType=ADR` を「子として置く」操作は機械強制されるが、止めるゲートと射程は経路ごとに違う（create / retype は継続型〔EPIC / Research〕以外のすべての親で block・reparent は計画〔plan〕親だけ素通り・親側の型変更と flow 外は無防備）**: ゲートを呼ぶのは `issue create --parent` / `issue retype` / `issue reparent --parent` の 3 経路。
@@ -39,9 +39,9 @@ ADR 級と判定した決定表の行は、以下の導線で切り出す（経�
 2. **設計本文から参照**: 設計ドキュメントには決定の結論と、ADR の**裸番号での参照**を書く。Why の本体は ADR 側に置き、設計本文に転記しない。
 3. **決定表のスコープ列に記録**: 当該行のスコープを「横断（ADR へ）」とし、参照する ADR を示す。この課題限りの行は「この課題限り」と記録する。
 
-> 起票・確定・公開の経路（IssueType=ADR → 承認 → 公開）は既存の仕組みに乗せる。本書は決定表からその経路へ流す導線を示すのみ。
+> 起票・確定の経路（IssueType=ADR → 承認 → 確定）は既存の仕組みに乗せる。本書は決定表からその経路へ流す導線を示すのみ。
 >
-> **切り出したあとは待たない（明示）**: ADR 候補を起票した時点で **Why は記録済み**なので、**候補が `Backlog` / `Review` のままでも設計本文の完成・`submit`・計画・実装へ進んでよい**。`approve` / `adr publish` は**公開（外向き・不可逆）のゲート**であって設計・実装の前提ではない（[[concept-gap-to-adr]] 手順 5）。CLI も ADR 候補の状態ではフェーズを止めない（根拠は `autonomous-flow` の `reference/criteria/phase-skill-map.md` の「注記」節）。
+> **切り出した後の順序（明示）**: ADR 候補を起票した時点で **Why は記録済み**なので、候補の確定の前でも設計本文の完成・`submit`・設計レビューへは進んでよい。**設計が起こした候補の確定と ADR 候補の PR の取り込みは、設計の承認の後、計画へ進む前に済ませる**（順序の正本は [[concept-gap-to-adr]] 手順 5、打つ段は `design-flow` の「段の順序」6）。CLI は ADR 候補の状態ではフェーズを止めないので、この順序は skill の手順と計画レビューが持つ（根拠は `autonomous-flow` の `reference/criteria/phase-skill-map.md` の「注記」節）。
 
 ## 過剰 ADR 化の歯止め
 

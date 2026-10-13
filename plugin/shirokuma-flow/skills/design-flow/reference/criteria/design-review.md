@@ -38,8 +38,8 @@ design-flow が所有する設計レビュー判定基準。design-flow の手�
   - **開く条件の読み方**: `shirokuma-flow config get ddd.level` が L1 か L2 を返せば開き、L0 を返せばファイルが在っても開かない。0 以外で返った回は `reason` で分ける——未設定（宣言が無いことを示す値）だけをファイルの有無で決め、値域外・読み取り失敗・`reason` を読めない回は開く側へ倒して理由を書く。開かなかった回は理由（L0 宣言・ファイル無し）を 1 行書く
 - [ ] **着地した What との照合**（正本は [[ddd-enforcement-gradient]]「着地した What の照合」節）: この段では G1・G3 と、モデル・構造・振る舞い・設計思想の G2 を当てる。条件と深刻度は同節に従い、ここには写さない。照合の申告行を書く
 - [ ] **逆方向 canon-gap**（必須）: この設計 / 変更は正本（concept / domain / glossary / Accepted ADR）に**無い新概念・新しい成果物クラス・新しい役割**を持ち込んでいないか。順方向（既存語との一貫）と対で常時発火させ、正本に照らして「これは何という語で、どの正本に定義があるか」を問う。定義の無い新語・新クラス・新役割が黙って設計に入っていたら High（NEEDS_REVISION）
-  - **検出時運用（ADR-first）**: 末端の glossary へいきなり定義を足して辻褄を合わせない。[[concept-gap-to-adr]] に従い **Why を先に記録する**（ADR 候補 Issue の起票 → glossary 定義・不変則 → rules / criteria 配線）。**High（NEEDS_REVISION）に当たるのは「Why が記録されていない」場合だけ**——すなわち検出した新概念に対応する **ADR 候補 Issue が起票されておらず**、glossary / rules へ直書きして既成事実化しているケース。**候補 Issue が起票済みなら、それが Review のまま（未 Accept）でも順序違反ではない**——Accept 前に glossary / rules を触ること自体は High ではない（規範ファイルの変更は [[rule-evolution]] のとおり Issue → PR → 人の確定を通る＝**その規律は本観点の外**であって、本観点が見るのは Why が記録されているかだけ）
-  - **自律の境界**: 概念ギャップの検知・ADR 候補 Issue での Why 記録・What ドラフトの提示（HTML 可視化）まで AI が能動。人ゲートは **`adr publish` の直打ち（verb 名では候補ごとの条件を表現できないので既定は人専有。config の事前授権がある構成で AI に開く条件は [[permission-boundary]]「verb 名では見分けられない副作用」節が正本）と、宣言欄が「自律の境界を緩める」と述べている候補の `approve`、および rule / glossary 変更の最終確定**（**緩めないと宣言された候補の `approve` は既定どおり orchestrator が打つ**）＝いずれも外向き・不可逆な操作の側であって、**実装・設計を進める前提ではない**（[[concept-gap-to-adr]] 手順 5）
+  - **検出時運用（ADR-first）**: 末端の glossary へいきなり定義を足して辻褄を合わせない。[[concept-gap-to-adr]] に従い **Why を先に記録する**（ADR 候補 Issue の起票 → glossary 定義・不変則 → rules / criteria 配線）。**High（NEEDS_REVISION）に当たるのは「Why が記録されていない」場合だけ**——すなわち検出した新概念に対応する **ADR 候補 Issue が起票されておらず**、glossary / rules へ直書きして既成事実化しているケース。**候補 Issue が起票済みなら、設計レビューの時点で候補が未確定であることは本観点の High ではない**（確定と ADR 候補の PR の取り込みは、設計の承認の後に `design-flow` の「段の順序」6 で行う）——確定の前に glossary / rules を触ること自体も本観点の High ではない（規範ファイルの変更は [[rule-evolution]] のとおり Issue → PR → 人の確定を通る＝**その規律は本観点の外**であって、本観点が見るのは Why が記録されているかだけ）
+  - **自律の境界**: 概念ギャップの検知・ADR 候補 Issue での Why 記録・What ドラフトの提示（HTML 可視化）まで AI が能動。ADR 候補の確定の打ち手は `next` の `runBy` に従う（形と主体の正本は [[status-policy]] の `approve` 条項、AI に開く条件の正本は [[permission-boundary]]「verb 名では見分けられない副作用」節で、ここには条件を写さない）。rule の変更の最終確定は [[rule-evolution]] に従う。設計が起こした候補の確定と ADR 候補の PR の取り込みは、設計の承認の後、計画へ進む前に済ませる（[[concept-gap-to-adr]] 手順 5）
 
 ## 4. 技術的実現可能性
 
@@ -63,7 +63,7 @@ design-flow が所有する設計レビュー判定基準。design-flow の手�
 | 既存 ADR との暗黙の矛盾 | Deprecated / Superseded とされた選択肢の再採用 |
 | 横断決定が設計 Issue に埋没 | ADR 級（6 軸該当）の横断的・長寿命の決定が ADR 候補へ切り出されず決定表に埋もれ、複数課題から再解釈され齟齬の温床になる |
 | 委任・検査の配線が発火しない | 委任した作業が全件 skip に倒れる／足した検査が母集団 0 件で緑に倒れる形（**判定条件は [[delegation-and-checks]] が正本。本行は条件を要約せず、当該規範を開く合図として置く**） |
-| 逆方向 canon-gap の無音素通し | 正本（glossary / domain / ADR）に定義の無い新概念・成果物クラス・役割が黙って設計に入り、**Why がどこにも記録されないまま**（ADR 候補 Issue が起票されないまま）末端の辻褄合わせで既成事実化する（[[concept-gap-to-adr]]）。**候補 Issue が起票済みで未 Accept なだけの状態はこれに当たらない** |
+| 逆方向 canon-gap の無音素通し | 正本（glossary / domain / ADR）に定義の無い新概念・成果物クラス・役割が黙って設計に入り、**Why がどこにも記録されないまま**（ADR 候補 Issue が起票されないまま）末端の辻褄合わせで既成事実化する（[[concept-gap-to-adr]]）。**候補 Issue が起票済みで、設計レビューの時点で未確定なだけの状態はこれに当たらない** |
 
 ## 判定（PASS / NEEDS_REVISION の決め方）
 

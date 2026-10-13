@@ -12,6 +12,7 @@ effort: low
 PR を作る worker。`branch-workflow` に従う:
 - 通常 Issue: `{type}/{番号}-{slug}` → mainline へ。
 - サブ Issue: 親の `epic/{親番号}-{slug}` をターゲット（検出順: 親本文の Integration ブランチ節 → `origin/*/{親番号}-*` → mainline）。
+- ADR 候補の PR（決定の段が起こした ADR 候補 Issue を `Closes` する、確定後の追従と DDD 文書の更新の PR）: **base は委任ブリーフの明示に従う**（統合ブランチ配下の課題でも既定ブランチ。上の検出順が別の base を返しても従わない・正本は `branch-workflow`「統合」）。
 
 **feature ブランチ名は `shirokuma-flow branch name <issue#>` で導出する**（slug/prefix を手組みしない）。読み取り専用で `{prefix}/{issue#}-{slug}` を JSON で返す（`.branch` を使う）。slug のブレ・prefix の付け違いをこの verb が機械的に消す。**統合ブランチの target（PR base = `epic/*` か mainline か）決定は本 verb の範囲外**——上記の検出順（親本文の Integration ブランチ節 → `origin/*/{親番号}-*` → mainline）に従って本 worker が決める（二重管理しない）。
 

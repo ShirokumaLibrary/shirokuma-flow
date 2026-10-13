@@ -10,7 +10,7 @@ flow のワークフローが前提にする **GitHub リポジトリ設定**の
 gh api repos/{owner}/{repo} --jq '{default_branch,allow_merge_commit,allow_squash_merge,allow_rebase_merge,delete_branch_on_merge}'
 ```
 
-Discussions カテゴリ・Project collaborator と違い**機械判定できる**ので、診断では `unknown` にせず充足/不足を出す。これは GET（read）であり、設定の変更（write）は人が UI で行う。
+Project collaborator と違い**機械判定できる**ので、診断では `unknown` にせず充足/不足を出す。これは GET（read）であり、設定の変更（write）は人が UI で行う。
 
 ## 期待値表
 

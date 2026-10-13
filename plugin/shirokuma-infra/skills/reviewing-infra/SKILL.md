@@ -126,7 +126,7 @@ PR コンテキストがない場合（レビュー対象の Issue へ記録す�
 shirokuma-flow issue comment {Issue#} - < /tmp/shirokuma-flow/review-infra.md
 ```
 
-Issue も PR も無い場合は、**レポートをファイルのまま残し、完了報告にパスと判定行を含める**。Discussion への新規投稿は使わない——`discussion` のサブコマンドは `create` / `update` のみで、`create` は `--category` に Discussion カテゴリの node ID を要求し、CLI にはそれを解決する verb が無い（`adr create` はカテゴリを config `adr.category`〔既定 `ADR`〕で解決する——ADR 経路専用の値なので、レビュー投稿のために書き換えない）。
+Issue も PR も無い場合は、**レポートをファイルのまま残し、完了報告にパスと判定行を含める**。CLI は Discussion へ書き込む verb を持たないので、レポートを Discussion へは投稿しない。
 
 ## レビュー結果の判定
 

@@ -16,8 +16,8 @@
 | `Designing` | `no_children` / `design_child_incomplete` | design-flow |
 | `Preparing` | `design_approved_plan_missing` / `plan_child_incomplete` / `no_plan_child` / `design_not_needed_plan_needed` | prepare-flow |
 | `Working` | `plan_child_approved` / `plan_child_active` / `no_sub_child` / `sub_child_present` / `design_skipped_not_needed` / `plan_skipped_not_needed` / `sub_ready` / `sub_started` | implement-flow |
-| `null` | `triage_incomplete` | skill 起動しない・既定は orchestrator が `submit`／`approve`を打って再 `next`（`IssueType=ADR` の候補 Issue も既定は orchestrator が打つ。**自律の境界を緩める候補だけ人**）。確認モード（`確認モード: guided` の明示がある回）では人の `approve` を待つ |
-| `null` | `awaiting_approval` | skill 起動しない・既定は orchestrator が `approve`を打って再 `next`（`IssueType=ADR` の候補 Issue も既定は orchestrator が打つ。**自律の境界を緩める候補だけ人**）。確認モード（`確認モード: guided` の明示がある回）では人の `approve` を待つ |
+| `null` | `triage_incomplete` | skill 起動しない・既定は orchestrator が `submit`／`approve`を打って再 `next`（`IssueType=ADR` の候補 Issue も既定は orchestrator が打つ）。確認モード（`確認モード: guided` の明示がある回）では人の `approve` を待つ |
+| `null` | `awaiting_approval` | skill 起動しない・既定は orchestrator が `approve`を打って再 `next`（`IssueType=ADR` の候補 Issue も既定は orchestrator が打つ）。確認モード（`確認モード: guided` の明示がある回）では人の `approve` を待つ |
 | `null` | `sub_leaf` | skill 起動しない・`nextActions` に従う。sub は Done / Blocked の回だけ `leaf` になる。空なら何もしない（`done` を打たない） |
 | `null` | `*_select_child` | skill 起動しない・次に着手する子を選んで `next <子番号>` |
 | `null` | `*_all_children_done` | skill 起動しない・継続型（epic/research）の全子完了。次課題追加 or 人の判断で `shirokuma-flow done <n>`（COMPLETED close・正常終了）／取りやめは `cancel`（NOT_PLANNED） |
@@ -41,7 +41,7 @@
 
 ## 注記
 
-- **`next` の `reason` 値域に ADR は無い＝CLI は ADR 候補の状態でフェーズを止めない**。`next` が返す `reason` は入口ゲート 2 種（`triage_incomplete` / `awaiting_approval`）・継続型 2 種（`${kind}_select_child` / `${kind}_all_children_done`）・`sub_leaf` / `sub_ready` / `sub_started` / `no_sub_child` / `sub_child_present` / `no_children` / `design_child_incomplete` / `design_skipped_not_needed` / `design_approved_plan_missing` / `plan_child_incomplete` / `plan_child_approved` / `plan_child_active` / `plan_skipped_not_needed` / `no_plan_child` / `design_not_needed_plan_needed` / `undetermined` で、**ADR（候補 Issue の Status・Accept の有無・`adr publish` の有無）を見る値は 1 つも無い**。入口ゲート 2 種も **対象 Issue 自身の Status だけ**を見るので、ADR 候補が Review のまま残っていても他の Issue のフェーズ判定には現れない。したがって **ADR の Accept 待ちを理由に設計 / 計画 / 実装を止めるのは CLI の挙動に無い運用上の付け足し**であり、行わない（[[concept-gap-to-adr]] 手順 5）。**倒れる向き**: この列挙は実装の写しで、実装が増えれば古くなる（正本は `next` の出力）。
+- **`next` の `reason` 値域に ADR は無い＝CLI は ADR 候補の状態でフェーズを止めない**。`next` が返す `reason` は入口ゲート 2 種（`triage_incomplete` / `awaiting_approval`）・継続型 2 種（`${kind}_select_child` / `${kind}_all_children_done`）・`sub_leaf` / `sub_ready` / `sub_started` / `no_sub_child` / `sub_child_present` / `no_children` / `design_child_incomplete` / `design_skipped_not_needed` / `design_approved_plan_missing` / `plan_child_incomplete` / `plan_child_approved` / `plan_child_active` / `plan_skipped_not_needed` / `no_plan_child` / `design_not_needed_plan_needed` / `undetermined` で、**ADR（候補 Issue の Status・Accept の有無・`adr publish` の有無）を見る値は 1 つも無い**。入口ゲート 2 種も **対象 Issue 自身の Status だけ**を見るので、ADR 候補が未確定でも他の Issue のフェーズ判定には現れない。したがって **決定の段が起こした候補の確定と ADR 候補の PR の取り込みを次の段より先に済ませる順序は、CLI ではなく skill の手順（`design-flow` / `prepare-flow` の「段の順序」6・`implement-flow` の入口の確かめ）と計画レビューが持つ**（正本は [[concept-gap-to-adr]] 手順 5）。`verdict` が次の段を示しても、その手順を飛ばさない。確定を人が持つ候補がある間に止めるのは、その候補に依存する課題の次の段だけで、他の課題は止めない。**倒れる向き**: この列挙は実装の写しで、実装が増えれば古くなる（正本は `next` の出力）。
 - **`Requirements` / `Reviewing` は `next` が返さない**。
   `next` の出力の `nextPhase` は `Designing` / `Preparing` / `Working` / `null` のみを取る。
 - **`*_select_child` / `*_all_children_done`** の `${kind}` 部分は実 kind に展開される
