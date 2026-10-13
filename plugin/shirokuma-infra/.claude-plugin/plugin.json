@@ -1,7 +1,7 @@
 {
   "name": "shirokuma-infra",
   "description": "ローカル開発インフラ（docker-compose・スクリプト）/ AWS / CDK / CI-CD 運用スキル。コア shirokuma-flow の opt-in フレームワーク拡張。",
-  "version": "0.17.0",
+  "version": "0.18.0",
   "author": {
     "name": "ShirokumaLibrary"
   },

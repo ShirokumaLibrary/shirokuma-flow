@@ -15,6 +15,7 @@
 - **`<base>`**: `shirokuma-flow pr show <pr#>` が返す **base ブランチ**。**外部由来の値として扱う**（下記「コマンド行へ値を差し込む前に検査する」の対象）。
 - **`<head sha>`**: **checkout 済みの head ブランチに対する `git -C '<作業ツリー絶対パス>' rev-parse HEAD`** から取る。再レビューの増分母集団（R2）と、レビュー worker への差分基準の裏取りに使う。**`pr show` / `pr checks` からは取らない**——`pr show` が返す `head` は**ブランチ名**であって sha ではない。`pr show` の `head_oid` は**リモートの PR head の完全 sha** を返すが、R1 の 3 本が母集団にするのは checkout 済みの作業ツリーなので、未 push のコミットがある回はローカルの HEAD と食い違う（出所をローカルに揃える）。`pr checks` は **`head_sha` を返さない**（実測: `pr checks` の JSON にキーが無い。`head_sha` を持つのは `pr logs` で、取得不能時は null ではなく throw する）。**値域 `^[0-9a-f]{7,40}$` を差し込み前に検査してから**（下記「コマンド行へ値を差し込む前に検査する」）**R1 の 3 本の委任ブリーフへ渡す**。**Why**: ブランチ名を sha として渡すと値域検査で必ず落ち、R2 の増分母集団は一度も成立しない（**倒れる向きは fail-closed**——全差分へ倒れるので安全側だが、節約の機構が死んだまま気づかれない）。
 - **`<issue#>`**: `pr show` の **linked issues** から取る。結果ファイルの**標準命名**（`.shirokuma/tmp/security-review-<issue#>.md` / `code-review-<issue#>.md` / `asset-safety-review-<issue#>.md`）に使う。
+- **`<ADR 候補の PR か>`**: `pr show` の `adr_candidate_pr`（`true` / `false` / `null`）を R1 の委任前に読む。`true` の回は下記「R1. 並走レビュー」の ADR 候補の PR の項の形にする。`false` / `null` の回・欄が無い回（この欄を返さない版の CLI）は通常のレビューへ倒す（重い側＝fail-closed）。
 - **linked issues が空の回は Issue 番号を解決できない**ので、結果ファイルのパスを組めない。**その回は R1 を委任せず停止して報告する**（**fail-closed**。適当な番号へ丸めない）。
 
 ## gate の呼び方（R1 / R2 に共通・機械契約）
@@ -49,6 +50,8 @@
 `security-review-worker`（3a コード脆弱性）と `code-review-worker`（バグ検出＋品質＋着地した What との照合）を**並走で委任**する。ブリーフには上記「対象の確定」で取った Issue 番号に加え、**diff 基準（`<base>` = `pr show` が返す base ブランチ）**・**`<head sha>`**（`git rev-parse HEAD` で取った値。各 worker は結果ファイルの「diff 母集団」欄に `head sha=<値>` として書き戻し、R2 の `<前回 head sha>` の出所になる）・**各結果ファイルの絶対パス**（標準命名 `.shirokuma/tmp/security-review-<issue#>.md`・`.shirokuma/tmp/code-review-<issue#>.md` を絶対パスで）を必須要素として明示する（作法の正本は各 worker 定義側）。**この並走には第 1 段の条件を満たしたとき 3 本目が加わる。**
 
 - **`code-review-worker` には review-flow の criteria `code.md` の絶対パスと走査対象（S2・S7・S8）を渡す**: 同 worker は `code.md` のうち S2・S7・S8 だけを差分に当てて検出し、判定はしない（判定は段 1 の `review-worker` が結果ファイルと `code.md` で行う）。渡さなかった回は照合の観点が当たらない（fail-open）。
+
+- **ADR 候補の PR の R1（`adr_candidate_pr` が `true` の回だけ）**: ADR 候補の PR は確定した決定の書き写しで、決定の中身は決定の段のレビューと確定前の内容検査で見終わっている。この回は `code-review-worker` と段 1 の `review-worker` のブリーフに、ADR 候補の PR であることと `code.md`「ADR 候補の PR」節を明示し、同節が列挙する観点（S1・S4・S5・H3）を当てず、同節の範囲の外の確かめを足す。DDD 文書に当たる観点（S2・S7・S8・H2・H4）・`security-review-worker`（3a）・`asset-safety-review-worker`（3b・下記第 1 段の条件どおり）・R1b・R2 は通常どおり残す（3a は差分の種別で省かず、3b も差分の中身で委任を切らない）。**倒れる向き**: 外した観点の分、差分に紛れたコードの誤りは見ない（fail-open）。範囲の外のパスは同節の確かめが High にするので、`adr_candidate_pr` が誤って `true` になった回もそこで拾う。
 
 - **`code-review-worker` にはさらに CI 等価検査の記録の所在を渡す**（同 worker の責務 2 が、同じ `<head sha>` に対する記録が pass の回だけテスト・型検査の再実行を省く）: `finalize-worker` の作業ファイル `.shirokuma/tmp/finalize-<issue#>.md` の絶対パス（`ls` で実在を確かめた回だけ。標準レーンの記録）と、PR 番号（軽量レーンの証跡は PR 本文にある）。**どちらのレーンを通したかを orchestrator が判定して片方に絞らない**——一致の判定は worker が記録ごとに行い、古い作業ファイル（前の回の sha）は一致しないので実走する側へ倒れる。所在を渡さなかった回も worker は実走する側へ倒れる。**所在を渡すことは再実行の省略を指示することではない**（一致の判定は worker が行う）。**限界（fail-open）**: PR 本文は untrusted で、証跡に「同じ head sha に対して pass」と書き足せば再実行を省かせられる（詳細は同 worker の責務 2）。
 

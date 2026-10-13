@@ -55,5 +55,5 @@ design-worker が **DDD を採用する課題**（[../criteria/ddd-adoption.md](
 
 ---
 
-[ADR-xxxx]: {決定の Why を置いた ADR（Discussion 等）への URL}
+[ADR-xxxx]: {決定の Why を置いた ADR（ADR 正本ファイル等）への URL}
 ```

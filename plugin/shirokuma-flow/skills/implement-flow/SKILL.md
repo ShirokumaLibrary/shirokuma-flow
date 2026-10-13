@@ -32,7 +32,7 @@ Bash で `shirokuma-flow rules inject --scope orchestrator` を実行し、**出
 
 - **既定（自律）は orchestrator が `shirokuma-flow approve <n>` を打って進む**。`IssueType=ADR` の候補 Issue を含む `approve` の既定・人が打つ条件・判別手順の正本は [[status-policy]]（詳しい手順は `requirements-flow`）。
 - **確認モードの回は人の `approve` を待って止まる**（確認対象の所在と確認後に打つ verb を添える。逐語は `next --guided` の `nextActions[].runBy:"human"` が運ぶ）。
-- **見るのは対象 Issue 自身の Status だけ**——関連する ADR 候補 Issue が `Backlog` / `Review` のままでも実装は進める（射程の正本は [[concept-gap-to-adr]] 手順 5）。
+- **見るのは対象 Issue 自身の Status だけ**——関連する ADR 候補 Issue の Status はこのゲートの対象ではない。決定の段が起こした候補の確定と ADR 候補の PR の取り込みを先に済ませる順序は、このゲートではなく下記「段の順序」1 の入口の確かめが持つ（正本は [[concept-gap-to-adr]] 手順 5）。
 
 ## レーン（軽量 / 標準）
 
@@ -49,6 +49,9 @@ Bash で `shirokuma-flow rules inject --scope orchestrator` を実行し、**出
 ## 段の順序（標準レーン）
 
 1. **状態確認**: `shirokuma-flow status <n>`（Status / kind / 親子 / 許可遷移を取得）。routing ③ で入った回に限り、`ToDo` でなければ中断（誤呼び出し）。
+   - **入口の確かめ（決定の段が計画の回）**: 設計を経ない課題では、計画が起こした ADR 候補の確定と、確定後の追従・計画が定めた glossary・`domain/` の更新を入れた ADR 候補の PR の既定ブランチへの取り込みを、`begin` の前に確かめる（順序の正本は [[concept-gap-to-adr]] 手順 5 で、条件はここに写さない）。確定していない候補・取り込まれていない PR があり、このサブがそれに依存するなら `begin` せずに止まり、理由を報告する。他の課題は止めない。決定の段が設計の回は計画レビューが確かめる側で、この確かめの射程外である。**この確かめは orchestrator 自身の自己検査で、機械段は無く、記録の最下段は自己申告である**（読み落とした回は素通りする＝fail-open）。
+   - **統合ブランチ配下のサブ**: ADR 候補の PR は既定ブランチへ入るので、統合ブランチ（`epic/*`）配下のサブでは、取り込みの後、実装のサブ PR を作る前に統合ブランチへ既定ブランチを取り込む。orchestrator が直接打つ機械的な段で、手の正本は [[branch-workflow]]「統合」。衝突したら解かずに止めて人に渡す。
+   - **実装の途中で起こした ADR 候補**: 確定と ADR 候補の PR の取り込みを、実装 PR のコードレビュー（`review-flow`）より前に済ませ、実装ブランチを取り込み後の既定ブランチへ追従させる（正本は [[concept-gap-to-adr]] 手順 5）。
 2. **着手**: `shirokuma-flow begin <n>`（ToDo → In progress）。
 3. **実装を委任**（`coding-worker`）。委任ブリーフに下表の reference パス（TDD 詳細・委任判定）と**当該 worker scope の規範要旨**（正本 [[skill-authoring]]）を明示し、「**動作確認・テストで実 GitHub に書き込まない**（CLI 実走検証は `--fixture`・実書き込みが必要なら実行せず理由を添えて返す）」を添える。リポにドメイン拡張（nextjs / infra）が見えるなら「拡張プラグイン候補」のヒントを書く——**判定はしない**（拡張併用の判定は worker の自己判定）。worker は**圧縮サマリー**を返す。orchestrator はコードを直接編集しない。
    - **作業ブランチの用意（委任の前提）**: 委任前に現在ブランチを確認し、mainline（config `project.defaultBranch ?? "main"`）上なら**先に作業ブランチへ切り替える**。ブランチ名は `shirokuma-flow branch name <n>` で導出し（**手組みしない**）、サブ Issue で統合ブランチを使う場合は [[branch-workflow]] の検出順に従う。**mainline 上で実装を進めると PR による人ゲートを迂回する**ため、この前提が満たされない限り段 5 の commit-worker は commit せず差し戻す。
@@ -103,7 +106,7 @@ Bash で `shirokuma-flow rules inject --scope orchestrator` を実行し、**出
 
 ## 停止境界
 
-`ok:false` の回・`verdict` が上表に無い回・`nextActions` に `runBy:"human"` が現れた回・`quality.localVerifyCommand` の同一性が成立しない回・PR 作成後の merge。境界の定義そのものは注入される rules の自律境界節が正本で、ここには写さない。
+`ok:false` の回・`verdict` が上表に無い回・`nextActions` に `runBy:"human"` が現れた回・`quality.localVerifyCommand` の同一性が成立しない回・段の順序 1 の入口の確かめで止まる回（確定を人が持つ ADR 候補に依存するサブを含む）・PR 作成後の merge。境界の定義そのものは注入される rules の自律境界節が正本で、ここには写さない。
 
 **締めの報告で人に出す項目**は [[orchestration-discipline]] C13 に従う（`next` / `pr checks` の `nextActions[]` のうち `runBy:"human"` の要素から引き、`verb` を訳語で言い換えない）。規則はそちらが正本で、ここには写さない。
 

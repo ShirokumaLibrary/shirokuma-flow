@@ -20,7 +20,7 @@ model: opus
 | `specs` | 恒久的な仕様・コンセプト | `.shirokuma/pages/specs/billing-rules/` |
 | `issues` | Issue #N の確認用 What・設計レビュー | `.shirokuma/pages/issues/<番号>/` |
 | `explainers` | Issue 補足の一時的な解説 | `.shirokuma/pages/explainers/{slug}/` |
-| `discussions` / `prs` | ADR / PR の補足 | `.shirokuma/pages/discussions/{N}/` |
+| `prs` | PR の補足 | `.shirokuma/pages/prs/{N}/` |
 | `reviews` / `status` / `incidents` | レビュー・報告・ポストモーテム | `.shirokuma/pages/reviews/{slug}/` |
 
 共有アセットは **pages ルート直下の `assets/`**（`.shirokuma/pages/assets/` ＝ `style.css` / `theme.js` / `modern-normalize.css`）に **1 組だけ**置く。各ページからは**絶対パス**（`/assets/style.css?v=N`）で参照し、**ページごとに `assets/` を複製しない**（複製するとテーマ変数がページ単位で分岐し、`?v=N` の一括更新も効かなくなる）。

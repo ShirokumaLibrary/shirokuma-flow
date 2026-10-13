@@ -28,5 +28,5 @@ design-worker が **DDD レベル L2**（[../criteria/ddd-adoption.md](../criter
 
 ---
 
-[ADR-xxxx]: {決定の Why を置いた ADR（Discussion 等）への URL}
+[ADR-xxxx]: {決定の Why を置いた ADR（ADR 正本ファイル等）への URL}
 ```

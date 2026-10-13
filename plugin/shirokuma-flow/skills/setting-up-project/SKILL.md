@@ -95,7 +95,7 @@ Project がまだ無い新リポでは通常の Issue 作成（Project 登録＋
      | **任意** | ⑤ SAST | **不足として数えない**。「未導入」と報告し、対処欄に誘導だけ書く |
 
      **「不足ゼロ」＝必須に不足が無い状態**を指す（推奨・任意の不充足があっても不足ゼロは成立する）。unknown 項目（下記）は不足ゼロ判定の外で、Issue に「人が確認」として含める。③ は `number` 未設定のとき判定対象外（そのときは ① が不足として立つので取りこぼしにはならない）。
-   - 機械判定できない項目（**Discussions カテゴリ**・**Project collaborator**・**Status 6 値の整形状態**——確認する verb が無い）は診断表で **unknown** とし、手順 3 の Issue に「人が確認」として含める。Status の整形状態を直接判定する verb は無いため——**Project を新規作成する場合は節 B（作成＋Status 整形）を必ず Issue に含める**。既存 Project の場合は手順 5 の疎通確認（`status <n>` の遷移可否）で間接検証する。
+   - 機械判定できない項目（**Project collaborator**・**Status 6 値の整形状態**——確認する verb が無い）は診断表で **unknown** とし、手順 3 の Issue に「人が確認」として含める。Status の整形状態を直接判定する verb は無いため——**Project を新規作成する場合は節 B（作成＋Status 整形）を必ず Issue に含める**。既存 Project の場合は手順 5 の疎通確認（`status <n>` の遷移可否）で間接検証する。
 2. **不足ゼロなら終了（状況確認モード）**: 上の「不足ゼロ判定の規則」で**不足ゼロ**（＝必須に不足なし）なら「**セットアップ済み**」と報告して**ここで終了**。Issue は起票しない。推奨・任意の不充足が残っていても終了してよいが、**警告としてその内容と壊れるものを報告に必ず含める**（推奨・任意の不充足を理由に起票しない）。
 3. **不足項目だけを Issue 化（編成モード）**: 不足がある項目に対応する `reference/templates/setup-tasks.md` の**該当節だけ**をコピーし、`{org}` / `{repo}` / `{flow-account}` を実値に埋めて本文を組み立て、**対象リポに起票**する。全部入りの固定チェックリストを毎回貼らない。
    - Project 未作成のとき（bootstrap）: `issue create --no-project --issue-type Task` で素の Issue を起票。**最上位 IssueType ゲートは `--no-project` ではスキップ（no-op）される**ので Task でも衝突しない。fresh org には拡張型（Chore 等）がまだ無い（それを追加するのがこの Issue 自身）ため、ここは GitHub 既定型（Task/Bug/Feature）から選ぶ。
