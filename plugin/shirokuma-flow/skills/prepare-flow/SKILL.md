@@ -12,7 +12,7 @@ Bash で `shirokuma-flow rules inject --scope orchestrator` を実行し、**出
 
 ## 流れ
 
-階層は 課題 > 設計(0..1) > 計画(1..n) > 実装サブ(1..n)。本 skill は課題（設計がある場合は設計）の子として**計画 Issue（IssueType = Plan）**を作り、着手可能にする。実装サブは**計画の子**（`--parent 計画#`）。次フェーズは `implement-flow`。
+階層は 課題 > 設計(0..1) > 計画(0..n) > 実装サブ(0..n)（計画と実装サブは PR を 2 本以上に分ける課題だけに作る）。本 skill は課題（設計がある場合は設計）の子として**計画 Issue（IssueType = Plan）**を作り、着手可能にする。実装サブは**計画の子**（`--parent 計画#`）。次フェーズは `implement-flow`。
 
 **親が継続型（Epic / Research）の場合、Plan / Design を直接の子にはできない**（継続型の合法子は normal / sub のみ）。軽量なサブ作業は `継続型 > sub` で直接ぶら下げ可。分解が要る場合は `継続型 > 課題本体(normal) > (設計) > 計画(Plan) > サブ` の階層を踏む。
 
@@ -26,7 +26,7 @@ Bash で `shirokuma-flow rules inject --scope orchestrator` を実行し、**出
 | `preparing`（計画立案） | `plan-worker` | reference/templates/plan-issue.md ／ reference/criteria/decomposition.md |
 | `preparing`（計画レビュー） | `review-worker` | reference/criteria/plan-review.md |
 | `gated` | — | `nextActions` が指す `submit` / `approve` を打つ（下記「状態遷移」の条件つき） |
-| `working` | — | `implement-flow` へ渡す（**計画を作らない**——`plan_skipped_not_needed` の課題は analyze-issue の `**計画要否:** NOT_NEEDED` 契約で計画フェーズがスキップされている） |
+| `working` | — | `implement-flow` へ渡す（**計画を作らない**——`plan_skipped_not_needed` の課題は信頼投稿者の `**計画要否:** NOT_NEEDED` 契約〔analyze-issue、または設計の承認の後に design-flow が残す〕で計画フェーズがスキップされている） |
 
 ## 段の順序（本 skill が持つ実行順）
 
@@ -62,5 +62,5 @@ Bash で `shirokuma-flow rules inject --scope orchestrator` を実行し、**出
 | ドキュメント | 内容 | 読むタイミング |
 |------------|------|--------------|
 | [reference/templates/plan-issue.md](reference/templates/plan-issue.md) | 計画 Issue 雛形（変更対象 / タスク分解 / リスク / 検証可能な受け入れ基準） | 計画起案時（毎回） |
-| [reference/criteria/decomposition.md](reference/criteria/decomposition.md) | 分解粒度（S/M・XL 分割）・親子構造（入れ子 4 階層・サブは計画の子）・承認継承の発火条件・sideEffects 確認手順 | サブ分解時・approve 後の発火確認時 |
+| [reference/criteria/decomposition.md](reference/criteria/decomposition.md) | 分解粒度（サブの大きさの目安・系統ごとの分割）・親子構造（入れ子 4 階層・サブは計画の子）・承認継承の発火条件・sideEffects 確認手順 | サブ分解時・approve 後の発火確認時 |
 | [reference/criteria/plan-review.md](reference/criteria/plan-review.md) | 計画レビュー観点カタログ（観測 ID 付き・件数は同ファイルに実在する「観点 N」見出しが正本で、ここには書かない）。**本スキルが所有** | 計画レビュー委任時 |

@@ -173,16 +173,16 @@ ls -d *-pages pages 2>/dev/null   # 何も出なければよい（出たら誤�
 ### permission が覆えるもの・覆えないもの（層の位置づけ）
 
 - **permission は二次 / 三次の層である。** ただし**破壊的 push を 1 つのクラスに束ねない**——前方一致で覆えるものと覆えないものが混ざっている。
-  - **フラグ形（`--mirror` / `--delete` / `-d`）は permission で覆える。** 破壊性がフラグに載るので `Bash(git push --mirror:*)` 等の前方一致に当たる。**だから上の設定例はこの 3 つも `ask` に含めている**——広い `Bash(git push:*)` allow のままだと、ブランチ / タグの削除と履歴の全上書きが未ゲートで自律実行されうる。
-  - **refspec 形（`git push origin +main` の強制更新・`git push origin :branch` の削除）は permission では覆えない。** 破壊性がフラグでなく**引数の中身**に載るため、`Bash(git push --…:*)` のどの前方一致にも当たらない。**hook 層が要る理由はここだけである。**
-- refspec 形を実際に止めるのは**別途導入が要る PreToolUse hook 層**である。**本セットアップ手順は hook 層の導入を必須にしていない**ので、**本節を完了しても hook 層が無い構成になりうる**（節 G が緑であることは、破壊的 push が全部覆われたことを意味しない）。hook 層を入れるかはこのリポの判断で、入れない場合は refspec 形が未ゲートのまま残ることを承知して進める。
+  - **フラグ形（`--mirror` / `--delete` / `-d`）は、`push` の直後に置いた語順なら permission で覆える。** 破壊性がフラグに載るので `Bash(git push --mirror:*)` 等の前方一致に当たる。**だから上の設定例はこの 3 つも `ask` に含めている**——広い `Bash(git push:*)` allow のままだと、ブランチ / タグの削除と履歴の全上書きが未ゲートで自律実行されうる。
+  - **語順を変えたフラグ形・refspec 形・宛先を書かない形は permission では覆えない。** 語順を変えたフラグ形（`git push origin --delete x`／`git push origin x --force`／`git push -u -f origin x`）は前方一致が `push` の直後しか見ないので広い allow に飲まれる。refspec 形（`git push origin +main` の強制更新・`git push origin :branch` の削除）は破壊性がフラグでなく**引数の中身**に載る。宛先を書かない形（`git push`／`git push origin HEAD`）はコマンド文字列に既定ブランチ名が現れない。
+- これらを実際に止めるのは**別途導入が要る PreToolUse hook 層**である。**本セットアップ手順は hook 層の導入を必須にしていない**ので、**本節を完了しても hook 層が無い構成になりうる**（節 G が緑であることは、破壊的 push が全部覆われたことを意味しない）。hook 層を入れるかはこのリポの判断で、入れない場合は上の 3 形がすべて未ゲートのまま残ることを承知して進める。
 - **AI がこの `settings.json` を書かないことに機械層は無い**（それを止める hook / permission / テストは同梱していない）。規範文としてしか存在しないので、**破っても誰も赤くしない＝fail-open かつ fail-silent** である。
 
 ### 作業
 
 1. **`{repo}` のルートに `.claude/settings.json` を作る**（**tracked**＝git の追跡下に置く）。既に在るなら `permissions` を下記に合わせて追記する。
 
-   <!-- FROZEN-BEGIN: 設定例（.shirokuma/rules/permission-boundary.md からの逐語コピー） -->
+   <!-- FROZEN-BEGIN: 設定例（規範 permission-boundary からの逐語コピー） -->
 
    ```jsonc
    {
@@ -212,7 +212,7 @@ ls -d *-pages pages 2>/dev/null   # 何も出なければよい（出たら誤�
 
 完了条件: `[ ] .claude/settings.json を作成（または追記）し、通常 push を allow・上の設定例の ask 6 変種（force 3 ＋ --mirror / --delete / -d）をすべて ask に置いた` / `[ ] プロジェクト固有の外向き操作を ask に追記した（無ければ「無し」とコメント）` / `[ ] .claude/settings.json を tracked としてコミットした`
 
-> 規範側の正本は配布物 `.shirokuma/rules/permission-boundary.md`（既定値と Why・3 レイヤの分離）。本節はその**配置手順**であって、境界の判断そのものは同規範が持つ。
+> 規範側の正本は配布物の規範 `permission-boundary`（既定値と Why・3 レイヤの分離）。本節はその**配置手順**であって、境界の判断そのものは同規範が持つ。
 
 ---
 

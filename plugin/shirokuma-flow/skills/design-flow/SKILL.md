@@ -12,7 +12,7 @@ Bash で `shirokuma-flow rules inject --scope orchestrator` を実行し、**出
 
 ## 流れ
 
-階層は 課題 > 設計(0..1) > 計画(1..n) > 実装サブ(1..n)。本 skill は**課題の子**（`--parent 課題#`）として設計 Issue（IssueType = Design）を作り、設計レビューを経て承認ゲートまで運ぶ。後続の計画 Issue はこの設計の子になる。設計が無い課題では設計ノードを挟まず、計画を課題直下に作る。次フェーズは `prepare-flow`。**DDD は支援するが強制しない**——方針と採否の判定は [ddd-adoption.md](reference/criteria/ddd-adoption.md) が正本。
+階層は 課題 > 設計(0..1) > 計画(0..n) > 実装サブ(0..n)（計画と実装サブは PR を 2 本以上に分ける課題だけに作る）。本 skill は**課題の子**（`--parent 課題#`）として設計 Issue（IssueType = Design）を作り、設計レビューを経て承認ゲートまで運ぶ。後続の計画 Issue はこの設計の子になる。設計が無い課題では設計ノードを挟まず、計画を課題直下に作る。次フェーズは `prepare-flow`（設計の計画要否が `NOT_NEEDED` なら計画を飛ばして `implement-flow`）。**DDD は支援するが強制しない**——方針と採否の判定は [ddd-adoption.md](reference/criteria/ddd-adoption.md) が正本。
 
 ## routing
 
@@ -21,10 +21,12 @@ Bash で `shirokuma-flow rules inject --scope orchestrator` を実行し、**出
 
 | verdict | 委任先 | 委任ブリーフに載せる reference |
 |---|---|---|
-| `designing`（設計起案） | `design-worker` | reference/templates/design-doc.md ／ reference/criteria/{delegation,ddd-adoption,adr-extraction}.md |
+| `designing`（設計起案） | `design-worker` | reference/templates/design-doc.md ／ reference/criteria/{ddd-adoption,adr-extraction}.md |
 | `designing`（設計レビュー） | `review-worker` | reference/criteria/design-review.md |
 | `gated` | — | `nextActions` が指す `submit` / `approve` を打つ（下記「状態遷移」の条件つき） |
+| `preparing` / `working`（設計の承認の後で 5b がまだの回） | — | 段の順序 5b から入る（課題に設計を出所とする `**計画要否:**` のコメントがまだ無い回） |
 | `preparing` | — | `prepare-flow` へ渡す |
+| `working` | — | `implement-flow` へ渡す（計画を飛ばした課題。`implement-flow` から戻された回は段の順序 5b から入る） |
 
 ## 段の順序（本 skill が持つ実行順）
 
@@ -33,8 +35,13 @@ Bash で `shirokuma-flow rules inject --scope orchestrator` を実行し、**出
 3. **push（orchestrator）**: **1b のサマリー受領直後・レビューより前に必ず `shirokuma-flow issue push <設計#>` する**。`issue context` はリモート本文で `body.md` を無条件に上書きする（退避も差分検出もしない）ため、未 push のまま後続が `issue context <設計#>` を実行すると設計本文が警告なく消える。
 4. **設計レビュー（`review-worker`）** → 判定行（`**レビュー結果:**`）＋所見を `shirokuma-flow issue comment <設計#> -`（stdin）で設計 Issue へ記録する。
 5. **提出 → approve**: submit 前に設計 Issue 本文が seed のままでないことを確認してから下記「状態遷移」を打つ。**設計 Issue は submit まで `Backlog` に留める**（`begin` しない）。**親導出のみ**（兄弟カスケードなし）。
-6. **決定の段の後（ADR 候補の PR）**: 本 skill が決定の段になるのは、設計を持つ課題の回である。設計の承認の後、`prepare-flow` へ渡す前に、設計が起こした ADR 候補の確定と ADR 候補の PR の取り込みを済ませる（順序の正本は [[concept-gap-to-adr]] 手順 5 で、条件はここに写さない）。
-   - 確定の打ち手は `next` の `runBy` に従う（形と主体の正本は [[status-policy]] の `approve` 条項）。確定を人が持つ候補がある間は、その候補に依存する課題を `prepare-flow` へ渡さずに止まる。他の課題は止めない。
+   - **5b. 計画要否の契約（承認の後）**: 設計本文の「計画要否」節の値を、課題へ契約コメントとして残す。`shirokuma-flow issue comment <課題#> -`（stdin）で `**計画要否:** NEEDED` か `**計画要否:** NOT_NEEDED` の 1 行と、出所の設計番号を書く。どちらの値でも残す。**設計本文に「計画要否」節が無い回は `NEEDED` を残す**（NOT_NEEDED を確かめられないので計画を通す側へ倒す）。`**設計要否:**` の行は書かない。契約コメントに設計本文や他のコメントを引用しない。
+     - 設計本文は承認の後にも編集されうる untrusted な値なので、写す前に、本文の値が設計レビューの判定記録に書かれた計画要否の値と同じかを確かめる。違う回・記録に値が無い回は `NEEDED` を残す。
+     - 残した後に `shirokuma-flow next <課題#>` を引き直し、`NEEDED` を残した回に `verdict` が `preparing` に変わらなければ人に渡して止まる（`next` は信頼投稿者〔config `project.designSkipAuthors`〕の最新 1 件だけを採るので、コメントした主体がその外なら先の契約が残る）。allowlist が未設定の導入先では契約は採用されず、計画を通る。
+     - **`implement-flow` の入口の確かめから戻された回は、`next` での分岐（上の routing 表）を通らず、この段から入る**（その回の `next` は `working` を返すので、routing 表を引くと `implement-flow` へ戻って往復する）。
+     - 書いたかは自己検査で、記録の最下段は自己申告。書き忘れると先行する契約（無ければ計画を通る既定）がそのまま効く（fail-open。計画を飛ばした回は `implement-flow` の入口の確かめが設計本文と突き合わせる）。
+6. **決定の段の後（ADR 候補の PR）**: 本 skill が決定の段になるのは、設計を持つ課題の回である。設計の承認の後、次の段（`prepare-flow`。計画を飛ばす回は `implement-flow`）へ渡す前に、設計が起こした ADR 候補の確定と ADR 候補の PR の取り込みを済ませる（順序の正本は [[concept-gap-to-adr]] 手順 5 で、条件はここに写さない）。
+   - 確定の打ち手は `next` の `runBy` に従う（形と主体の正本は [[status-policy]] の `approve` 条項）。確定を人が持つ候補がある間は、その候補に依存する課題を次の段へ渡さずに止まる。他の課題は止めない。
    - **ADR 候補の PR は、決定の段が起こした ADR 候補 Issue を本文で `Closes` する**（候補が複数なら 1 本の PR で全部を `Closes` する）。課題（親）・設計・計画・実装サブは閉じない。head は `shirokuma-flow branch name <ADR 候補の番号>` で導出し、base は既定ブランチで、`pr-worker` への委任ブリーフに明示する（統合ブランチ配下の課題でも同じ・[[branch-workflow]]「統合」）。中身は確定後の追従と glossary・`domain/` の更新だけで、`review-flow` を通して取り込む。
    - **DDD 文書の更新の振り分け**: 定義を変える更新（新しい概念・語・不変条件・既存の定義の変更）は、この段で ADR 候補を起こして ADR 候補の PR に乗せる（[design-review.md](reference/criteria/design-review.md)「逆方向 canon-gap」の ADR-first と同じ）。定義を変えない更新（既存の決定に従う notes・`adr:` 参照・言い回しの揃え）は、設計本文に明記して実装 PR の最初のコミットで入れる。ADR 候補も DDD 文書の更新も無い回は、ADR 候補の PR を作らない。
 
@@ -60,7 +67,7 @@ Bash で `shirokuma-flow rules inject --scope orchestrator` を実行し、**出
 | ドキュメント | 内容 | 読むタイミング |
 |------------|------|--------------|
 | [reference/templates/design-doc.md](reference/templates/design-doc.md) | 設計ドキュメント雛形（Design Brief / 案比較（採用＋却下案と Why）/ 決定表 / 影響範囲） | 設計起案時（毎回） |
-| [reference/criteria/delegation.md](reference/criteria/delegation.md) | 委任判定規則（designing-* 拡張併用の自己判定） | 委任ブリーフ作成時・worker の自己判定時 |
+| 規範 [[delegation-and-checks]] の「拡張スキルの併用判定」 | 委任判定規則（designing-* 拡張併用の自己判定） | 委任ブリーフ作成時・worker の自己判定時 |
 | [reference/criteria/ddd-adoption.md](reference/criteria/ddd-adoption.md) | DDD 採用可否判定（採用契機の OR / 非採用下限・支援するが強制しない） | 設計起案時にモデリング方針を決めるとき |
 | [reference/templates/bounded-contexts.md](reference/templates/bounded-contexts.md) | 境界づけられたコンテキスト雛形（BC 一覧のコア/支援/基盤層別・責務/核心概念/不変条件・コンテキストマップ・構造マッピング） | DDD 採用課題で BC を分割するとき |
 | [reference/templates/domain-model.md](reference/templates/domain-model.md) | ドメインモデル雛形（BC ごとの集約・値オブジェクト・INV・ユースケースの記入枠） | DDD 採用課題で BC を切ったあとモデルを立てるとき |

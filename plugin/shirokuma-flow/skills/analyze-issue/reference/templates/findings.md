@@ -10,7 +10,7 @@ analyze-issue が返す所見レポートの構造。**先頭の判定行は機�
 ```markdown
 **レビュー結果:** PASS | NEEDS_REVISION
 **設計要否:** NEEDED | NOT_NEEDED   ← 要件分析時のみ。判定根拠を 1-2 文で添える
-**計画要否:** NEEDED | NOT_NEEDED   ← 要件分析時のみ（設計要否と同じ回で必ず出す）。判定根拠を 1-2 文で添える
+**計画要否:** NEEDED | NOT_NEEDED   ← 要件分析時のみ（設計要否と同じ回で必ず出す）。判定根拠は規範 branch-workflow「Plan ケース」のどの系統に当たるか（どちらにも当たらないか）で 1-2 文で添える
 
 # 分析所見
 

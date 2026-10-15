@@ -41,18 +41,13 @@
 
 ## 注記
 
-- **`next` の `reason` 値域に ADR は無い＝CLI は ADR 候補の状態でフェーズを止めない**。`next` が返す `reason` は入口ゲート 2 種（`triage_incomplete` / `awaiting_approval`）・継続型 2 種（`${kind}_select_child` / `${kind}_all_children_done`）・`sub_leaf` / `sub_ready` / `sub_started` / `no_sub_child` / `sub_child_present` / `no_children` / `design_child_incomplete` / `design_skipped_not_needed` / `design_approved_plan_missing` / `plan_child_incomplete` / `plan_child_approved` / `plan_child_active` / `plan_skipped_not_needed` / `no_plan_child` / `design_not_needed_plan_needed` / `undetermined` で、**ADR（候補 Issue の Status・Accept の有無・`adr publish` の有無）を見る値は 1 つも無い**。入口ゲート 2 種も **対象 Issue 自身の Status だけ**を見るので、ADR 候補が未確定でも他の Issue のフェーズ判定には現れない。したがって **決定の段が起こした候補の確定と ADR 候補の PR の取り込みを次の段より先に済ませる順序は、CLI ではなく skill の手順（`design-flow` / `prepare-flow` の「段の順序」6・`implement-flow` の入口の確かめ）と計画レビューが持つ**（正本は [[concept-gap-to-adr]] 手順 5）。`verdict` が次の段を示しても、その手順を飛ばさない。確定を人が持つ候補がある間に止めるのは、その候補に依存する課題の次の段だけで、他の課題は止めない。**倒れる向き**: この列挙は実装の写しで、実装が増えれば古くなる（正本は `next` の出力）。
+- **`next` の `reason` 値域に ADR は無い＝CLI は ADR 候補の状態でフェーズを止めない**。表1の `reason` に ADR（候補 Issue の Status・Accept の有無・`adr publish` の有無）を見る値は無い。入口ゲート 2 種も **対象 Issue 自身の Status だけ**を見るので、ADR 候補が未確定でも他の Issue のフェーズ判定には現れない。したがって **決定の段が起こした候補の確定と ADR 候補の PR の取り込みを次の段より先に済ませる順序は、CLI ではなく skill の手順（`design-flow` / `prepare-flow` の「段の順序」6・`implement-flow` の入口の確かめ。後者は決定の段が計画の回と、計画を飛ばした回の設計が起こした候補を持つ）と計画レビューが持つ**（正本は [[concept-gap-to-adr]] 手順 5）。`verdict` が次の段を示しても、その手順を飛ばさない。確定を人が持つ候補がある間に止めるのは、その候補に依存する課題の次の段だけで、他の課題は止めない。
 - **`Requirements` / `Reviewing` は `next` が返さない**。
   `next` の出力の `nextPhase` は `Designing` / `Preparing` / `Working` / `null` のみを取る。
 - **`*_select_child` / `*_all_children_done`** の `${kind}` 部分は実 kind に展開される
   （`epic_select_child`・`research_all_children_done` 等）。継続型（epic / research）
   の親に対して返る reason であり、親自身はフェーズを持たない（子課題を選んで `next <子>` する）。
-- **`*_all_children_done` の done/cancel 案内は `next` 出力の `hint` にも載る**。
-  継続型が In progress のとき `next <n>` の JSON は `hint` に「継続するなら子課題追加／完了なら人起点で
-  `done <n>`（COMPLETED close・正常終了）・取りやめは `cancel`（NOT_PLANNED）」を返し、ToDo のときは
-  「`done` は In progress からのみ → `begin` → `done <n>` の 2 手」を返す（Blocked / Done は虚偽断定回避で
-  `hint` を omit）。抑制されるのは機械の auto-close であり、人起点の `done` は射程外＝正当。
-  JSON 契約（`nextPhase: null` / `reason: *_all_children_done`）は不変で、`hint` は optional な補足。
+- **`*_all_children_done` の done/cancel 案内は `next` 出力の `hint` が運ぶ**（optional な補足で、JSON 契約は不変）。抑制されるのは機械の auto-close であり、人起点の `done` は射程外。
 - **`Working → implement-flow` の命名非対称**: `Preparing → prepare-flow` は語幹一致だが
   `Working → implement-flow` は語幹が一致しない。convention（フェーズ名から skill 名を機械導出）では
   解けないため、本表が本質的に必要（この対応を暗黙の規則で代替できない）。
