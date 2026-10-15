@@ -36,7 +36,7 @@ EPIC（親 Issue）を起案・整備する際の本文雛形。埋めれば EPI
 | 1 | #{sub1} | {概要} | — | S |
 | 2 | #{sub2} | {概要} | #{sub1} | M |
 
-> サブはサイズ S/M に収める。XL なら着手前に分割する（[../criteria/sizing.md](../criteria/sizing.md)）。
+> サブは規範 `branch-workflow`「Plan ケース」の系統が真の部分ごとに切る（1 サブ = 1 PR）。大きさだけでは分割しない（[../criteria/sizing.md](../criteria/sizing.md)）。
 
 ## 実行順序
 

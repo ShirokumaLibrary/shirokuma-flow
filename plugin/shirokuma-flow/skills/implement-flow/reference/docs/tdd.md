@@ -22,7 +22,7 @@ coding-worker が実装時に回す TDD（red → green → refactor）の刻み
 | 状態を持つ処理（状態機械・遷移） | 許可遷移・禁止遷移の両側 |
 | ユーティリティ | 正常系・エッジケース・エラーケース |
 
-- フレームワーク固有の最低カバレッジ（page / server action / API ルート等）は拡張 skill（coding-nextjs 等）側の基準に従う（併用判定は [../criteria/delegation.md](../criteria/delegation.md)）。
+- フレームワーク固有の最低カバレッジ（page / server action / API ルート等）は拡張 skill（coding-nextjs 等）側の基準に従う（併用判定は 規範 [[delegation-and-checks]] の「拡張スキルの併用判定」）。
 - 内部実装の詳細（private 関数）はテストしない——公開 I/F 経由で振る舞いを検証する（refactor でテストが壊れない粒度に保つ）。
 
 ## @testdoc コメント（必須）

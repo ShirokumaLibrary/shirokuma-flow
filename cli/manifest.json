@@ -1,10 +1,10 @@
 {
   "schema": 1,
-  "generatedAt": "2026-10-13T06:15:56Z",
+  "generatedAt": "2026-10-15T16:03:44Z",
   "distribution": "tarball",
   "packages": [
-    {"name":"@shirokuma-library/flow","version":"0.18.0","tarball":"shirokuma-library-flow.tgz"},
-    {"name":"@shirokuma-library/nextjs","version":"0.18.0","tarball":"shirokuma-library-nextjs.tgz"},
-    {"name":"@shirokuma-library/typescript","version":"0.18.0","tarball":"shirokuma-library-typescript.tgz"}
+    {"name":"@shirokuma-library/flow","version":"0.19.0","tarball":"shirokuma-library-flow.tgz"},
+    {"name":"@shirokuma-library/nextjs","version":"0.19.0","tarball":"shirokuma-library-nextjs.tgz"},
+    {"name":"@shirokuma-library/typescript","version":"0.19.0","tarball":"shirokuma-library-typescript.tgz"}
   ]
 }

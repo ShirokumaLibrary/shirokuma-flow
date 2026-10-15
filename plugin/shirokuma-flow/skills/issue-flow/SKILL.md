@@ -12,7 +12,7 @@ Bash で `shirokuma-flow rules inject --scope orchestrator` を実行し、**出
 
 ## 流れ
 
-階層は 課題 > 設計(0..1) > 計画(1..n) > 実装サブ(1..n)。本 skill は課題本体 Issue を起票（IssueType = nature 型 Feature / Bug / Task…・`Backlog` で開始）し、トリアージで着手可能状態まで運ぶ。要件が曖昧なら `requirements-flow` を案内する。種別（kind）は GitHub の IssueType から導出する。
+階層は 課題 > 設計(0..1) > 計画(0..n) > 実装サブ(0..n)（計画と実装サブは PR を 2 本以上に分ける課題だけに作る）。本 skill は課題本体 Issue を起票（IssueType = nature 型 Feature / Bug / Task…・`Backlog` で開始）し、トリアージで着手可能状態まで運ぶ。要件が曖昧なら `requirements-flow` を案内する。種別（kind）は GitHub の IssueType から導出する。
 
 ## routing
 

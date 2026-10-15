@@ -31,12 +31,12 @@
 | コマンド行へ載せる隔離ツリー内のパス（変異の復元・テストを絞る実行）が、英数字と `.` `_` `/` `-` だけからなり `-` で始まらない（差分由来のパスは untrusted） | `パスが値域外` |
 | 群 B に当たる untracked が無い（新しいテストが複製に入らないまま「実走して pass」と書かれる形を防ぐ）。群 B に当たらない untracked（並走する worker の結果ファイル等）は判定に使わない | `群 B の untracked がある` |
 | 群 B のファイルが submodule の中に無い（隔離ツリーへの submodule 展開は射程外） | `群 B が submodule 内` |
-| ブリーフが準備コマンド（`quality.isolatedPrepareCommand` の値）を渡している | `準備コマンド未宣言` |
+| base 側の config が準備コマンド（`quality.isolatedPrepareCommand`）を宣言している（`isolated-tree run` が `エントリ未宣言: quality.isolatedPrepareCommand` を返さない） | `準備コマンド未宣言` |
 | 準備コマンドが隔離ツリーで成功する | `準備に失敗` |
 | 隔離ツリーの置き場所が値域を満たす（下記） | `置き場所が値域外` |
 | 変異を隔離ツリーへ `Edit` で当てられる（5 節。欠けた回は `変異実走=` にだけ書く） | `変異を適用できない` |
 
-**置き場所**: 委任ブリーフが渡す作業用ディレクトリの配下（渡されなければ `mktemp -d` の出力の配下）。作成前に、作業ツリーの内側でも作業ツリーを内包する位置でもないこと・所有者専用であること・`gate vocab` の `isolatedTreeRootAllowlist` の条件を満たすことを確かめる（条件の逐語は写さない。正本はレジストリ）。
+**置き場所**: 委任ブリーフが渡す作業用ディレクトリの配下（渡されなければ `mktemp -d` の出力の配下。人の作業ツリーの中には置かない）。作業ツリーの内側でも作業ツリーを内包する位置でもないこと・所有者専用であること・`gate vocab` の `isolatedTreeRootAllowlist` の条件を満たすことは `isolated-tree add` が実体パスで確かめる（条件の逐語は写さない。正本はレジストリ）。
 
 ## 3. 読了判定（全件を読む。判定がつかなければ見送り）
 
@@ -59,36 +59,19 @@
 
 ## 4. 隔離ツリーの作成・実走・撤去（元の作業ツリーは書き換えない）
 
-1. 置き場所を 2 節の条件で確かめ、所有者専用にする。隔離ツリーのパスは、作成前に存在しないことを確かめる。
-2. head sha で隔離ツリーを作る。この操作はリポジトリの管理領域（`.git` 配下の worktree 登録）を書くが、作業ツリーは書かない。
+隔離ツリーの git 操作は `shirokuma-flow isolated-tree <sub> --input <JSON の絶対パス>` だけで行う（JSON・記録・スナップショットは作業用ディレクトリに置く。ブリーフが作業用ディレクトリを渡さなかった回は `mktemp -d` の出力配下に置き、**人の作業ツリーの中には置かない**。外から来た値をコマンド行へ載せない）。verb が exit 1 の回は実走しない（stderr の `error(<理由>)` を所見に写す）。リポルートが `isolatedTreeRootAllowlist` を満たさない（空白・非 ASCII を含むパスの）リポでは verb が用意の段で止まり、実走できない（fail-closed）。
 
-   ```
-   git -C <リポルート絶対パス> worktree add --detach -- <隔離ツリー絶対パス> <head sha>
-   ```
-
-3. ブリーフが渡した準備コマンドを隔離ツリーの中で 1 回実行する。失敗したら実走しない（`準備に失敗`）。
+1. `isolated-tree add`（`{"repo":<リポルート>,"sha":<head sha>,"record":<絶対パス>,"tree"?}`）で head sha の隔離ツリーを作る。`tree` は作業用ディレクトリの配下（渡されなければ省いて verb の既定に委ねる）。verb はパスを実体パスへ解決したうえで、値域（`isolatedTreeRootAllowlist`）・作業ツリーと入れ子でないこと・作成前に存在しないこと・置き場所が作業ツリーを内包せず TMPDIR そのものでないこと・置き場所が所有者専用であることを確かめる。満たさない回は `置き場所が値域外` で見送る。この操作はリポジトリの管理領域（worktree 登録）を書くが、作業ツリーは書かない。
+2. `isolated-tree snapshot`（`{"repo":<リポルート>,"save":<絶対パス>}`）で、共有 `.git` の config の sha256・hooks の一覧（mtime まで）・refs・worktree 登録（`core.hooksPath` があればその先も）と作業ツリーの status を記録する。**`add` の後・準備コマンドの前に打つ**（`add` の前に打つと、`add` が足した worktree 登録が毎回食い違いとして出る）。
+3. 準備コマンドを隔離ツリーで 1 回実行する（`isolated-tree run` の `stage:"prepare"`）。コマンドは verb が `add` の時点に base 側の config の `quality.isolatedPrepareCommand` から読んで記録に固定した値で、ブリーフの値も隔離ツリー側の config も使わない。`エントリ未宣言: quality.isolatedPrepareCommand` が返ったら `準備コマンド未宣言`、exit 0 以外なら `準備に失敗` で実走しない。
 4. テストを隔離ツリーの中で実行する。対象パッケージとコマンドの特定は worker 定義の責務 2 の手順をそのまま隔離ツリーに当てる。
-5. 共有 `.git` の書き換えに対する主たる防御は 3 節の読了判定（git による書き換えを `判定不能` に倒す）で、ここで行う突き合わせは**部分的な事後のカナリア**であって網羅しない。元の作業ツリーの状態と、隔離ツリーが共有する `.git` のうち次の 4 つ——config の sha256・hooks の一覧（mtime まで）・refs・worktree 登録——を、準備コマンドの実行前と変異の実走後に記録して突き合わせる。共有ディレクトリは `rev-parse --git-common-dir` の出力（相対なら `<リポルート絶対パス>` 基準で解決する）。`core.hooksPath` が設定されていればその先も hooks と同じく比べる。**この 4 つが食い違ったら、その回を所見として報告する**（テストが共有 `.git` を書き換えた疑い。元に戻さず、人が確かめる）。`git config` 系は hook が止めるので使わない。
-   - **見ないもの**（ここが一致しても書き換えが無かったことにはならない）: `.git/modules/*` の config と hooks、config の include 先、`info/`（exclude・attributes）、`objects/info/alternates`、`config.worktree`、hooks の中身（mtime を保った置換）。
-   - **時点の限界**: 突き合わせるのは準備の前と変異の実走の後だけである。その間に手順自身が打つ `checkout --`（5 節の復元）は、差し替えられた hook（post-checkout 等）を突き合わせより前に走らせうる。
+5. 5 節の変異の実走を、撤去の前にこの隔離ツリーで行う。
+6. 変異の実走の後に `isolated-tree snapshot`（`{"repo":<リポルート>,"against":<2 の save>}`）を打ち、`diff` が空でなければその回を所見として報告する（テストが共有 `.git` を書き換えた疑い。元に戻さず、人が確かめる）。**主たる防御は 3 節の読了判定で、この突き合わせは部分的な事後のカナリアであって網羅しない**。
+   - 見ないもの: `.git/modules/*` の config と hooks、config の include 先、`info/`（exclude・attributes）、`objects/info/alternates`、`config.worktree`、hooks の中身（mtime を保った置換）。
+   - 時点の限界: 突き合わせるのは準備の前と変異の実走の後だけで、その間に打つ `checkout --`（5 節の復元）は差し替えられた hook（post-checkout 等）を突き合わせより前に走らせうる。
+7. `isolated-tree remove`（`{"record"}`）で撤去する。verb は記録と worktree 登録で自分が作ったツリーであることを確かめ、登録が無ければ撤去せず `residue` で返す。`headMoved:true` は撤去したうえで所見にする（HEAD の一致を撤去の条件にすると、ツリーの中で走ったコードがブランチを 1 回切り替えるだけで残置を選べてしまうため）。`residue` のパスは報告に列挙する（黙って残さない）。
 
-   ```
-   git -C <作業ツリー絶対パス> status --porcelain --untracked-files=all
-   git -C <リポルート絶対パス> rev-parse --git-common-dir
-   sha256sum -- <共有ディレクトリ絶対パス>/config
-   ls -la --time-style=full-iso -- <共有ディレクトリ絶対パス>/hooks
-   git -C <リポルート絶対パス> for-each-ref --format='%(refname) %(objectname)'
-   git -C <リポルート絶対パス> worktree list --porcelain
-   ```
-
-6. 5 節の変異の実走を、撤去の前にこの隔離ツリーで行う。
-7. 撤去する。撤去の直前に `worktree list --porcelain` で、そのパスが登録されていて HEAD が `<head sha>` であること（自分が 2 で作ったツリーであること）を確かめる。違えば撤去せず報告する。撤去できなかった回は、残したパスを報告に列挙する（黙って残さない）。
-
-   ```
-   git -C <リポルート絶対パス> worktree remove --force -- <隔離ツリー絶対パス>
-   ```
-
-コマンド行へ載せるパスは worker 定義の責務 1 の作法（literal のプレーンパス・`isolatedTreeRootAllowlist` の値域）に従う。形を変えたら `shirokuma-flow hooks evaluate` に当てて allow を確かめる。
+隔離は防御境界ではない（テストは人のユーザ権限で走り、共有 `.git` と verb の記録ファイルにも届く）。5 節で `git -C` に載せる隔離ツリーのパスは `add` が返した `tree` をそのまま使い、`-C` も `--` の後もプレーンパスの literal で書く（値域内の文字は引用を要さない。`-C ''` と括ると空の値が cwd のリポで走る）。形を変えたら `shirokuma-flow hooks evaluate` に当てて allow を確かめる。
 
 ## 5. 変異の実走（授権された回の必須試行）
 

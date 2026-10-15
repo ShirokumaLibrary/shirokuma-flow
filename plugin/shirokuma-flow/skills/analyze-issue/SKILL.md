@@ -31,6 +31,7 @@ orchestrator が結果を機械的に走査して分岐できるよう、固定�
 | モジュール I/F（公開シグネチャ・境界）の変更 |
 | 不可逆なデータ移行を伴う |
 | 新規の外部依存を導入する |
+| ADR 級の決定（`design-flow/reference/criteria/adr-extraction.md` の 6 軸のどれか）を含む見込みがある |
 
 上記いずれにも該当しない（既存パターン内の実装・軽微な修正・設定変更・ドキュメント追加・バグ修正）場合は `NOT_NEEDED`。
 
@@ -38,12 +39,11 @@ orchestrator が結果を機械的に走査して分岐できるよう、固定�
 
 ## 計画要否の判定基準
 
-**参照型・独自列挙なし**。次のいずれかに当たれば `NEEDED`（OR 判定）。
+**参照型・独自列挙なし**。規範 `branch-workflow`「Plan ケース」のどちらかの系統に当たれば `NEEDED`、どちらにも当たらなければ `NOT_NEEDED`。作業の大きさでは判定しない。
 
-- `prepare-flow/reference/criteria/decomposition.md` の粒度表で **L〜XL**（1 PR で見渡せない・複数の関心が混在）に当たる。
-- `.shirokuma/rules/branch-workflow.md`「Plan ケース」の判定軸（段階移行〔strangler-fig〕または隔離・bisect 性が価値を持つ）に当たる。
+`next` verb は信頼投稿者（config `project.designSkipAuthors`）の最新の契約だけを読み、`NOT_NEEDED` なら計画フェーズを飛ばして Working へ誘導する（normal 限定・子が design のみの回に限る・plan が 1 件でも在れば契約より構造が優先）。設計を経る課題では、設計の承認の後に `design-flow` が計画要否の契約を残し、それが最新の 1 件としてこの判定を上書きする。
 
-どちらにも当たらない（1 PR で閉じる・並列に進めない・分解が要らない）場合は `NOT_NEEDED`。`next` verb は信頼投稿者（config `project.designSkipAuthors`）の最新の契約だけを読み、`NOT_NEEDED` なら計画フェーズを飛ばして Working へ誘導する（normal 限定・子が design のみの回に限る・plan が 1 件でも在れば契約より構造が優先）。
+**本文を書いた文脈では両方を NOT_NEEDED にしない**: 実行した文脈がその課題の本文を書いた（起票した・本文を編集した）回は、設計要否・計画要否の両方を `NOT_NEEDED` にせず、設計要否を `NEEDED` にする（書いた本人の確かめだけで実装へ進まないよう、設計レビューの経路へ回す）。本文を書いたかは実行者自身の申告で、確かめる機械段は無い（fail-open）。
 
 ## 手順
 
