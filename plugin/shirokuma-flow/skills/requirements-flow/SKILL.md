@@ -40,7 +40,7 @@ ADR の Why 調査を `research-worker` へ委任する回は、調査の結果�
 |---|---|
 | `gated` | `nextActions` が指す `submit` / `approve` を打つ（下記「ADR の状態遷移」の条件つき） |
 | `designing` / `preparing` / `working` | 完了後の受け渡し先（`design-flow` / `prepare-flow` / `implement-flow`） |
-| `select_child` / `all_children_done` / `leaf` | `nextActions` に従う |
+| `select_child` / `all_children_done` / `leaf` / `reclassify` | `nextActions` に従う |
 
 ## ADR の状態遷移（打ち方）
 

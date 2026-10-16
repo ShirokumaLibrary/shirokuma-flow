@@ -23,7 +23,7 @@ Bash で `shirokuma-flow rules inject --scope orchestrator` を実行し、**出
 |---|---|
 | `gated` | `nextActions` が指す `submit` / `approve` を打つ（下記「状態遷移」の条件つき） |
 | `designing` / `preparing` / `working` / `requirements` | 対応フェーズの skill へ渡す（表引きの正本は `autonomous-flow` の `reference/criteria/phase-skill-map.md`） |
-| `select_child` / `all_children_done` / `leaf` | `nextActions` に従う |
+| `select_child` / `all_children_done` / `leaf` / `reclassify` | `nextActions` に従う |
 
 ## 状態遷移（打ち方）
 

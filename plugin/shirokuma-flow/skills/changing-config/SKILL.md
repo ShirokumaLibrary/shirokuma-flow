@@ -26,4 +26,4 @@ model: opus
 
 ## 倒れる向き
 
-依頼の有無を機械で確かめる層は無い（fail-open）。`config set` は値域外の値を書かずに失敗するが、値域内の誤った値は止めない。人の手編集はこのスキルを通らない。Edit ツールでの書き換えを止めたい導入先は [reference/permission-deny.md](reference/permission-deny.md) の設定例を使える。
+依頼の有無を機械で確かめる層は無い（fail-open）。`config set` は値域外の値を書かずに失敗するが、値域内の誤った値は止めない。人の手編集はこのスキルを通らない。Edit ツールによる `config.yaml` と配布物の置き場（`.shirokuma/dist/`）の書き換えを止めたい導入先は [reference/permission-deny.md](reference/permission-deny.md) の設定例を使える。
