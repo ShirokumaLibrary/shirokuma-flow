@@ -26,6 +26,7 @@ Bash で `shirokuma-flow rules inject --scope orchestrator` を実行し、**出
 | `preparing`（計画立案） | `plan-worker` | reference/templates/plan-issue.md ／ reference/criteria/decomposition.md |
 | `preparing`（計画レビュー） | `review-worker` | reference/criteria/plan-review.md |
 | `gated` | — | `nextActions` が指す `submit` / `approve` を打つ（下記「状態遷移」の条件つき） |
+| `reclassify` | — | `nextActions` に従い（`issue set-kind <n> normal` → `next <n>`）、引き直した verdict でこの表を引き直す |
 | `working` | — | `implement-flow` へ渡す（**計画を作らない**——`plan_skipped_not_needed` の課題は信頼投稿者の `**計画要否:** NOT_NEEDED` 契約〔analyze-issue、または設計の承認の後に design-flow が残す〕で計画フェーズがスキップされている） |
 
 ## 段の順序（本 skill が持つ実行順）

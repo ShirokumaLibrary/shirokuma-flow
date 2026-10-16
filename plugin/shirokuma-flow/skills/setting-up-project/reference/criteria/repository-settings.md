@@ -43,7 +43,7 @@ Project collaborator と違い**機械判定できる**ので、診断では `un
 gh api repos/{owner}/{repo}/branches/{mainline}/protection
 ```
 
-`{mainline}` は config `project.defaultBranch`（未設定なら `main`）。**この API は環境によって設定自体が選べない**ため、結果は 5 通りに分けて扱う（403 を一律「失敗」と読まない・404 も一律「未設定」と読まない）。
+`{mainline}` は config `project.defaultBranch`。未設定の回は既定へ解決せず、SKILL.md 診断 ① で値を確定してから測る（未確定のまま既定の名前で測ると、誰も選んでいないブランチの保護を判定することになる）。**この API は環境によって設定自体が選べない**ため、結果は 5 通りに分けて扱う（403 を一律「失敗」と読まない・404 も一律「未設定」と読まない）。
 
 | 応答 | 読み方 | 次手 |
 |---|---|---|

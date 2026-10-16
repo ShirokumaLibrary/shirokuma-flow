@@ -24,7 +24,7 @@ Bash で `shirokuma-flow rules inject --scope orchestrator` を実行し、**出
 | `working`（上から順に当てる） | ① `descendTo` がある → 段の順序に入らず、`nextActions` の `next <descendTo>` を打ち、降りた先の verdict でこの表を引き直す<br>② reason が `sub_started` → 段の順序に入らず、[reference/docs/recovery.md](reference/docs/recovery.md)「実装サブを In progress から再開する」から再開する（`begin` は打たない）<br>③ reason が `sub_ready` / `design_skipped_not_needed` / `plan_skipped_not_needed` / `no_sub_child` → 下記「段の順序」へ入る<br>④ それ以外 → 停止して報告する |
 | `gated` | `nextActions` が指す `submit` / `approve` を打つ（下記「入口の状態遷移」の条件つき） |
 | `designing` / `preparing` | 対応フェーズ skill へ渡す（本 skill は着手しない） |
-| `select_child` / `all_children_done` / `leaf` | `nextActions` に従う |
+| `select_child` / `all_children_done` / `leaf` / `reclassify` | `nextActions` に従う |
 
 ①で降りた回と②の回は、段 1〜5 の `<n>`（`status <n>`・`begin <n>`・`branch name <n>`・PR 本文の `Closes`・終端の `done <サブ番号>`）をすべて降りた先のサブの番号に置き換える。最初に渡された課題や計画の番号は使わない。
 

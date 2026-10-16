@@ -24,6 +24,7 @@ Bash で `shirokuma-flow rules inject --scope orchestrator` を実行し、**出
 | `designing`（設計起案） | `design-worker` | reference/templates/design-doc.md ／ reference/criteria/{ddd-adoption,adr-extraction}.md |
 | `designing`（設計レビュー） | `review-worker` | reference/criteria/design-review.md |
 | `gated` | — | `nextActions` が指す `submit` / `approve` を打つ（下記「状態遷移」の条件つき） |
+| `reclassify` | — | `nextActions` に従い（`issue set-kind <n> normal` → `next <n>`）、引き直した verdict でこの表を引き直す |
 | `preparing` / `working`（設計の承認の後で 5b がまだの回） | — | 段の順序 5b から入る（課題に設計を出所とする `**計画要否:**` のコメントがまだ無い回） |
 | `preparing` | — | `prepare-flow` へ渡す |
 | `working` | — | `implement-flow` へ渡す（計画を飛ばした課題。`implement-flow` から戻された回は段の順序 5b から入る） |

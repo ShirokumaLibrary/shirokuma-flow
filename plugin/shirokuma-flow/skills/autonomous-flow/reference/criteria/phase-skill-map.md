@@ -19,6 +19,7 @@
 | `null` | `triage_incomplete` | skill 起動しない・既定は orchestrator が `submit`／`approve`を打って再 `next`（`IssueType=ADR` の候補 Issue も既定は orchestrator が打つ）。確認モード（`確認モード: guided` の明示がある回）では人の `approve` を待つ |
 | `null` | `awaiting_approval` | skill 起動しない・既定は orchestrator が `approve`を打って再 `next`（`IssueType=ADR` の候補 Issue も既定は orchestrator が打つ）。確認モード（`確認モード: guided` の明示がある回）では人の `approve` を待つ |
 | `null` | `sub_leaf` | skill 起動しない・`nextActions` に従う。sub は Done / Blocked の回だけ `leaf` になる。空なら何もしない（`done` を打たない） |
+| `null` | `sub_design_needed`（verdict `reclassify`） | skill 起動しない・`nextActions` に従い `issue set-kind <n> normal` で課題（normal）へ切り替えてから `next <n>` を引き直す（EPIC / Research 直下の sub に信頼投稿者の `**設計要否:** NEEDED` がある回。ToDo / In progress のときだけ） |
 | `null` | `*_select_child` | skill 起動しない・次に着手する子を選んで `next <子番号>` |
 | `null` | `*_all_children_done` | skill 起動しない・継続型（epic/research）の全子完了。次課題追加 or 人の判断で `shirokuma-flow done <n>`（COMPLETED close・正常終了）／取りやめは `cancel`（NOT_PLANNED） |
 | `null` | `undetermined` | skill 起動しない・`shirokuma-flow status <n>` で状態確認して判断 |

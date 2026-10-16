@@ -52,6 +52,7 @@ Issue を**全フェーズ自動で**進める orchestrator。各フェーズ or
 | `gated` | `nextActions` が指す `submit` / `approve` を打つ（下記「承認ゲートの通し方」の条件つき） |
 | `select_child` / `all_children_done` | `nextActions` に従う（**ADR 候補の Status だけを根拠に skill の起動を見送らない**——見送るのは、確定を人が持つ候補に依存する課題の次の段だけ・正本は phase-skill-map.md の「注記」節） |
 | `leaf` | `nextActions` に従う。sub は Done / Blocked の回だけ `leaf` になる。空なら何もしない（`done` を打たない） |
+| `reclassify` | `nextActions` に従い（`issue set-kind <n> normal` → `next <n>`）、引き直した verdict でこの表を引き直す |
 
 `requirements` / `reviewing` は `next` が出さない。requirements-flow / review-flow は phase-skill-map 表2のタイミングで文脈起動する。
 
