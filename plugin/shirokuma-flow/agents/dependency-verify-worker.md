@@ -5,7 +5,6 @@ tools: Write, Read, Bash
 model: opus
 effort: low
 ---
-<!-- model / effort の根拠: 主な作業は検査の実走と結果の記録で、low は subagent の典型用途。 -->
 
 # dependency-verify-worker
 
@@ -143,7 +142,7 @@ prepare と検査の 2 コマンドは **`isolated-tree add` が base 側（人�
 
 レポート**全文**をブリーフで渡された結果ファイルの絶対パスへ **Write** する（自己計算した相対パスは使わない）。Write の前に `Read` で既存の有無を確かめ、Write の後に `Read` か `ls` で実在を検証する。
 
-**冒頭の検証母集団の見出しと欄（必須）**: `shirokuma-flow gate vocab --profile dependency-verify --scaffold` の `scaffold` をそのまま貼り、値だけを埋める（見出し・欄名・並びの正本はこの verb。欄名を変形すると入口の固定文字列照合が欠落と判定する）。詳細は欄の直下の字下げ行に書く。`gate vocab` を引けない回は欄名の逐語を書き戻して回避しない（欠落として課題化レーンへ落ちる＝fail-closed）。注釈行を 1 行添える（例: `> 段ラベル: V1＝宣言差分（マニフェスト）の読み取り／V2＝実効差分（ロックファイル）の読み取り／V3＝検査コマンドの実走／V4＝更新前後の出力比較／V5＝記録と限界の申告。`）。**判定 JSON の `build` ブロック（`sourceMatch` / `dirty` / `degraded`・欠落した回の読み方を含む）の読み方は `shirokuma-flow gate limits --sub limits` の `H19` が正本**（ここに写さない）。**`stale` を名乗った回・`build` ブロックそのものが無い回は、その判定を現ソースの値として読まない。** **`stale` と `build.dirty: true` が同時に立つ回は、その判定を根拠に使わない。** **`build.dirty: null`（焼いていない）は、再現性の担保が無い側として `build.dirty: true` と同じに読む。**
+**冒頭の検証母集団の見出しと欄（必須）**: `shirokuma-flow gate vocab --profile dependency-verify --scaffold` の `scaffold` をそのまま貼り、値だけを埋める（見出し・欄名・並びの正本はこの verb。欄名を変形すると入口の固定文字列照合が欠落と判定する）。詳細は欄の直下の字下げ行に書く。`gate vocab` を引けない回は欄名の逐語を書き戻して回避しない（欠落として課題化レーンへ落ちる＝fail-closed）。注釈行を 1 行添える（例: `> 段ラベル: V1＝宣言差分（マニフェスト）の読み取り／V2＝実効差分（ロックファイル）の読み取り／V3＝検査コマンドの実走／V4＝更新前後の出力比較／V5＝記録と限界の申告。`）。**判定 JSON の `build` ブロック（`sourceMatch` / `dirty` / `degraded`・欠落した回の読み方を含む）の読み方は `shirokuma-flow gate limits --sub limits` の `H19` が正本**（ここに写さない）。`stale` を名乗った回・`build` ブロックそのものが無い回は、その判定を現ソースの値として読まない。`stale` と `build.dirty: true` が同時に立つ回は、その判定を根拠に使わない。`build.dirty: null`（焼いていない）は、再現性の担保が無い側として `build.dirty: true` と同じに読む。
 
 各欄の値の形（この形以外で書かない）:
 

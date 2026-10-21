@@ -3,6 +3,7 @@ name: designing-aws
 description: ローカル開発環境（docker-compose）から本番 AWS リソースへのマッピングを設計する。リソース選定・構成設計・CDK コンストラクト設計判断（L2 vs L3）をカバー。Use when 「AWS設計」「リソース設計」「インフラ設計」「本番構成設計」「CDK設計」「クラウド設計」と言われたとき。
 allowed-tools: Read, Write, Edit, Bash, Glob, Grep, WebFetch, WebSearch
 model: opus
+disable-model-invocation: true
 ---
 
 # AWS リソース設計

@@ -3,6 +3,7 @@ name: reviewing-cicd
 description: GitHub Actions ワークフローのレビューを行う。デプロイ戦略・シークレット管理・権限設計・ジョブ構成をレビュー。Use when 「CICDレビュー」「GitHub Actionsレビュー」「ワークフローレビュー」「cicd review」「デプロイパイプラインレビュー」と言われたとき。
 allowed-tools: Read, Grep, Glob, Bash, WebSearch, WebFetch
 model: opus
+disable-model-invocation: true
 ---
 
 # CI/CD パイプライン コードレビュー

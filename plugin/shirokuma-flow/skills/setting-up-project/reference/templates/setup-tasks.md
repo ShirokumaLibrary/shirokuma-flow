@@ -121,7 +121,7 @@ ls -d *-pages pages 2>/dev/null   # 何も出なければよい（出たら誤�
 
 表の**「必須/推奨」列**が必須と推奨の区別の正本。必須項目を満たしていないとセットアップ完了にならない。推奨項目は別方針（squash 運用など）なら外してよいが、**外すと何が壊れるか**（右端列）を承知したうえでこの Issue にコメントで残す。
 
-<!-- FROZEN-BEGIN: 期待値表（../criteria/repository-settings.md からの逐語コピー） -->
+<!-- FROZEN-BEGIN: 期待値表 -->
 
 | API フィールド | UI ラベル（Settings → General → Pull Requests） | 期待値 | 必須/推奨 | 不充足で壊れるもの |
 |---|---|---|---|---|
@@ -182,7 +182,7 @@ ls -d *-pages pages 2>/dev/null   # 何も出なければよい（出たら誤�
 
 1. **`{repo}` のルートに `.claude/settings.json` を作る**（**tracked**＝git の追跡下に置く）。既に在るなら `permissions` を下記に合わせて追記する。
 
-   <!-- FROZEN-BEGIN: 設定例（規範 permission-boundary からの逐語コピー） -->
+   <!-- FROZEN-BEGIN: 設定例 -->
 
    ```jsonc
    {

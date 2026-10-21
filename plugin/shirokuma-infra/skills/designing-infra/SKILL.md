@@ -3,6 +3,7 @@ name: designing-infra
 description: ローカル開発インフラの設計を行う。docker-compose サービス構成設計・マルチステージ Dockerfile 設計・サービス分割方針・ポート割り当て計画をカバー。Use when 「インフラ設計」「docker-compose設計」「ローカル環境設計」「コンテナ設計」「Dockerfile設計」「開発環境設計」と言われたとき。
 allowed-tools: Read, Write, Edit, Bash, Glob, Grep, WebFetch, WebSearch
 model: opus
+disable-model-invocation: true
 ---
 
 # ローカル開発インフラ設計

@@ -3,6 +3,7 @@ name: designing-cicd
 description: CI/CD パイプラインのアーキテクチャ設計を行う。ワークフロー構成設計・デプロイ戦略選択・環境分離設計・OIDC 認証設計をカバー。Use when 「CI/CD設計」「パイプライン設計」「デプロイ戦略設計」「GitHub Actions設計」「環境分離設計」「デプロイアーキテクチャ」と言われたとき。
 allowed-tools: Read, Write, Edit, Bash, Glob, Grep, WebFetch, WebSearch
 model: opus
+disable-model-invocation: true
 ---
 
 # CI/CD パイプライン設計

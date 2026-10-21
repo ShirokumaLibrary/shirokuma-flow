@@ -2,6 +2,7 @@
 name: coding-cicd
 description: CI/CD パイプラインの構築・修正を支援する。GitHub Actions テンプレート（CI=lint→test→build、CD=環境別デプロイ）を提供。Use when 「CI/CD」「GitHub Actions」「パイプライン」「デプロイワークフロー」「ci-test」「cd-deploy」と言われたとき。
 allowed-tools: Read, Write, Edit, Bash, Grep, Glob
+disable-model-invocation: true
 ---
 
 # CI/CD コーディング

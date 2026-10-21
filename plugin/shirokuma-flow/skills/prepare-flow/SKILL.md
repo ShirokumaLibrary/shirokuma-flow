@@ -8,7 +8,17 @@ model: opus
 
 ## 起動直後
 
-Bash で `shirokuma-flow rules inject --scope orchestrator` を実行し、**出力の `<rule-file>` 要素を本タスクの規範として読む**。`<rule-file>` の外（ヘッダ行）に規範は載らない。
+Bash で `shirokuma-flow rules inject --scope orchestrator --rules trust-boundary,measurement-claims,completion-report-style,permission-boundary,gh-to-verb-map,rule-evolution,orchestration-discipline,next-routing-contract,status-policy,issuetype-hierarchy` を実行し、**出力の `<rule-file>` 要素を本タスクの規範として読む**。`<rule-file>` の外（ヘッダ行）に規範は載らない。
+
+**参照する規範**
+
+- `branch-workflow`: 「段の順序」節の計画要否の判定（Plan ケース）に入る
+- `concept-gap-to-adr`: 計画が ADR 候補を含む
+- `html-report-criteria`: 「確認ビュー」節で生成条件を判定する
+- `confirmation-style`: 確認モードの解決値を委任ブリーフへ書く／確認モードの回に人へ確認を出す
+- `skill-authoring`: 委任先 worker の定義から宣言集合の値が取れない
+
+参照集合（常時は注入しない。契機に当たったら `<rule-index>` の `file` から Read する）。
 
 ## 流れ
 
@@ -33,7 +43,7 @@ Bash で `shirokuma-flow rules inject --scope orchestrator` を実行し、**出
 
 1. **計画策定を委任**（`plan-worker`・実装サブ Issue の分解を含む。委任ブリーフに reference パスと**当該 worker scope の規範要旨**〔正本 [[skill-authoring]]〕を明示する）。**サブは計画がまだ Backlog のうちに `--force` で起案する**——可否の正本は [[status-policy]]「入口ゲートの正規例外」で、これにより承認継承が発火する。スキップされるゲート全件は [decomposition.md](reference/criteria/decomposition.md)「計画 Backlog 中のサブ起案」。
 2. **計画レビューを委任**（`review-worker`）。**approve でサブが一括 ToDo 昇格する前段なので、[plan-review.md](reference/criteria/plan-review.md) の「サブ Issue 本文の最低限確認」観点を含める。**
-3. **レビュー結果を記録**: 判定行（`**レビュー結果:**`）＋所見を `shirokuma-flow issue comment <計画#> -`（stdin）で計画 Issue へ記録する。続けて「確認ビュー」節の記録行を残す。
+3. **レビュー結果を記録**: 判定行（`**レビュー結果:**`）＋所見は、段 2 の `review-worker` が `shirokuma-flow issue comment <計画#> -`（stdin）で計画 Issue へ記録し、判定行の値とコメントの所在だけを返す（メインは記録を書かない）。続けて「確認ビュー」節の記録行を委任先に残させる。
 4. **提出 → approve**（下記「状態遷移」）。
 5. **承認継承の発火を出力 `sideEffects` で確認する**（[decomposition.md](reference/criteria/decomposition.md)）——**この確認はどちらのモードでも行う**（誰が `approve` を打ったかに関わらず発火の裏取りが要る）。
 6. **決定の段の後（ADR 候補の PR）**: 本 skill が決定の段になるのは、設計を経ない課題の回である。計画の承認の後、`implement-flow` へ渡す前に、計画が起こした ADR 候補の確定と ADR 候補の PR の取り込みを済ませる（順序の正本は [[concept-gap-to-adr]] 手順 5 で、条件はここに写さない）。設計が決定の段だった回は、設計の側で済んでいることを計画レビューが確かめる（[plan-review.md](reference/criteria/plan-review.md) の決定の段の観点）。
@@ -50,7 +60,7 @@ Bash で `shirokuma-flow rules inject --scope orchestrator` を実行し、**出
 
 ## 確認ビュー
 
-計画レビューの確認ビューは、HTML 化要否・生成の発火条件（既定は生成しない）・記録行の欄 id（`confirmation-view-record` / `decision-hesitation`）と値域・生成の委任先の正本を [[html-report-criteria]] に置く（ここには写さない）。置く時点は段の順序 3（レビュー結果の記録）の後で、確認モードの回は `approve` 待ちで止まる前。生成した回も生成しなかった回も `issue context <計画#>` → 本文編集 → `issue push <計画#>`（状態は触らない）で計画 Issue 本文の BLUF 位置へ記録行を残す。確認ビューのリポジトリ内パスは生成より前に本文へ書き（`pages-issue-drift` が本文の sha256 を焼き込むため）、記録行と同じ 1 回の本文編集にまとめる。URL は本文にもコメントにも書かない（`preview-url-guard` が `issue push` と `issue comment` の双方で拒否する）。
+計画レビューの確認ビューは、HTML 化要否・生成の発火条件（既定は生成しない）・記録行の欄 id（`confirmation-view-record` / `decision-hesitation`）と値域・生成の委任先の正本を [[html-report-criteria]] に置く（ここには写さない）。**記録行の書き込み・生成・`pages push` は、生成しない回も含めて正本の定める委任先へ委任する**（メインは本文も pages も書かない。委任先と順序は正本から引く）。委任ブリーフには skill `writing-html-explainer` の SKILL.md の絶対パス（本 skill のディレクトリの隣）を渡す。以下の書き込み経路と順序は委任先が通す（メインは打たない）。置く時点は段の順序 3（レビュー結果の記録）の後で、確認モードの回は `approve` 待ちで止まる前。生成した回も生成しなかった回も `issue context <計画#>` → 本文編集 → `issue push <計画#>`（状態は触らない）で計画 Issue 本文の BLUF 位置へ記録行を残す。確認ビューのリポジトリ内パスは生成より前に本文へ書き（`pages-issue-drift` が本文の sha256 を焼き込むため）、記録行と同じ 1 回の本文編集にまとめる。URL は本文にもコメントにも書かない（`preview-url-guard` が `issue push` と `issue comment` の双方で拒否する）。
 
 ## 停止境界
 

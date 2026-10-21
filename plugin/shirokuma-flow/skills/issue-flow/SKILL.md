@@ -8,7 +8,15 @@ model: opus
 
 ## 起動直後
 
-Bash で `shirokuma-flow rules inject --scope orchestrator` を実行し、**出力の `<rule-file>` 要素を本タスクの規範として読む**。`<rule-file>` の外（ヘッダ行）に規範は載らない。
+Bash で `shirokuma-flow rules inject --scope orchestrator --rules trust-boundary,measurement-claims,completion-report-style,permission-boundary,gh-to-verb-map,rule-evolution,orchestration-discipline,next-routing-contract,status-policy,issuetype-hierarchy` を実行し、**出力の `<rule-file>` 要素を本タスクの規範として読む**。`<rule-file>` の外（ヘッダ行）に規範は載らない。
+
+**参照する規範**
+
+- `concept-gap-to-adr`: 本文に横断の判断（既存 ADR の変更・規約の確立）を含む
+- `html-report-criteria`: 「確認ビュー」節で生成条件を判定する
+- `confirmation-style`: 確認モードの解決値を委任ブリーフへ書く／確認モードの回に人へ確認を出す
+
+参照集合（常時は注入しない。契機に当たったら `<rule-index>` の `file` から Read する）。
 
 ## 流れ
 
@@ -33,7 +41,7 @@ Bash で `shirokuma-flow rules inject --scope orchestrator` を実行し、**出
 
 ## 確認ビュー
 
-確認用 What（Issue 要件）は HTML 化要否・生成の発火条件（既定は生成しない）・記録行の欄 id（`confirmation-view-record` / `decision-hesitation`）と値域・生成の委任先の正本は [[html-report-criteria]]（ここには写さない）。**書き込み経路**: 生成した回も生成しなかった回も `issue context <n>` → 本文編集 → `issue push <n>`（状態は触らない）で対象 Issue 本文の BLUF 位置へ記録行を残す（行の有無を生成／非生成の分岐に依存させない）。**確認ビューのリポジトリ内パスは生成より前に**本文へ書き（`pages-issue-drift` が本文の sha256 を焼き込むため）、**URL は本文へ書かない**（`preview-url-guard` が拒否する）。
+確認用 What（Issue 要件）は HTML 化要否・生成の発火条件（既定は生成しない）・記録行の欄 id（`confirmation-view-record` / `decision-hesitation`）と値域・生成の委任先の正本は [[html-report-criteria]]（ここには写さない）。**記録行の書き込み・生成・`pages push` は、生成しない回も含めて正本の定める委任先へ委任する**（メインは本文も pages も書かない。委任先と順序は正本から引く）。委任ブリーフには skill `writing-html-explainer` の SKILL.md の絶対パス（本 skill のディレクトリの隣）を渡す。以下の書き込み経路と順序は委任先が通す（メインは打たない）。**書き込み経路**: 生成した回も生成しなかった回も `issue context <n>` → 本文編集 → `issue push <n>`（状態は触らない）で対象 Issue 本文の BLUF 位置へ記録行を残す（行の有無を生成／非生成の分岐に依存させない）。**確認ビューのリポジトリ内パスは生成より前に**本文へ書き（`pages-issue-drift` が本文の sha256 を焼き込むため）、**URL は本文へ書かない**（`preview-url-guard` が拒否する）。
 
 ## 停止境界
 

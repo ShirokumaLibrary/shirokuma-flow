@@ -3,6 +3,7 @@ name: designing-cdk
 description: CDK コンストラクト設計を行う。スタック分割方針・L2/L3 コンストラクト選択根拠・Props インターフェース設計・Aspects ガバナンス設計をカバー。Use when 「CDK設計」「コンストラクト設計」「スタック設計」「CDKアーキテクチャ」「Aspects設計」「CDK構造設計」と言われたとき。
 allowed-tools: Read, Write, Edit, Bash, Glob, Grep, WebFetch, WebSearch
 model: opus
+disable-model-invocation: true
 ---
 
 # CDK コンストラクト設計

@@ -3,6 +3,7 @@ name: reviewing-infra
 description: ローカル開発インフラのコードレビューを行う。Dockerfile のベストプラクティス・docker-compose 設計・LocalStack 設定・セキュリティをレビュー。Use when 「Dockerfileレビュー」「docker-composeレビュー」「ローカル環境レビュー」「infra review」「コンテナレビュー」「LocalStackレビュー」と言われたとき。
 allowed-tools: Read, Grep, Glob, Bash, WebSearch, WebFetch
 model: opus
+disable-model-invocation: true
 ---
 
 # ローカル開発インフラ コードレビュー

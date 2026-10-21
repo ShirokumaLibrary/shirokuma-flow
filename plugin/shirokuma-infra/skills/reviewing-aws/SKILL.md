@@ -3,6 +3,7 @@ name: reviewing-aws
 description: AWS インフラ構成のレビューを行う。IAM ポリシー・セキュリティグループ・Well-Architected フレームワーク・コスト最適化・可用性設計をレビュー。Use when 「AWSレビュー」「インフラレビュー」「IAMレビュー」「aws review」「セキュリティグループレビュー」「Well-Architectedレビュー」と言われたとき。
 allowed-tools: Read, Grep, Glob, Bash, WebSearch, WebFetch
 model: opus
+disable-model-invocation: true
 ---
 
 # AWS インフラ構成レビュー

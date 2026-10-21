@@ -3,11 +3,12 @@ name: writing-html-explainer
 description: 確認用 What を HTML で可視化する解説ページを、pages submodule の共有テンプレートで生成する。Use when 「HTML で詳しく」「HTML 解説」「確認用ページ」と言われたとき。
 allowed-tools: Read, Write, Edit, Bash
 model: opus
+disable-model-invocation: true
 ---
 
 # writing-html-explainer（確認用 HTML 解説の執筆）
 
-人に確認させる **What**（設計案・コンセプト・レビュー結果・計画・実装サマリー）を、Markdown では潰れる情報密度のまま HTML 1 枚に可視化する変更系 worker。Issue / Discussion / PR の本文には**概要**を残し、図・案比較・全決定の**詳細はこの HTML が正本**になる。この宣言は**生成した回に掛かる**——[[html-report-criteria]] の節「生成の発火（既定は生成しない）」は**既定を生成しない側に置く**ので、生成しなかった回（＝同節の OR 条件がどれも成立しなかった回）の詳細の正本は Issue / PR 本文である。状態遷移はしない（orchestrator の責務）。pages submodule への commit/push（`shirokuma-flow pages push`）は直後に orchestrator が自律実行し、通常のコード commit は commit-worker が担う。
+人に確認させる **What**（設計案・コンセプト・レビュー結果・計画・実装サマリー）を、Markdown では潰れる情報密度のまま HTML 1 枚に可視化する手順。**読み手は worker `explainer-worker`**（本 SKILL.md を全文 Read して従う）で、メインはこの skill を起動しない。Issue / Discussion / PR の本文には**概要**を残し、図・案比較・全決定の**詳細はこの HTML が正本**になる。この宣言は**生成した回に掛かる**——[[html-report-criteria]] の節「生成の発火（既定は生成しない）」は**既定を生成しない側に置く**ので、生成しなかった回（＝同節の OR 条件がどれも成立しなかった回）の詳細の正本は Issue / PR 本文である。状態遷移はしない（orchestrator の責務）。pages submodule への commit/push（`shirokuma-flow pages push`）と返り値の確かめは、生成した `explainer-worker` 自身が直後に行う（下の「返す前に」）。親リポの通常の commit は `commit-worker` が行う。
 
 短い説明や図の要らない内容は HTML 化しない（`writing-manual` で Markdown）。HTML を選ぶのは「視覚整理が読みやすさに直結する」場合のみ。
 
@@ -216,7 +217,7 @@ shirokuma-flow lint areas docs             # ③ 参照切れ・親ナビ・孤�
 
 削除後の `lint areas docs`（`pages-orphan`/`pages-not-in-index`/`pages-parent-nav`）が、削除で生じた参照切れ・親ナビ不整合を warning で知らせる。索引を持つ構成なら索引も再生成する。
 
-**本スキルは working tree の生成/削除＋索引まで（自律）。submodule への commit/push も AI 自律**（`shirokuma-flow pages push`・`pages-preview-infra` 層2）。親リポの `.shirokuma/pages` gitlink ポインタ bump も同 verb が mainline 上でのみ pathspec 限定 commit → direct push する自律の限定例外（条件と Why は `pages-preview-infra` が正本）。
+**本スキルの読み手（`explainer-worker`）は working tree の生成/削除＋索引と、submodule への commit/push（`shirokuma-flow pages push`・`pages-preview-infra` 層2）までを自律で行う**（メインは pages を書かない）。親リポの `.shirokuma/pages` gitlink ポインタ bump も同 verb が mainline 上でのみ pathspec 限定 commit → direct push する自律の限定例外（条件と Why は `pages-preview-infra` が正本）。
 
 棚卸し・drift 監査は `shirokuma-flow lint areas docs`（`pages-issue-drift` が乖離を warning で出す）。
 
@@ -242,8 +243,8 @@ grep -rnE 'style\.css\?v=|theme\.js\?v=' .shirokuma/pages
 
 ## 返すもの
 
-生成パス（`.shirokuma/pages/{category}/{topic}/`）・公開 URL・Issue / PR 貼付用の Markdown リンク・索引再生成の有無を圧縮サマリーで返す。**本スキルは working tree の生成＋索引までを担い、submodule への commit/push は行わない**——直後に orchestrator が `shirokuma-flow pages push` で自律実行する（`pages-preview-infra` 層2）。
+生成パス（`.shirokuma/pages/{category}/{topic}/`）・公開 URL・Issue / PR 貼付用の Markdown リンク・索引再生成の有無を圧縮サマリーで返す。生成の後、**読み手（`explainer-worker`）が `shirokuma-flow pages push` で submodule へ commit/push し**（`pages-preview-infra` 層2）、返り値を確かめてから返す。
 
-> orchestrator への注意（副導線・規範の正本は `pages-preview-infra` の「返り値の検分」節）: `pages push` の返り値 `pushed` / `pointerBump.done` を**検分してから**確認 URL を人に提示する。false のまま URL を出すと、未 push の内容を「確認してください」と言うことになる。
+> **返す前に**（規範の正本は `pages-preview-infra` の「返り値の検分」節）: `pages push` の返り値 `pushed` / `pointerBump.done` を**検分し**、false の回は確認 URL を成功として返さず、その値を返す（メインは返った値を見て人に提示するかを決める）。false のまま URL を出すと、未 push の内容を「確認してください」と言うことになる。
 
-> 関連: writing-manual（Markdown）/ design-flow・requirements-flow・reviewing-manual（確認用 What の呼び出し元）/ `pages push`（orchestrator が自律で永続化＝層2）。役割分担: [[html-readability]]＝可読性の定量基準＋認知的関与の基準（正本）/ [[html-report-criteria]]＝いつ・どのステージで HTML 化し認知的関与を課すか / 本スキル＝どう書くか（作法・部品）。
+> 関連: writing-manual（Markdown）/ design-flow・requirements-flow・reviewing-manual（確認用 What の呼び出し元）/ `pages push`（`explainer-worker` が自律で永続化＝層2）。役割分担: [[html-readability]]＝可読性の定量基準＋認知的関与の基準（正本）/ [[html-report-criteria]]＝いつ・どのステージで HTML 化し認知的関与を課すか / 本スキル＝どう書くか（作法・部品）。

@@ -17,6 +17,8 @@ model: opus
 
 ## 手順
 
+**誰が打つか**（規範 `orchestration-discipline` C16）: 状態機械の verb（起票の `issue create`〔`Backlog` を seed する〕・階層ゲートを通る `issue reparent`・必須フィールドの設定）はメインが打つ——手順 1・2 と、手順 5 で割った sub-issue の起票と再ペアレント。手順 5 の割るかの判断もメイン（方向の指示）。**本文の書き換えは `plan-worker` へ委任する**——手順 3（計画本文のサブ参照を実番号で書く）と手順 4（親本文へ Integration ブランチ節を書く）。ブリーフには対象の番号・確定した実番号の対応・ブランチ名を渡し、worker は書いた Issue の番号と止まった回の理由の一言だけを返す。
+
 1. **EPIC 親を用意**: 親 Issue を `IssueType = EPIC` で作成（または既存課題を昇格）。必須フィールド（Status / Priority / IssueType）を設定。`Backlog` で開始。
 2. **再ペアレント（sub-issue 化）**: 束ねる既存 Issue を親の子にする。**第一手段は `shirokuma-flow issue reparent <子> --parent <epic>`**（child-kind 階層ゲートを経由し、生 API で直接変更しない）。各子ごとに実行する。frontmatter に `parent: {epic-number}` を手書きして再登録する／GitHub の sub-issue 関係を UI で設定する、は **verb が使えない例外時のフォールバック**に留める（生 API 直変更・手書き drift を避けるため）。
 3. **計画 Issue の参照は実番号で手書き**: 計画本文でサブ Issue を参照する箇所は、再ペアレント後に確定した**実 Issue 番号**で書く（プレースホルダを残さない）。

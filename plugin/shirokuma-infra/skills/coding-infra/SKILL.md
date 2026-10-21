@@ -2,6 +2,7 @@
 name: coding-infra
 description: ローカル開発インフラ（docker-compose・スクリプト）の実装・修正を行う。サービス追加・コンテナ設定変更・起動スクリプト整備を担当。Use when 「コンテナ追加」「サービス追加」「docker-compose修正」「起動スクリプト作成」「インフラ設定」と言われたとき。
 allowed-tools: Read, Write, Edit, Bash, Grep, Glob
+disable-model-invocation: true
 ---
 
 # インフラ コーディング

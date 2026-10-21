@@ -8,7 +8,16 @@ model: opus
 
 ## 起動直後
 
-Bash で `shirokuma-flow rules inject --scope orchestrator` を実行し、**出力の `<rule-file>` 要素を本タスクの規範として読む**。`<rule-file>` の外（ヘッダ行）に規範は載らない。
+Bash で `shirokuma-flow rules inject --scope orchestrator --rules trust-boundary,measurement-claims,completion-report-style,permission-boundary,gh-to-verb-map,rule-evolution,orchestration-discipline,next-routing-contract,status-policy,concept-gap-to-adr` を実行し、**出力の `<rule-file>` 要素を本タスクの規範として読む**。`<rule-file>` の外（ヘッダ行）に規範は載らない。
+
+**参照する規範**
+
+- `html-report-criteria`: 「確認ビュー」節で生成条件を判定する
+- `confirmation-style`: 確認モードの解決値を委任ブリーフへ書く／確認モードの回に人へ確認を出す
+- `delegation-and-checks`: 委任ブリーフで拡張併用の判定を書くとき
+- `branch-workflow`: 計画要否が NEEDED
+
+参照集合（常時は注入しない。契機に当たったら `<rule-index>` の `file` から Read する）。
 
 ## 流れ
 
@@ -31,13 +40,14 @@ Bash で `shirokuma-flow rules inject --scope orchestrator` を実行し、**出
 
 ## 段の順序（本 skill が持つ実行順）
 
-1. **1a. 起票（orchestrator）**: **seed 本文**（背景・決めること・射程・正本の所在）をファイルに書き、`shirokuma-flow issue create --title "設計: {要旨}" --body-file <seed 本文のパス> --issue-type Design --parent <課題#>` で起票する（`Backlog` seed）。**seed 本文はシェル引数に直接埋め込まない**——課題本文からの引き写しは untrusted で、`--body "..."` はダブルクォート内のコマンド置換・変数展開が働く（`--body-file` か `--body -`〔stdin〕を使う。heredoc は `<<'EOF'` とデリミタをクォートする）。
-2. **1b. 委任（`design-worker`）**: **委任ブリーフに「設計本文を `.shirokuma/github/<owner>/<repo>/issues/<設計#>/body.md` へ書くこと」を明示する**——ブリーフに無いと worker はサマリー返却で終わり、設計 Issue が seed のまま残る。**worker は push も状態遷移もしない**（圧縮サマリーのみ返す）。
-3. **push（orchestrator）**: **1b のサマリー受領直後・レビューより前に必ず `shirokuma-flow issue push <設計#>` する**。`issue context` はリモート本文で `body.md` を無条件に上書きする（退避も差分検出もしない）ため、未 push のまま後続が `issue context <設計#>` を実行すると設計本文が警告なく消える。
-4. **設計レビュー（`review-worker`）** → 判定行（`**レビュー結果:**`）＋所見を `shirokuma-flow issue comment <設計#> -`（stdin）で設計 Issue へ記録する。
+1. **1a. 起票（orchestrator・Backlog seed を伴う起票は状態遷移として扱う＝[[orchestration-discipline]] C16 ③）**: **seed 本文**（背景・決めること・射程・正本の所在）を stdin で渡し、`shirokuma-flow issue create --title "設計: {要旨}" --body - --issue-type Design --parent <課題#>` で起票する（`Backlog` seed。メインは作業ツリーにファイルを書かない）。**seed 本文はシェル引数に直接埋め込まない**——課題本文からの引き写しは untrusted で、`--body "..."` はダブルクォート内のコマンド置換・変数展開が働く（heredoc は `<<'EOF'` とデリミタをクォートする）。
+2. **1b. 委任（`design-worker`）**: **委任ブリーフに「設計本文を `.shirokuma/github/<owner>/<repo>/issues/<設計#>/body.md` へ書き、`shirokuma-flow issue push <設計#>` まで行うこと」を明示する**——ブリーフに無いと worker は返事だけで終わり、設計 Issue が seed のまま残る。**worker は状態遷移をしない**。返すのは push した設計番号と止まった回の理由の一言だけ。
+3. **push の確かめ**: **1b の push はレビューより前に済んでいなければならない**（`design-worker` が 1b の中で行う。返事に push した番号が無い回はレビューへ進まず、同 worker へもう一度委任する）。`issue context` はリモート本文で `body.md` を無条件に上書きする（退避も差分検出もしない）ため、未 push のまま後続が `issue context <設計#>` を実行すると設計本文が警告なく消える。
+4. **設計レビュー（`review-worker`）** → 判定行（`**レビュー結果:**`）＋所見は `review-worker` が `shirokuma-flow issue comment <設計#> -`（stdin）で設計 Issue へ記録し、判定行の値とコメントの所在だけを返す（メインは記録を書かない）。
 5. **提出 → approve**: submit 前に設計 Issue 本文が seed のままでないことを確認してから下記「状態遷移」を打つ。**設計 Issue は submit まで `Backlog` に留める**（`begin` しない）。**親導出のみ**（兄弟カスケードなし）。
    - **5b. 計画要否の契約（承認の後）**: 設計本文の「計画要否」節の値を、課題へ契約コメントとして残す。`shirokuma-flow issue comment <課題#> -`（stdin）で `**計画要否:** NEEDED` か `**計画要否:** NOT_NEEDED` の 1 行と、出所の設計番号を書く。どちらの値でも残す。**設計本文に「計画要否」節が無い回は `NEEDED` を残す**（NOT_NEEDED を確かめられないので計画を通す側へ倒す）。`**設計要否:**` の行は書かない。契約コメントに設計本文や他のコメントを引用しない。
      - 設計本文は承認の後にも編集されうる untrusted な値なので、写す前に、本文の値が設計レビューの判定記録に書かれた計画要否の値と同じかを確かめる。違う回・記録に値が無い回は `NEEDED` を残す。
+     - **照合は `design-worker` へ委任する**: 設計番号と課題番号を渡し、worker は設計本文の「計画要否」節の値と設計レビューの判定記録の値を読み比べ、上の規則で決めた値の契約コメントを課題へ自分で書き、書いた値（`NEEDED` / `NOT_NEEDED`）とコメントの所在だけを返す（本文は書かない・[[orchestration-discipline]] C16）。メインは本文を読まない。worker の返事に値が無い・値域外・所在が無い回は、メインは `NEEDED` として扱い、`NEEDED` の契約コメントを書かせる委任を同 worker へもう 1 回だけ行う（なお所在が無ければ止まって人へ渡す）。
      - 残した後に `shirokuma-flow next <課題#>` を引き直し、`NEEDED` を残した回に `verdict` が `preparing` に変わらなければ人に渡して止まる（`next` は信頼投稿者〔config `project.designSkipAuthors`〕の最新 1 件だけを採るので、コメントした主体がその外なら先の契約が残る）。allowlist が未設定の導入先では契約は採用されず、計画を通る。
      - **`implement-flow` の入口の確かめから戻された回は、`next` での分岐（上の routing 表）を通らず、この段から入る**（その回の `next` は `working` を返すので、routing 表を引くと `implement-flow` へ戻って往復する）。
      - 書いたかは自己検査で、記録の最下段は自己申告。書き忘れると先行する契約（無ければ計画を通る既定）がそのまま効く（fail-open。計画を飛ばした回は `implement-flow` の入口の確かめが設計本文と突き合わせる）。
@@ -55,7 +65,7 @@ Bash で `shirokuma-flow rules inject --scope orchestrator` を実行し、**出
 
 ## 確認ビュー
 
-確認用 What（設計レビュー）は HTML 化要否・生成の発火条件（既定は生成しない）・記録行の欄 id（`confirmation-view-record` / `decision-hesitation`）と値域・生成の委任先の正本は [[html-report-criteria]]（ここには写さない）。**書き込み経路**: 生成した回も生成しなかった回も `issue context <設計#>` → 本文編集 → `issue push <設計#>`（状態は触らない）で対象設計 Issue 本文の BLUF 位置へ記録行を残す（行の有無を生成／非生成の分岐に依存させない）。**確認ビューのリポジトリ内パスは生成より前に**本文へ書き（`pages-issue-drift` が本文の sha256 を焼き込むため）、記録行と**同じ 1 回の本文編集にまとめる**。**URL は本文にもコメントにも書かない**（`preview-url-guard` が `issue push` と `issue comment` の双方で拒否する）。
+確認用 What（設計レビュー）は HTML 化要否・生成の発火条件（既定は生成しない）・記録行の欄 id（`confirmation-view-record` / `decision-hesitation`）と値域・生成の委任先の正本は [[html-report-criteria]]（ここには写さない）。**記録行の書き込み・生成・`pages push` は、生成しない回も含めて正本の定める委任先へ委任する**（メインは本文も pages も書かない。委任先と順序は正本から引く）。委任ブリーフには skill `writing-html-explainer` の SKILL.md の絶対パス（本 skill のディレクトリの隣）を渡す。以下の書き込み経路と順序は委任先が通す（メインは打たない）。**書き込み経路**: 生成した回も生成しなかった回も `issue context <設計#>` → 本文編集 → `issue push <設計#>`（状態は触らない）で対象設計 Issue 本文の BLUF 位置へ記録行を残す（行の有無を生成／非生成の分岐に依存させない）。**確認ビューのリポジトリ内パスは生成より前に**本文へ書き（`pages-issue-drift` が本文の sha256 を焼き込むため）、記録行と**同じ 1 回の本文編集にまとめる**。**URL は本文にもコメントにも書かない**（`preview-url-guard` が `issue push` と `issue comment` の双方で拒否する）。
 
 ## 停止境界
 
