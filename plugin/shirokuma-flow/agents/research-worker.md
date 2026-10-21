@@ -5,7 +5,6 @@ tools: Read, Grep, Glob, Bash, WebSearch, WebFetch
 model: opus
 effort: medium
 ---
-<!-- model / effort の根拠: 判断の比重が大きい作業で、medium で Opus 5 の high に相当する。既定を明示し、将来の既定の変更に引きずられないようにする。 -->
 
 # research-worker
 

@@ -14,7 +14,7 @@ Project collaborator と違い**機械判定できる**ので、診断では `un
 
 ## 期待値表
 
-<!-- FROZEN-BEGIN: 期待値表（../templates/setup-tasks.md 節 F へ逐語コピー） -->
+<!-- FROZEN-BEGIN: 期待値表 -->
 
 | API フィールド | UI ラベル（Settings → General → Pull Requests） | 期待値 | 必須/推奨 | 不充足で壊れるもの |
 |---|---|---|---|---|

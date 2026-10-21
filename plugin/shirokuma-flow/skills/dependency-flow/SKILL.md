@@ -8,7 +8,15 @@ model: opus
 
 ## 起動直後
 
-Bash で `shirokuma-flow rules inject --scope orchestrator` を実行し、**出力の `<rule-file>` 要素を本タスクの規範として読む**。`<rule-file>` の外（ヘッダ行）に規範は載らない。
+Bash で `shirokuma-flow rules inject --scope orchestrator --rules trust-boundary,measurement-claims,completion-report-style,permission-boundary,gh-to-verb-map,rule-evolution,orchestration-discipline,next-routing-contract,status-policy,dependency-update` を実行し、**出力の `<rule-file>` 要素を本タスクの規範として読む**。`<rule-file>` の外（ヘッダ行）に規範は載らない。
+
+**参照する規範**
+
+- `confirmation-style`: 「課題化レーン」節で発見結果を人へ提示する
+- `branch-workflow`: 依存更新 PR を merge する
+- `skill-authoring`: 委任先 worker の定義から宣言集合の値が取れない
+
+参照集合（常時は注入しない。契機に当たったら `<rule-index>` の `file` から Read する）。
 
 ## 流れ
 
@@ -38,7 +46,7 @@ Bash で `shirokuma-flow rules inject --scope orchestrator` を実行し、**出
 
 ## 軽量レーン（検証 → 記録 → submit）
 
-1. **検証実走を `dependency-verify-worker` へ委任する**（独立で規模の大きい作業はサブエージェント）。段は [reference/verification.md](reference/verification.md) の V1〜V5。委任ブリーフには**当該 worker scope の規範要旨**を明記する（正本は 規範 `skill-authoring`）。
+1. **検証実走を `dependency-verify-worker` へ委任する**（メインの文脈を膨らませる作業はサブエージェント）。段は [reference/verification.md](reference/verification.md) の V1〜V5。委任ブリーフには**当該 worker scope の規範要旨**を明記する（正本は 規範 `skill-authoring`）。
    - ブリーフに渡す入力は——対象 PR 番号・結果ファイルの絶対パス・base 側 cwd（人の作業ツリーの絶対パス）・出自の照合値（期待する author と head ブランチ接頭辞）・マニフェスト／ロックファイルの判定リスト（分類ラベル付き・**分類ごとの想定件数を添える**）・隔離ツリーの絶対パス（head 側・base 側の 2 つ）・隔離ツリーへ展開する submodule パスの一覧（リポジトリ相対）。入力の閉じた集合と必須／任意の別は worker 定義が正本で、供給元と組み立て方は [reference/verification.md](reference/verification.md)。
    - **必須入力は 1 つでも欠けたまま委任しない**。worker は欠けた入力を推測で埋めず実走しないので、欠けた委任は待ち時間だけを消費する。
    - **隔離ツリーの絶対パスは任意入力**——置き場所の config キーが未宣言なら渡さず、worker の既定（`mktemp -d` の出力配下）に委ねる。**どちらに倒れたかは V5 に残す**（既定へ倒れても何のエラーも出ないため）。**未宣言（degraded）と値域違反（人へ渡す）は別の事象**で、`config get` のエラーの `reason` で区別する。組み立て方・値の条件・置き場所の用意・倒れる向きの根拠は [reference/verification.md](reference/verification.md)。
@@ -48,7 +56,7 @@ Bash で `shirokuma-flow rules inject --scope orchestrator` を実行し、**出
 2. **結果ファイルの実在と検証母集団の欄を機械検証する**（worker の実在確認報告を鵜呑みにせず二重防御する）。委任した worker の報告受領後、`shirokuma-flow gate artifacts --profile dependency-verify --file dependency='<結果ファイルの絶対パス>'` を引く。**見出し・欄名・値域の正本はコード内のレジストリ**で、欄名が要るとき（報告へ載せる・課題化レーンの起票に書く等）は `shirokuma-flow gate vocab --profile dependency-verify` から引く（本手順は欄名の逐語を持たない）。
    - **コマンド行へ値を差し込む前に検査する**: `--file` へ渡す絶対パスに埋め込む PR 番号が `^[0-9]+$` を満たすことを**差し込む前に**確かめ、通った値も**単一引用符で囲んで**渡す。**`gate` 側の値域検査をこの検査の代わりにしない**——注入はシェルの構文解析時に済み、verb の検査はそれより後（プロセス内）でしか効かないので、両者は別の層である。満たさない回は verb を引かず、下記の欠落と同じ経路へ回す。
    - **判定は JSON ＋ exit code の二重で受け取る**: `ok: true` と `complete: true` が揃った回だけを判定が成立した回として読み、`files[].exists`（結果ファイルの実在。verb が自分で確かめるので worker の報告に依存しない）と `findings[]`（欄ごとの所見）と `checked`（実施した欄検査の件数）を読む。**`exists: false` と「欄が無い」は別フィールドで返る**ので、不在と欠落を取り違えない。**`complete` を欠く回・`ok: false` の回・`shirokuma-flow` や `gate artifacts` を解決できない回は判定不能**であって pass ではない（fail-closed）。
-   - **判定 JSON の `build` ブロック（`sourceMatch` / `dirty` / `degraded`・欠落した回の読み方を含む）の読み方は `shirokuma-flow gate limits --sub limits` の `H19` が正本**（ここに写さない）。**`stale` を名乗った回・`build` ブロックそのものが無い回は、その判定を現ソースの値として読まない。** **`stale` と `build.dirty: true` が同時に立つ回は、その判定を根拠に使わない。** **`build.dirty: null`（焼いていない）は、再現性の担保が無い側として `build.dirty: true` と同じに読む。**
+   - **判定 JSON の `build` ブロック（`sourceMatch` / `dirty` / `degraded`・欠落した回の読み方を含む）の読み方は `shirokuma-flow gate limits --sub limits` の `H19` が正本**（ここに写さない）。`stale` を名乗った回・`build` ブロックそのものが無い回は、その判定を現ソースの値として読まない。`stale` と `build.dirty: true` が同時に立つ回は、その判定を根拠に使わない。`build.dirty: null`（焼いていない）は、再現性の担保が無い側として `build.dirty: true` と同じに読む。
    - **欠落時の経路**: 欠落（`exists: false`・`findings[]` が非空・判定不能のいずれも同じ扱い）は**課題化レーンへ回す**（fail-closed）。**再委任で回復を試みない**——本レーンの検証は隔離ツリーでの第三者コード実行を伴うので、回復のための再実走は受容済みベクタを 1 回無意味に増やす。**verb が返すのは判定だけで、この routing は本手順が持つ。**
    - **この検査の射程（何を見て、何を見ないか）**: **欄の存在と値の非空だけを見る検査**であって、**記録の中身が実測に基づくことの検査ではない**。pass を「機械検証済み＝記録の正しさの保証」と読まない。値が **ASCII 以外の空白だけ**（全角スペース・NBSP・ゼロ幅スペース等）の回は**欠落として扱われる**（判定の空白正規化が ASCII 3 種に限られないため）。**見ないもの**は上の射程宣言（記録の中身は見ない）が代表で、**何を見ないかの全件は `shirokuma-flow gate limits --sub artifacts` が返す**ので本手順に列挙を写さない。
 3. **worker の判定を読む**。`軽量レーン可否` が `可` のときだけ軽量レーンを続ける。**`可` 以外はすべて課題化レーンへ回す**——実走しなかった場合（`未実施（…）`）を「問題が無かった」と読み替えない（fail-closed）。理由トークンの列挙は worker 定義が正本なので、ここでも報告でも複製しない（そのまま転記する）。
@@ -80,7 +88,7 @@ Bash で `shirokuma-flow rules inject --scope orchestrator` を実行し、**出
 | `approve` | 既定は orchestrator（`IssueType=ADR` 候補も含む。ADR 候補の確定の打ち手は `next` の `runBy` に従う＝形と主体の正本は [[status-policy]] の `approve` 条項）／確認モード（`確認モード: guided` の明示がある回）は人 | 追従 Issue のトリアージは既存レール（判定の正本は `issue-flow`「状態遷移」節と [[confirmation-style]]「確認モードの解決と中継」節） |
 | 処分（据え置き / bot への ignore 指示 / close）の**選択** | 人 | 実質不可逆（確定後の実行だけを入口が代行する） |
 | 追従実装 / 要件分析 / 設計要否判定 | `implement-flow` / `analyze-issue` / `design-flow` | 入口は振り分けに留める |
-| 検証の実走そのもの | worker | 独立で規模の大きい作業はサブエージェント（隔離ツリーでの実走） |
+| 検証の実走そのもの | worker | メインの文脈を膨らませる作業はサブエージェント（隔離ツリーでの実走） |
 
 ## 信頼境界
 

@@ -2,6 +2,7 @@
 name: reviewing-nextjs
 description: Next.js（App Router）のレビュー支援。server/client 境界・server action の安全性・アノテーション整合をレビューする（review-flow の review-worker から委任・framework コンパニオン）。Use when Next.js のコードをレビューするとき、server action の安全性を確認するとき。
 model: opus
+disable-model-invocation: true
 ---
 
 # reviewing-nextjs（Next.js レビュー支援）

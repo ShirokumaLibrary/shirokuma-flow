@@ -3,6 +3,7 @@ name: reviewing-cdk
 description: AWS CDK コードのレビューを行う。コンストラクト設計・Aspects パターン・スタック分割・テスト・型安全性をレビュー。Use when 「CDKレビュー」「コンストラクトレビュー」「cdk review」「IaCレビュー」「スタックレビュー」と言われたとき。
 allowed-tools: Read, Grep, Glob, Bash, WebSearch, WebFetch
 model: opus
+disable-model-invocation: true
 ---
 
 # AWS CDK コードレビュー

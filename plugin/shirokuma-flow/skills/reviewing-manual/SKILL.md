@@ -2,6 +2,7 @@
 name: reviewing-manual
 description: Markdown マニュアルを Diátaxis 区分・構成・リンク整合の観点でレビューする（lint docs と補完）。Use when マニュアルをレビューするとき、Diátaxis 区分の適合を確認するとき、ドキュメント構成を確認するとき。
 model: opus
+disable-model-invocation: true
 ---
 
 # reviewing-manual（マニュアルレビュー）

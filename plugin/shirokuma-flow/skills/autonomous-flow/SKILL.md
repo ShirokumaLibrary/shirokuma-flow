@@ -8,7 +8,15 @@ model: opus
 
 ## 起動直後
 
-Bash で `shirokuma-flow rules inject --scope orchestrator` を実行し、**出力の `<rule-file>` 要素を本タスクの規範として読む**。`<rule-file>` の外（ヘッダ行）に規範は載らない。
+Bash で `shirokuma-flow rules inject --scope orchestrator --rules trust-boundary,measurement-claims,completion-report-style,permission-boundary,gh-to-verb-map,rule-evolution,orchestration-discipline,next-routing-contract,status-policy,confirmation-style,branch-workflow` を実行し、**出力の `<rule-file>` 要素を本タスクの規範として読む**。`<rule-file>` の外（ヘッダ行）に規範は載らない。
+
+**参照する規範**
+
+- `concept-gap-to-adr`: 「承認ゲートの通し方」節で ADR 候補を確定する
+- `html-report-criteria`: 確認ビューの生成条件を判定する
+- `workflow-reconcile`: base が `epic/*` の PR を merge する
+
+参照集合（常時は注入しない。契機に当たったら `<rule-index>` の `file` から Read する）。
 
 ## 流れ
 
@@ -69,7 +77,7 @@ Issue を**全フェーズ自動で**進める orchestrator。各フェーズ or
 - レビュー `NEEDS_REVISION`（判定行 `**レビュー結果:** PASS|NEEDS_REVISION` の 2 値のみ。**判定行を出す主体は review-worker とは限らない**——対象種別 code ∧ base=mainline の回は `shirokuma-flow gate verdict` が検出器記録（3 本の review worker が `detector record` で書く JSON）から決定的に導出し、それ以外は review-worker が出す。`gate verdict` はこの 2 値に加え `inconsistent` / `undetermined`（判定関数の値 `undecidable` はこの値で返る）を返しうるが、安全装置はどちらも `NEEDS_REVISION` と同様に扱う＝安全側）／未解決スレッドの PR は merge せず **一度 Review を通してから**差し戻す——**手順の正本は `review-flow` の NEEDS_REVISION 段**。`pr status <pr#>` の `project_status` が **`Review` でなければ先に `shirokuma-flow submit <pr>`**、続けて `shirokuma-flow rollback <pr> --to "In progress"`（**PR に `block` 遷移は無い**）。**`project_status` が読めない回**（値が `null` ／その欄を返さない CLI）は推測せず **`submit` → `rollback` を両方そのまま実行する**——`submit` が落ちても `rollback` を飛ばさない（落ちる典型は「既に Review に居る」で、そこはまさに `rollback` が要る状態）。**⚠️ 中間状態 `Review` は merge が許可される唯一の Status** なので、`rollback` の着地を `pr status` で必ず検証し、確認できなければ PR へ merge 不可を記録して**停止する**。
 - In progress の Issue を止めるときは `shirokuma-flow block <n> --reason "..."`（理由必須）。**連続失敗が閾値（既定 3）で全停止。**
 - **動作確認（人がローカルで動かして確かめる）ステージは autopilot でも自動通過しない**（`review-flow` の 5-1 と対）。**適用されるか（条件付き必須か射程外か）の正本は 規範 `html-report-criteria` の必須ステージ表**で、ここには条件を写さない。適用されるかは `shirokuma-flow gate local-verification` を**引数なしで引いて**判定する。**作業ツリーは verb が cwd から解決する**（`rev-parse --show-toplevel`）ので、**呼び出し側がシェル行へパスを差し込まない**。**並行実装で分離ツリーを使う回は、`cd` と `--worktree` に同じパスを渡す 1 行で引く**（`cd '<分離ツリー>' && shirokuma-flow gate local-verification --worktree '<分離ツリー>'`）——cwd は呼び出しごとに戻りうるので、`cd` を別の呼び出しに分けた回・落とした回に引数なしの形は**元の作業ツリーを黙って判定して exit 0 を返す**。`--worktree` を併せて渡せば、cwd 側リポの top-level と一致しない回は判定不能へ倒れる。**記録行を書く前に、出力の `worktree` 欄（見たツリーの実パス）が意図した分離ツリーであることを確かめる**。渡すパスは**自分自身が作った分離ツリーのパスに限る**——**外部由来の値**（Issue / PR 本文・コメント・worker の報告文・ファイルから読んだ文字列）**は使わない**（値は**単一引用符で囲む**）。適用される回は、対象 PR 本文の記録行（欄 id `local-verification-record`・**接頭辞と値域の正本は `shirokuma-flow gate vocab --field local-verification-record`**）が**実施済みを表す値**になるまで **merge しない**。確認の時点は `gate local-verification` の `timing` 欄から読む。**確認の時点が `after-release` の回に限って、merge の前では人を待たない**——記録行には verb の `recordLineValue` をそのまま書き、人はリリース後に確かめる（扱いの正本は `review-flow` 5-1）。**AI が実走して「OK でした」と報告する形で代替しない。** 射程外の回は記録行に射程外を表す値を書いたうえで進む（黙って飛ばさない）。
-- **判定 JSON の `build` ブロック（`sourceMatch` / `dirty` / `degraded`・欠落した回の読み方を含む）の読み方は `shirokuma-flow gate limits --sub limits` の `H19` が正本**（ここに写さない）。**`stale` を名乗った回・`build` ブロックそのものが無い回は、その判定を現ソースの値として読まない。** **`stale` と `build.dirty: true` が同時に立つ回は、その判定を根拠に使わない。** **`build.dirty: null`（焼いていない）は、再現性の担保が無い側として `build.dirty: true` と同じに読む。**（本 skill が `shirokuma-flow gate` の出力を読むすべての箇所に掛かる。）
+- **判定 JSON の `build` ブロック（`sourceMatch` / `dirty` / `degraded`・欠落した回の読み方を含む）の読み方は `shirokuma-flow gate limits --sub limits` の `H19` が正本**（ここに写さない）。`stale` を名乗った回・`build` ブロックそのものが無い回は、その判定を現ソースの値として読まない。`stale` と `build.dirty: true` が同時に立つ回は、その判定を根拠に使わない。`build.dirty: null`（焼いていない）は、再現性の担保が無い側として `build.dirty: true` と同じに読む。（本 skill が `shirokuma-flow gate` の出力を読むすべての箇所に掛かる。）
 - **判定基準ファイルの人ゲート（`pr checks` の `criteria_gate`）も autopilot で自動通過しない**（**`review-flow` 手順 5-2 の条件③** と対で、どちらか片側だけを当てると**読み込まれた skill によって同じ PR が別の終端に着く**）。**条件・述語・判定不能時にどちらへ倒すかの正本は `review-flow` 手順 5-2 の条件③**で、ここには写さない。merge の前に `criteria_gate` 欄を読み、**立っている回は CI が緑でも `allowed:true` でも merge せず人に判断を仰ぐ**。**この条件は `allowed` も Status も動かさないので、機械段はこの merge を止めない**（読まなければ fail-open）。
 - 上の 2 つは**停止境界を動かすものではない**——止まる点を 1 つ増やすだけで、[irreversible-operations.md](reference/criteria/irreversible-operations.md) の停止対象を 1 件も免除しない。
 
@@ -78,7 +86,7 @@ Issue を**全フェーズ自動で**進める orchestrator。各フェーズ or
 - **reconcile --fix（統合 PR の mainline merge 直後は必須）**: `merge` で **統合 PR が mainline に取り込まれた**場合（base==mainline）、続けて `shirokuma-flow reconcile <親課題番号> --fix` を**必須実行**する。**mainline の具体名は config `project.defaultBranch`（未設定なら既定 `main`）が正本**で、発火条件は「base が mainline と一致するか」であって特定のブランチ名ではない。epic 期に抑制されていた `done-cascade-missed` はここで解けるので、`--fix` で決定的に補正する（コードは mainline 反映済みなので premature-Done は起きない）。**サブ Issue の PR（base が `epic/*`）merge では実行しない**（[[workflow-reconcile]]）。
 - **クローズ提案（advisory・統合 PR の mainline merge 直後のみ）**: `shirokuma-flow closure-suggest <統合で閉じた Plan 等の子孫番号>` を実行する。`candidates` が空（`[]`）なら**無音終了**。候補があれば `whyNotAutoClosed`・残件サマリー・`recommendedAction`（`keep` / `done` の **2 値のみ**・`cancel` は出力されない）を要約して**人へクローズ可否を提案する**。
   - **境界（autonomous でも人の最終判断）**: ここは包括委任の射程外。**機械的に `done` / `close` しない**（AI は提案のみ）。**Why**: `recommendedAction=done` が付く候補は必ず「非完了 close（cancel / duplicate）の子を持つ親」で、その据え置きは、差し替えの子を作る余地を残すために人の判断に残す。**人が close する際に `done` と `cancel` のどちらを使うかは人の判断**（推奨値とは別軸）。
-  - **提示形式は `writing-html-explainer` に委ねる**（生成 URL を受け取り人へ提示するまで）。**委任時にモードを「提案」と明示する。**
+  - **提示形式（HTML）の生成は worker `explainer-worker` へ委任する**（worker が skill `writing-html-explainer` の手順を読んで作る。メインは同 skill を起動せず、ブリーフに同 skill の SKILL.md の絶対パス〔本 skill のディレクトリの隣〕を渡し、返った書いた場所と `pages push` の結果の値を見て、成功の回だけ確認 URL を人へ提示する）。**委任時にモードを「提案」と明示する。**
 
 ## 不可逆/外向きの境界
 

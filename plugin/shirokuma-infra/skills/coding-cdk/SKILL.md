@@ -2,6 +2,7 @@
 name: coding-cdk
 description: AWS CDK（TypeScript）でインフラコンストラクトの実装・修正を行う。designing-aws の設計成果物をもとに L2/L3 コンストラクト実装・スタック分割・環境別設定管理・CI/CD 連携を担当。Use when 「CDK実装」「CDKコンストラクト」「CDKスタック」「インフラ実装」「cdk deploy」「cdk synth」と言われたとき。
 allowed-tools: Read, Write, Edit, Bash, Grep, Glob
+disable-model-invocation: true
 ---
 
 # CDK コーディング

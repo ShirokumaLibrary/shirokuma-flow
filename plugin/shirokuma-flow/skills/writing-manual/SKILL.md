@@ -2,6 +2,7 @@
 name: writing-manual
 description: Diátaxis ベースの体系的マニュアル（Markdown）を執筆する（短い解説向け・HTML が要るなら writing-html-explainer）。Use when マニュアルを執筆するとき、tutorial/how-to/reference を書き分けるとき。
 model: opus
+disable-model-invocation: true
 ---
 
 # writing-manual（Diátaxis マニュアル執筆）

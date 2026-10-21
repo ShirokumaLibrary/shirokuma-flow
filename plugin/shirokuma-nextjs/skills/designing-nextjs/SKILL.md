@@ -2,6 +2,7 @@
 name: designing-nextjs
 description: Next.js（App Router）の設計支援。route 階層・server/client 境界・server action のデータフローを設計する（design-flow から委任・framework コンパニオン）。Use when Next.js のルーティングを設計するとき、server/client 境界を設計するとき。
 model: opus
+disable-model-invocation: true
 ---
 
 # designing-nextjs（Next.js 設計支援）
@@ -15,7 +16,7 @@ model: opus
 4. **アノテーション方針**: 各 `page.tsx` に `@screen <Name>`、コンポーネントに `@usedComponents` を付け、`shirokuma-flow nextjs feature-map` で画面↔部品を可視化できるようにする。
 
 ## 出力
-設計案（What）は HTML 可視化（writing-html-explainer）してから人に確認。状態遷移は design-flow の flow verb。横断の決定を ADR に切り出したら、その What の着地は `docs-placement` 第 1 節の基準で判定し、カテゴリは `shirokuma-flow gate vocab --field adr-landing-category` から選ぶ（領域固有のカテゴリは無い）。
+設計案（What）を人に確認させる回の確認ビューは、生成するかを `html-report-criteria` で決め（既定は生成しない）、生成は orchestrator が `explainer-worker` へ委任する（本 skill の読み手は HTML を作らない）。状態遷移は design-flow の flow verb。横断の決定を ADR に切り出したら、その What の着地は `docs-placement` 第 1 節の基準で判定し、カテゴリは `shirokuma-flow gate vocab --field adr-landing-category` から選ぶ（領域固有のカテゴリは無い）。
 
 ## リファレンスドキュメント
 

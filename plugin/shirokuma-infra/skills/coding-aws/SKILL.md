@@ -2,6 +2,7 @@
 name: coding-aws
 description: AWS SDK を使ったアプリケーションコードの実装、または AWS サービス設定のセットアップガイダンスを提供する（IaC ではなく SDK コード・コンソール操作・AWS CLI ベースの作業）。Use when 「S3実装」「SES実装」「SNS実装」「SQS実装」「Cognito実装」「IAMロール設定」と言われたとき。
 allowed-tools: Read, Write, Edit, Bash, Grep, Glob
+disable-model-invocation: true
 ---
 
 # AWS コーディング

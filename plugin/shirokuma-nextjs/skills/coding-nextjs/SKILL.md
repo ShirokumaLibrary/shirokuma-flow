@@ -1,6 +1,7 @@
 ---
 name: coding-nextjs
 description: Next.js（App Router）の実装支援。page/component/server action を規約に沿って実装しアノテーションを付ける（implement-flow の coding-worker から委任・framework コンパニオン）。Use when Next.js のコードを実装するとき、page/component を実装するとき。
+disable-model-invocation: true
 ---
 
 # coding-nextjs（Next.js 実装支援）
