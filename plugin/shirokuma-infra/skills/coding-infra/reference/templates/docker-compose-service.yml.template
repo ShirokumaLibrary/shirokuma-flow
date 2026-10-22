@@ -1,5 +1,5 @@
 # docker-compose サービス定義テンプレート
-# 使用方法: このスニペットを docker-compose.yml の services: セクションにコピーして編集する
+# 使用方法: このスニペットを compose.yaml の services: セクションにコピーして編集する
 #
 # 置換変数:
 #   {project}     - プロジェクト名 (例: myapp)

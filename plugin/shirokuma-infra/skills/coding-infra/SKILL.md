@@ -14,7 +14,7 @@ docker-compose・シェルスクリプトを使ったローカル開発インフ
 ## 開始前に
 
 1. プロジェクトの `CLAUDE.md` でサービス構成・命名規則を確認
-2. 既存の `docker-compose.yml`（または `compose.yml`）の構造を読んで踏襲する
+2. 既存の compose（base と断片）の構造を読んで踏襲する。置き場（`{compose-dir}`）とファイル名の決め方は [reference/patterns/infra-conventions.md](reference/patterns/infra-conventions.md) の「compose の置き場とファイル名」節
 3. [reference/patterns/infra-conventions.md](reference/patterns/infra-conventions.md) の命名規則・パターンを確認
 
 ## ワークフロー
@@ -27,7 +27,7 @@ docker-compose・シェルスクリプトを使ったローカル開発インフ
 ## 実装計画
 
 ### 変更ファイル
-- [ ] `docker-compose.yml` - サービス追加・修正
+- [ ] `compose.yaml` - サービス追加・修正
 - [ ] `scripts/up-all.sh` - 起動スクリプト更新
 
 ### 確認事項
@@ -49,21 +49,21 @@ docker-compose・シェルスクリプトを使ったローカル開発インフ
 ### ステップ 3: 動作確認
 
 ```bash
-# 設定の構文チェック
-cd infra && docker compose config
+# 設定の構文チェック（{compose-dir} で打つ。定義は reference/patterns/infra-conventions.md の「compose の置き場とファイル名」節）
+docker compose config
 
 # サービス起動
-cd infra && docker compose up -d {service-name}
+docker compose up -d {service-name}
 
 # ログ確認
-cd infra && docker compose logs -f {service-name}
+docker compose logs -f {service-name}
 
 # ヘルスチェック確認
-cd infra && docker compose ps
+docker compose ps
 
 # 設定を変えた後は作り直してから測る（up -d は作り直さないことがある）
 # {service-name} は「設定を変えたサービス」だけを入れる（db 等を巻き込まない）。前提は下記。
-cd infra && docker compose up -d --force-recreate {service-name}
+docker compose up -d --force-recreate {service-name}
 ```
 
 **`--force-recreate` の前提（対象を絞る）**: このオプションは**指定したサービスのコンテナを作り直す**。ベーステンプレは db＋app の 2 サービスなので、**対象を書かずに打つと db も作り直される**。データが消えないのは **named volume 規約**（[reference/patterns/docker-compose.md](reference/patterns/docker-compose.md) の命名規約・「データ消失 → named volume を必ず使用」）が成り立っているときだけで、**volume 未定義でコンテナ内にデータを持つサービスでは消える**。したがって: ①**規約が成り立っているかを先に確かめる** ②**設定を変えたサービスだけを名前で指定する**。**倒れる向きは fail-silent**——消えたことはコマンドの成否にも `docker compose ps` にも出ない。
@@ -88,22 +88,22 @@ cd infra && docker compose up -d --force-recreate {service-name}
 | [reference/templates/compose.mailpit.yml.template](reference/templates/compose.mailpit.yml.template) | Mailpit 断片（SES 相当・SMTP 1025／Web UI 8025・healthcheck） | メール送信（SES 相当）をローカル合成する時。base に `-f` で重ねる |
 | [reference/templates/compose.valkey.yml.template](reference/templates/compose.valkey.yml.template) | Valkey 断片（ElastiCache 相当・`valkey-cli ping` healthcheck・named volume） | キャッシュ／キュー（ElastiCache 相当）をローカル合成する時。base に `-f` で重ねる |
 | [reference/templates/localstack-init.sh.template](reference/templates/localstack-init.sh.template) | LocalStack init 最小実例（S3 1＋SQS 1＋SES verify 1・awslocal・足し方コメント） | localstack 断片を使い初期リソースを作る時 |
-| [reference/patterns/docker-compose.md](reference/patterns/docker-compose.md) | docker-compose パターン集（設定変更の反映＝`--force-recreate`・疎通確認が測っていない経路を含む） | サービス追加・修正時／動作確認の結果を解釈する時 |
+| [reference/patterns/docker-compose.md](reference/patterns/docker-compose.md) | docker-compose パターン集（プロジェクト名の固定・一回きりのタスクの待ち方・設定変更の反映＝`--force-recreate`・疎通確認が測っていない経路を含む） | サービス追加・修正時／動作確認の結果を解釈する時 |
 | [reference/patterns/service-migration.md](reference/patterns/service-migration.md) | サービス移行パターン | イメージ変更・リネーム時 |
-| [reference/patterns/infra-conventions.md](reference/patterns/infra-conventions.md) | 命名規則・ポート割り当て・ヘルスチェック | インフラ作業の開始前 |
+| [reference/patterns/infra-conventions.md](reference/patterns/infra-conventions.md) | compose の置き場（`{compose-dir}`）とファイル名の定義・命名規則・ポート割り当て・ヘルスチェック・`.env*` の ignore | インフラ作業の開始前（コマンド例を打つ前） |
 | [reference/patterns/localstack.md](reference/patterns/localstack.md) | LocalStack サービス定義・初期化スクリプト・AWS サービス対応表 | AWS サービスエミュレーション追加時 |
 | [reference/patterns/dockerfile.md](reference/patterns/dockerfile.md) | Dockerfile マルチステージビルド・pnpm キャッシュ・セキュリティ | Dockerfile 作成・修正時 |
 
 ## クイックコマンド
 
 ```bash
-# compose 一式は infra/ 配下（cd infra してから実行）
-cd infra && docker compose up -d              # 全サービス起動（バックグラウンド）
-cd infra && docker compose down               # 全サービス停止
-cd infra && docker compose ps                 # サービス状態確認
-cd infra && docker compose logs -f {service}  # ログ追跡
-cd infra && docker compose config             # 設定の構文検証
-cd infra && docker compose pull               # イメージ更新
+# {compose-dir} で打つ（置き場とファイル名の定義は reference/patterns/infra-conventions.md の「compose の置き場とファイル名」節）
+docker compose up -d              # 全サービス起動（バックグラウンド）
+docker compose down               # 全サービス停止
+docker compose ps                 # サービス状態確認
+docker compose logs -f {service}  # ログ追跡
+docker compose config             # 設定の構文検証
+docker compose pull               # イメージ更新
 ```
 
 ## 次のステップ

@@ -2,13 +2,21 @@
 
 ## 基本構造
 
-### ファイル命名
+### ファイル命名と置き場
 
-| ファイル | 用途 |
-|---------|------|
-| `docker-compose.yml` | 標準（推奨） |
-| `compose.yml` | Docker Compose v2 の優先名 |
-| `docker-compose.override.yml` | ローカル上書き（gitignore 対象） |
+置き場（`{compose-dir}`）・base の名前・断片の名前は [infra-conventions.md](infra-conventions.md) の「compose の置き場とファイル名」節で定義する。本ファイルのコマンド例は `{compose-dir}` で打つ前提で書く。
+
+- `compose.override.yaml`（または既存の `docker-compose.override.yml`）は、`-f` 無しの `docker compose` が base に自動で重ねる個人用の上書き。ignore する（追跡すると、個人の上書きが全員の環境へ入る）。
+
+### プロジェクト名を固定する（トップレベル `name:`）
+
+```yaml
+name: {project}        # base の先頭に置く
+```
+
+- **何を防ぐか**: `name:` が無いと、Compose はプロジェクト名を `{compose-dir}` のディレクトリ名から作る。置き場を動かした・別の作業ツリー（同じリポの別ディレクトリ）から起動した回にプロジェクト名が変わり、**既存のコンテナ・名前の付いていないボリュームを見失って新しく作る**（データが空に見える）。`name:` で固定し、ボリュームも `volumes.<名前>.name: {project}-...` で固定する（本ファイル「ボリューム命名規則」）。
+- **限界**: プロジェクト名を固定すると、同じホストで同じ compose を 2 つの作業ツリーから同時に立てたときは同じコンテナを奪い合う。並べて立てる必要がある回は `docker compose -p <別名>` で起動時に変える（固定ボリュームの `name:` も別名にする必要がある）。
+- 追試状況: 実測（Docker Compose v5.5.1 の `docker compose config` がトップレベル `name:` をプロジェクト名として出すことを確認）。
 
 ### サービス定義の基本形
 
@@ -27,7 +35,7 @@ services:
     networks:
       - {project}-network
     healthcheck:
-      test: ["CMD", "pg_isready", "-U", "postgres"]
+      test: ["CMD", "pg_isready", "-h", "127.0.0.1", "-U", "postgres"]
       interval: 10s
       timeout: 5s
       retries: 5
@@ -63,7 +71,8 @@ postgres:
     #   移行は旧イメージで起動して pg_dump で吸い出し、新構成へ restore する。
     - postgres-data:/var/lib/postgresql   # 18 の単一マウント先。/data へ挿すと新規ボリュームでも起動しない（docker-library/postgres#1259）
   healthcheck:
-    test: ["CMD-SHELL", "pg_isready -U ${POSTGRES_USER:-postgres}"]
+    # -h 127.0.0.1 を外さない（初期化中の一時サーバに成功して healthy が早まるのを防ぐ。infra-conventions.md「ヘルスチェック要件」）
+    test: ["CMD-SHELL", "pg_isready -h 127.0.0.1 -U ${POSTGRES_USER:-postgres}"]
     interval: 10s
     timeout: 5s
     retries: 5
@@ -121,6 +130,30 @@ app:
       condition: service_healthy
 ```
 
+### 一回きりのタスク（マイグレーション）を待つ
+
+```yaml
+migrate:
+  image: {migrate-image}
+  restart: "no"                     # 一回きり。終わったら再起動しない
+  environment:
+    - DATABASE_URL=postgresql://{migrate-user}:${MIGRATE_PASSWORD}@db:5432/{db-name}   # DDL を流せる強い資格
+  depends_on:
+    db:
+      condition: service_healthy
+app:
+  environment:
+    - DATABASE_URL=postgresql://{app-user}:${APP_DB_PASSWORD}@db:5432/{db-name}       # 読み書きだけの弱い資格
+  depends_on:
+    migrate:
+      condition: service_completed_successfully   # exit 0 で終わるまで app を起動しない
+```
+
+- **何を防ぐか**: ①アプリがスキーマの古い DB に接続して起動時に失敗する・②アプリの資格で DDL を流せる（アプリが乗っ取られると表を消せる）。マイグレーションを強い資格の別サービスにし、アプリは DDL を持たない別ロールで、マイグレーションの正常終了を待つ。ロールの作り方は DB 初期化 SQL（`db/init/`）で書く。
+- **倒れる向き**: マイグレーションが exit 0 以外で終わると app は作られたまま起動しない（`docker compose ps -a` で app が `created`）。`up -d` の出力に `service "migrate" didn't complete successfully` が出る。
+- **`restart: "no"` を一回きりのタスクと dev サーバに付ける**: base の既定の `restart: unless-stopped` を写すと、終わったマイグレーションが Docker の再起動のたびに流れ直し、手で止めた dev サーバも勝手に戻る。`restart` を省いたときの既定は `"no"` だが、写し元の既定に引きずられないよう明示する。
+- 追試状況: 実測（Docker Compose v5.5.1。一回きりのサービスが exit 0 なら app が起動・exit 1 なら app は `created` のまま）。ロールの分離そのものは DB の権限設計で、版で動くものではない。
+
 ## 起動スクリプトパターン
 
 ### up スクリプト（全サービス）
@@ -139,7 +172,7 @@ echo "All services started."
 ```sh
 #!/bin/sh
 set -e
-docker compose -f docker-compose.yml -f docker-compose.plugins.yml up -d
+docker compose -f compose.yaml -f compose.plugins.yml up -d
 ```
 
 ## 断片合成（service-fragment）
@@ -149,13 +182,13 @@ base（db＋app の最小 compose）に、AWS エミュレーション等を**�
 - **一次方式は `-f` 多重指定**。起動コマンド側で断片を選ぶ（base ファイルを編集しない）。
   ```sh
   # S3/SQS を使うなら base + localstack 断片
-  ./scripts/dev-up.sh "-f docker-compose.yml -f compose.localstack.yml"
+  ./scripts/dev-up.sh "-f compose.yaml -f compose.localstack.yml"
   # メールも要るなら mailpit 断片を足す
-  ./scripts/dev-up.sh "-f docker-compose.yml -f compose.localstack.yml -f compose.mailpit.yml"
+  ./scripts/dev-up.sh "-f compose.yaml -f compose.localstack.yml -f compose.mailpit.yml"
   # 直接 docker compose でも同じ
-  docker compose -f docker-compose.yml -f compose.localstack.yml up -d
+  docker compose -f compose.yaml -f compose.localstack.yml up -d
   ```
-- **`dev-up.sh` は合成 `-f ...` 文字列を 1 引数で受ける**。引数なし＝`docker-compose.yml` 単独（base のみ・後方互換）。起動サービスを `docker compose ps` で動的に列挙し healthcheck 持ちだけ待つため、断片を足しても待機ロジックは変わらない。
+- **`dev-up.sh` は合成 `-f ...` 文字列を 1 引数で受ける**。引数なし＝`compose.yaml` 単独（base のみ）。base を別の名前（既存の `docker-compose.yml` など）で持つなら、`-f` で渡すか雛形の既定値を書き換える（そのままだと引数なしの起動がファイルを見つけられず落ちる）。起動サービスを `docker compose ps` で動的に列挙し healthcheck 持ちだけ待つため、断片を足しても待機ロジックは変わらない。
 - **断片テンプレ**（同一 skill 内 `../templates/`）:
   - [`compose.localstack.yml.template`](../templates/compose.localstack.yml.template) — S3 / SQS / SNS / Secrets Manager（init は localstack パターン参照）
   - [`compose.mailpit.yml.template`](../templates/compose.mailpit.yml.template) — SES 相当（SMTP 捕捉 + Web UI）
@@ -164,7 +197,7 @@ base（db＋app の最小 compose）に、AWS エミュレーション等を**�
 
 ### network 参照規約
 
-断片を `-f` 合成するときの top-level `networks:` 宣言は **base（`docker-compose.yml`）だけが持つ**。断片側に置かない。
+断片を `-f` 合成するときの top-level `networks:` 宣言は **base（`compose.yaml`）だけが持つ**。断片側に置かない。
 
 - **断片側**: service の `networks: [{project}-network]` 参照だけ残し、top-level `networks:` は書かない。volume は断片側で宣言してよい（名前は `{project}` プレフィックス）。
 - **base 側**: `networks.{project}-network.name: {project}-network` を宣言。合成後もこの宣言が残るため compose が name で自動作成し、合成 `up` がそのまま通る。

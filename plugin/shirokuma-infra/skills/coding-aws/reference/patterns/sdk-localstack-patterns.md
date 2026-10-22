@@ -29,6 +29,26 @@ export const s3Client = new S3Client({
 - `forcePathStyle: true` は LocalStack で S3 を使う場合に必須。
 - リージョンは `process.env.AWS_REGION` から取得（ハードコードしない）。SDK v3 は `AWS_DEFAULT_REGION` を読まないので、`.env` には `AWS_REGION` を置く（`coding-infra` の LocalStack の `.env` の雛形は両方を置く）。
 
+### 接続と要求のタイムアウトを明示し、例外として返るかを確かめる
+
+```typescript
+import { NodeHttpHandler } from '@smithy/node-http-handler';
+
+export const s3Client = new S3Client({
+  region: process.env.AWS_REGION,
+  requestHandler: new NodeHttpHandler({
+    connectionTimeout: 3_000,      // 接続を張るまで
+    requestTimeout: 10_000,        // 要求と応答の全体
+    throwOnRequestTimeout: true,   // これが無いと requestTimeout は警告を出すだけで、要求は待ち続ける
+  }),
+});
+```
+
+- `@smithy/node-http-handler` は SDK が間接に入れる依存なので、厳密に解決するパッケージマネージャ（pnpm の既定など）では `package.json` に直接の依存として足す（足さないと import が解決できない）。
+- **何を防ぐか**: 既定はどちらのタイムアウトも 0（無効）で、相手が接続を受けたまま応答しないと要求が終わらない。要求を待つ処理（リクエストの処理・キューの消費）が詰まり、上流のタイムアウトが先に切れて原因が見えなくなる。
+- **例外として返るかを確かめる**: タイムアウトを書いただけでは足りない。受け付けるだけで応答しないサーバ（`net.createServer(() => {})` を手元で立てる）へ向けて要求を送り、`TimeoutError` で reject されることをテストで確かめる。`requestTimeout` だけを付けた形は警告を 1 行出して待ち続ける。
+- 追試状況: 実測（`@smithy/node-http-handler` 4.12.1。応答しないサーバへの要求は、`throwOnRequestTimeout` 無しでは 5 秒たっても終わらず、付けると 1 秒で `TimeoutError`）。版で既定が変わりうるので、使う版で上のテストを回す。
+
 ## サービス別実装パターン（SDK v3 コマンド）
 
 ### S3 操作

@@ -38,6 +38,8 @@ reviewing-nextjs が PR 差分に適用する Next.js（App Router）固有の�
 - server で取るべきデータを client の `useEffect` でフェッチしている
 - 独立した取得の逐次 `await`（`Promise.all` にできる）・ループ内クエリ（N+1）
 - ミューテーション後の `revalidatePath` / `revalidateTag` 漏れ（古い表示が残る——再現する実害があれば High）
+- 本番に出すアプリで `next.config` に `poweredByHeader: false` が無い（既定では `X-Powered-By` で枠組みを外へ知らせる）・CDN の後ろでクライアントの IP を `X-Forwarded-For` から読んでいる（クライアントが偽れる）・CDN が上書きする専用のヘッダから読んでいるのにオリジンを CDN に絞っていない（直接叩けば専用のヘッダも偽れる。絞り方は `shirokuma-infra` の designing-aws スキル `reference/patterns/aws-resource-patterns.md`「ALB の受け口を CDN に絞る」）。照合先は coding-nextjs スキルの `reference/criteria/checklist.md`「9. 公開する応答と本番の観測」
+- 認可を経路の一覧で一元管理する構成で、書き込みの口が server action になっていて action の中で認可を確かめていない（一覧の外に口ができる——designing-nextjs スキルの `reference/patterns/route-design.md`）
 
 ### NS2. hydration リスク（観点 1 関連）
 

@@ -88,7 +88,7 @@ shirokuma-flow issue create --title "{サブ}" --body "{サブ本文}" --issue-t
 
 - **他のゲートも同時に飛ぶ**ので、実行前に**親番号と IssueType を必ず確認**する（サブ起案のつもりで親番号を間違えても、上記 1〜5 はもう止めてくれない）。
 - **親の存在確認が一切なくなるわけではない**。飛ぶのは親の**事前**取得だけで、作成後の親リンク（sub-issue 追加）は実行される。親が存在しなければそこで失敗し、作成された Issue は**ロールバック close** される。
-- 自律進行（autopilot）との関係: `issue create --force` は**作成**操作（失敗時はロールバック close）であって破壊操作ではないため、不可逆／外向き操作リストの「`--force` を伴う破壊操作」には**当たらない**＝一括委任の射程内で実行してよい（`autonomous-flow` の `reference/criteria/irreversible-operations.md`）。
+- 自律進行（autopilot）との関係: `issue create --force` は**作成**操作（失敗時はロールバック close）であって破壊操作ではないため、不可逆／外向き操作リストの「強制・破壊」行には**当たらない**。「ゲートのバイパス」行も、停止表の下の `issue create --force` の注記の条件をすべて満たす形（計画 Backlog 中のサブ起案の正規用法）は射程外なので、包括委任の射程内で実行してよい。条件を 1 つでも満たさない `--force` は「ゲートのバイパス」行に当たり、止まって人に確認する。条件そのものは `autonomous-flow` の `reference/criteria/irreversible-operations.md` の停止表の下の注記が持つ。
 - bootstrap（Project 未作成のリポでセットアップ Issue を起票する場面）で使う `--force` は**用途が別**（最上位 IssueType ゲート向け・`setting-up-project` スキル）。本節が扱うのは**計画配下のサブ起案（親 Status ゲート向け）**。
 
 ## 承認継承の発火確認（approve の sideEffects）

@@ -96,6 +96,31 @@ npm run test     # Vitest 起動（テストランナー疎通）
 npm run build    # 本番ビルドが通ること
 ```
 
+### （任意）モノレポに 2 本目のアプリを足す
+
+1 つのリポジトリに Next.js のアプリを 2 本以上置くときの手順。1 本だけの間はこの節を飛ばす（ルート直下の 1 アプリのままでよい）。
+
+**並べ方の推奨**: ルートの `package.json` に npm workspaces を置き、アプリを `apps/<名前>`、2 本以上のアプリが実際に使う共有物だけを `packages/<名前>` に置く（`apps/*`・`packages/*` は workspaces の公開の慣例）。それ以外のディレクトリは導入先が名前を選ぶもので、次は一例にすぎない——DB のマイグレーション（例: `db/<アプリ>/migrations/`。アプリごとに分ける）・ドメインの定義（例: `domain/`）・インフラ一式（例: `infra/`。compose の置き場の決め方は `shirokuma-infra` の coding-infra スキル `reference/patterns/infra-conventions.md`「compose の置き場とファイル名」節）。
+
+- **何を防ぐか**: 共有物を早く切り出すと、1 本しか使わないものの変更が全アプリの依存の更新になる（`packages/` は 2 本目が実際に使ってから作る）。マイグレーションを 1 か所に混ぜると、どのアプリのスキーマ変更かが分からず、片方だけを戻せない。ドメインの定義を `packages/` に置くのは既定にしない（アプリ間で共有するかは境界の設計で決める・designing-nextjs スキル）。
+- **1 本目を `apps/` へ移す段と、workspaces を入れる段を分ける**: 先に移動だけのコミット（中身を変えない・`git mv`）を作り、ビルドが通ることを確かめてから workspaces と依存の置き場を変える。混ぜると、壊れたときに移動と設定のどちらが原因かを切り分けられない。
+
+**手順**:
+
+```bash
+# 1. ルートの package.json に workspaces を置く（既にあれば飛ばす）
+#    "workspaces": ["apps/*", "packages/*"]
+# 2. アプリを apps/<名前> に作る（依存はルートで入れる・git はリポのものを使う）
+npx create-next-app@latest apps/<名前> --typescript --app --skip-install --disable-git --use-npm
+# 3. ルートで依存を入れる（lockfile はルートの 1 つだけになる）
+npm install
+# 4. アプリ単位で打つ（<名前> はアプリの package.json の name。既定はディレクトリ名）
+npm run build -w <名前>
+```
+
+- **生成されるエージェント向けのファイル**: `create-next-app` はアプリのディレクトリに `AGENTS.md` を作り、`next dev` はエージェントを検出すると、その中の印（`<!-- BEGIN:nextjs-agent-rules -->` から `<!-- END:nextjs-agent-rules -->` まで）の間を書き直す（消しても次の `next dev` で戻る）。リポの直下に `CLAUDE.md` や `AGENTS.md` が既にあるときは、どちらかに決める——①アプリの `AGENTS.md` を残してコミットする（アプリの版に合った同梱ドキュメントを指す。印の外に書いた内容は残る）②作らない（`create-next-app` に `--no-agents-md`、`next.config` に `agentRules: false`）。生成されたファイルを消すだけにすると、`next dev` のたびに未コミットの差分として戻る。`CLAUDE.md` が生成されるかは版で変わりうるので、作った直後に `ls -a apps/<名前>` で確かめる。
+- 追試状況: 実測（`create-next-app` 16.4.2 を npm workspaces の `apps/<名前>` で上の手順の 1〜3 を打ち（4 の build は打っていない）、アプリに `AGENTS.md` ができ `CLAUDE.md` はできないこと・lockfile がルートだけにできること・`npm exec -w <名前> -- next typegen` が通ることを確認）。`agentRules: false` の挙動は `要確認（未追試）`（Next.js 16.4.2 同梱のドキュメントと照合しただけ）。
+
 ### ステップ 6: 完了レポート
 
 採用したスタック・差し替えた既定・確認結果を Issue にコメントとして記録する。実装規約に沿った page / component / server action の作成は coding-nextjs スキルへ引き継ぐ。

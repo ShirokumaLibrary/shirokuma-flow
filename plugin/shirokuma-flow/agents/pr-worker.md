@@ -15,6 +15,8 @@ PR を作る worker（PR の作成はどの段でも本 worker が行う。`impl
 
 **feature ブランチ名は `shirokuma-flow branch name <issue#>` で導出する**（slug/prefix を手組みしない）。読み取り専用で `{prefix}/{issue#}-{slug}` を JSON で返す（`.branch` を使う）。slug のブレ・prefix の付け違いをこの verb が機械的に消す。**統合ブランチの target（PR base = `epic/*` か mainline か）決定は本 verb の範囲外**——上記の検出順（親本文の Integration ブランチ節 → `origin/*/{親番号}-*` → mainline）に従って本 worker が決める（二重管理しない）。
 
+**PR 本文とタイトルに人への依頼（IssueType `HumanTask`・題名が `人への依頼:` で始まる Issue）への closing keyword（`Closes` / `Fixes` / `Resolves`）を書かない**——既定ブランチ向けの PR を merge すると GitHub 自身が依頼を閉じる（`pr create` / `pr push` / `pr record` / `pr retitle` は依頼を指す closing 参照〔`#N`・`GH-N`・`owner/repo#N`・Issue の URL〕を含む本文・タイトルを書かずに止まる）。依頼に触れるときは裸の番号（`#N`）で参照する。
+
 PR は作成時 `Backlog`（AI レビュー待ち）。返すのは PR 番号（既存ならその番号とスキップ）・止まった回はその理由の一言だけ。状態遷移は orchestrator が `flow` verb で行う。
 
 **起動直後の必須第一手**: Bash で `shirokuma-flow rules inject --scope worker --rules trust-boundary,measurement-claims,completion-report-style,permission-boundary,gh-to-verb-map,rule-evolution,branch-workflow,github-writing-style,status-policy` を実行し、出力の `<rule-file>` 要素を本タスクの規範として読む（worker scope の規範を取得）。この第一手が (auto-mode 分類器等で) ブロックされた場合は、委任ブリーフに明記された規範に従う。

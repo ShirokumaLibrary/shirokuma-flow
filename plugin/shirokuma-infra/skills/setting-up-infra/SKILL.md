@@ -40,12 +40,13 @@ model: opus
 
 ### ステップ 2: compose 一式を作成する
 
-`infra/` 配下に以下の最小構成を用意し、置換変数を実値に埋める。
+`{compose-dir}` に以下の最小構成を用意し、置換変数を実値に埋める。`{compose-dir}` と base の名前の決め方は coding-infra スキルの `reference/patterns/infra-conventions.md`「compose の置き場とファイル名」節（既存の compose があればその置き場と名前を使う）。
 
-**1. `docker-compose.yml`（base）** — `{project}`・`{db-name}`・`{db-user}` を実値に置換する。
+**1. base（新しく作るなら `compose.yaml`）** — `{project}`・`{db-name}`・`{db-user}` を実値に置換する。
 
 ```yaml
 # compose-spec 準拠: `version:` キーは書かない
+name: {project}                     # プロジェクト名を固定（ディレクトリ名で変わらない）
 services:
   db:
     image: postgres:18-alpine        # バージョンピン（latest 禁止・メジャー固定）
@@ -71,7 +72,7 @@ services:
       - db-data:/var/lib/postgresql            # 18 の単一マウント先（image のメジャーと連動・上記コメント）
       - ./db/init:/docker-entrypoint-initdb.d:ro
     healthcheck:
-      test: ["CMD-SHELL", "pg_isready -U {db-user} -d {db-name}"]
+      test: ["CMD-SHELL", "pg_isready -h 127.0.0.1 -U {db-user} -d {db-name}"]   # -h 127.0.0.1: 初期化中の一時サーバ（ソケットだけ）に成功させない
       interval: 5s
       timeout: 5s
       retries: 10
@@ -162,18 +163,18 @@ VALKEY_PORT=6379
 ### ステップ 4: 起動確認
 
 ```bash
-# 設定の構文チェック（compose 一式は infra/ 配下）
-cd infra && docker compose config
+# 設定の構文チェック（{compose-dir} で打つ。定義は coding-infra スキルの reference/patterns/infra-conventions.md「compose の置き場とファイル名」節）
+docker compose config
 
 # 起動（Valkey を合成する場合は -f を重ねる）
-cd infra && docker compose up -d
-# 例: cd infra && docker compose -f docker-compose.yml -f compose.valkey.yml up -d
+docker compose up -d
+# 例: docker compose -f compose.yaml -f compose.valkey.yml up -d
 
 # 状態・ヘルスチェック確認
-cd infra && docker compose ps
+docker compose ps
 
 # ログ確認
-cd infra && docker compose logs -f db
+docker compose logs -f db
 ```
 
 db の healthcheck が green になり、app が `service_healthy` を待って起動することを確認する。

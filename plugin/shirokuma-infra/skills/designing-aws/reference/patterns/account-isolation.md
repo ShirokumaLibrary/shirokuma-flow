@@ -56,6 +56,7 @@ OU（Organizational Unit）でアカウントを整理する。標準的な OU �
 | **env 別の account/region** | `bin/app.ts` で env（dev/staging/prod）ごとに `env: { account, region }` を明示する。単一の `CDK_DEFAULT_ACCOUNT` に依存する初期テンプレを env 別に拡張する |
 | **cross-account deploy** | GitHub Actions からのデプロイは OIDC ロールを **アカウント別**に用意する。`github-actions-cdk.yml.template` の `CDK_DEPLOY_ROLE_ARN`（dev/staging 用）と `CDK_DEPLOY_ROLE_ARN_PROD`（本番用）の分岐がその萌芽 |
 | **bootstrap** | 各アカウント × 各リージョンで `cdk bootstrap` を実行する（アカウントを増やすたびに必要） |
+| **共用アカウントの bootstrap** | 他のアプリと同じアカウントを使うときは、`cdk bootstrap --qualifier {qualifier} --toolkit-stack-name {toolkit-stack}` で専用の bootstrap を作り、アプリ側も同じ qualifier で合成する（`cdk.json` の context `@aws-cdk/core:bootstrapQualifier`、または `DefaultStackSynthesizer` の `qualifier`）。**何を防ぐか**: 既定の bootstrap を共有すると、他のアプリの bootstrap の作り直し・版の更新・権限の変更が自分の deploy に効き、デプロイ用のロールとアセットのバケットも共有になる。追試状況: `要確認（未追試）`。本物のアカウントでの bootstrap は試していない。aws-cdk 2.1146.0 の CLI が `--qualifier`・`--toolkit-stack-name` を持ち、aws-cdk-lib 2.274.0 の合成器が context `@aws-cdk/core:bootstrapQualifier` を読むことはパッケージの中身で照合した |
 
 ```typescript
 // bin/app.ts — env ごとに account/region を明示する例（実装は coding-cdk が担当）

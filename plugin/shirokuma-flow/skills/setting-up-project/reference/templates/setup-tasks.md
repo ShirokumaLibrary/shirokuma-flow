@@ -27,8 +27,9 @@ kind 導出は GitHub の **IssueType** を主経路にする。`https://github.
 - **色の基準**（既定 3 型の色を軸に意味で揃える）: BLUE=価値を作る（Feature/Evolution）・RED=問題を直す（Bug）・YELLOW=実行作業（Task）・GRAY=保守雑務（Chore）・GREEN=知識を増やす（Docs/Research）・PURPLE=意思決定/役割文書（Plan/Design/ADR）・ORANGE=構造/束ね（EPIC）。
 - 既定の `Feature` / `Bug` / `Task` も**説明（Description）が空や不適切なら上表に合わせて調整**する（無い org なら追加）。
 - 説明はトリアージ時に型を選ぶ判断材料になるため、空のまま放置しない。
+- **任意の 1 型 `HumanTask`**（人への依頼・説明例「AI が人に頼む操作。人が済ませて閉じる」・色は任意）: 足すと、AI が人に頼む操作（merge・リリースの公開・設定の変更など）が `shirokuma-flow issue human-task` でこの型の最上位 Issue として起票され、人は Issue の一覧の検索欄に `is:open type:HumanTask` を入れて自分のやることを探せる。足すときは config の `issueTypes.topLevel` にも `HumanTask` を足す（`shirokuma-flow config set issueTypes.topLevel` で書く。足さないと起票が allowlist で止まる）。足さない org では依頼は IssueType 無し・題名の接頭辞 `人への依頼:` で起票され、`is:open "人への依頼:" in:title` で探せる。`shirokuma-flow issuetype check` は推奨欄（`recommendedMissing`）に出すだけで `ok` には数えない。
 
-完了条件: `[ ] org の IssueType 11 型を揃えた（8 型追加＋既定 3 型の説明確認/調整）`
+完了条件: `[ ] org の IssueType 11 型を揃えた（8 型追加＋既定 3 型の説明確認/調整）`（`HumanTask` は任意で、完了条件に含めない）
 
 ---
 

@@ -1,7 +1,7 @@
 {
   "name": "shirokuma-nextjs",
   "description": "Next.js（App Router）支援 — designing/coding/reviewing-nextjs スキル。コア shirokuma-flow の opt-in フレームワーク拡張（コアは framework 非依存・固有支援は拡張プラグインへ隔離）。CLI 拡張 @shirokuma-library/nextjs（nextjs routes/feature-map/screenshots）と対。",
-  "version": "0.21.0",
+  "version": "0.22.1",
   "author": {
     "name": "ShirokumaLibrary"
   },

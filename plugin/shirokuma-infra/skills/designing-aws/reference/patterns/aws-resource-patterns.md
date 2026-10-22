@@ -35,6 +35,12 @@ ECS Fargate タスク（プライベートサブネット）
 RDS / ElastiCache（プライベートサブネット）
 ```
 
+**ALB の受け口を CDN に絞る**（CDN を前に置く構成）: ALB のセキュリティグループの受け口を、CDN のオリジン向けマネージドプレフィックスリスト（CloudFront なら AWS が管理するもの）に絞り、加えて CDN からだけ付くオリジン検証ヘッダ（値は秘密）を ALB のリスナールールで確かめる。
+
+- **何を防ぐか**: CDN を迂回して ALB を直接叩く経路（CDN の WAF・キャッシュ・クライアント IP の上書きを素通りする）。プレフィックスリストだけでは同じ CDN を使う他者のディストリビューションからも届くので、ヘッダで自分の CDN だけに絞る。
+- **秘密は世代で入れ替える**: ヘッダの値は Secrets Manager 等に置き、入れ替えの間は新旧 2 つの値をリスナールールで受け、CDN 側を新しい値へ切り替えてから旧い値を外す（一度に替えると切り替えの間の要求が落ちる）。
+- 追試状況: `要確認（未追試）`。プレフィックスリストの名前・セキュリティグループのルール数の上限は AWS のドキュメントで確かめ、本物の環境で ALB を直接叩くと拒まれることを確かめる。
+
 > **この図は接続の寿命を決めていない**: ALB を通す構成で SSE / ストリーミング / WebSocket のように**接続を張り続ける**なら、アイドルタイムアウトと heartbeat の関係・前段のバッファリングを別途決める。正本は [long-lived-connections.md](long-lived-connections.md)（同一 patterns ディレクトリ）。決めずに実装へ進むと後から構成変更になる。
 
 ---
@@ -55,6 +61,11 @@ RDB は**単一固定でなく、負荷特性・規模・可用性要件で運�
 - **迷ったら Aurora Serverless v2**（既定の出発点）。負荷が予測可能で定常低負荷なら通常 RDS インスタンスへ、本番で高可用・読み取りスケールが要るなら Aurora Multi-AZ + reader へ寄せる。
 - **Web/RDS スタック分離と表裏一体**: RDS は Web（cdk-nextjs）とは別 CloudFormation スタック（`DataStack`）に置き、本番は `deletionProtection` + `RemovalPolicy.RETAIN` で blast radius を抑える。スタック間参照は SSM / Secrets Manager の名前解決（疎結合）を既定にし、CFN export の削除ロックを避ける。
 - **版照合注記（実装時〔`coding-cdk`〕に確認）**: (1) Aurora Serverless v2 の最小 ACU 0 対応は cdk / エンジン版依存のため、ピン版で `serverlessV2MinCapacity` の 0 許容を照合する。(2) `rds.PostgresEngineVersion` / `rds.AuroraPostgresEngineVersion` enum の該当バージョン実在をピン版の型定義で照合する（本 matrix は方式選定まで・実 API 版照合は実装時）。
+
+**DB への接続は TLS の `verify-full` にし、CA をイメージに同梱する**: RDS の CA バンドルをビルド時にイメージへ入れ、接続で `sslmode=verify-full`（と CA のパス）を指定する。CA のファイルが無いときはビルドを失敗させる。
+
+- **何を防ぐか**: `require` など相手を検証しない TLS は暗号化だけで、経路上のなりすましを通す。CA が無いままイメージができると、`verify-full` が本番で初めて失敗する（ビルドで止めれば手元で気づける）。
+- 追試状況: `要確認（未追試）`。CA バンドルの入手先と、使うドライバが `verify-full` と CA のパスをどの名前で受けるかは、RDS とドライバのドキュメントで確かめる。
 
 ### 単純 RDB 選定（用途別クイックリファレンス）
 
@@ -185,6 +196,13 @@ DB サブネット（各 AZ）:
 | 汎用アウトバウンド通信 | NAT Gateway（パブリックサブネット） |
 | S3 / DynamoDB へのアクセス | VPC Endpoint（Gateway 型：無料） |
 | Secrets Manager / ECR | VPC Endpoint（Interface 型：コスト考慮） |
+
+**NAT を置かない型（VPC エンドポイントだけで外へ出る）**: タスクが話す相手が AWS のサービス（ECR・S3・Secrets Manager・CloudWatch Logs など）だけなら、NAT Gateway を置かず、使うサービスの分だけ VPC エンドポイントを置く。
+
+- **何を防ぐか**: NAT の時間課金と、タスクから任意のインターネット宛先へ直接出る経路。**データの持ち出しそのものは塞がない**——エンドポイントの既定のポリシーは全アクセスを許すので、エンドポイント経由で他人のアカウントの資源（例: 他人のバケットへの PutObject）へ書けるし、DNS の問い合わせに載せて出す経路も残る。
+- **エンドポイントポリシーで自分の資源に絞る**: 各エンドポイントのポリシーで、条件キー `aws:ResourceAccount`（自アカウント）か `aws:ResourceOrgID`（自組織）に当たる資源だけを許す。ECR のイメージ取得に使う AWS 側のレイヤー用バケットは自アカウントの資源ではないので、S3 のエンドポイントではその許可を残す（落とすとイメージを取得できない）。DNS での持ち出しも脅威に含めるなら、Route 53 Resolver DNS Firewall で問い合わせ先を絞る。
+- **代償**: エンドポイントの無いサービスや外部の API へは出られない。ECS Fargate のイメージ取得には ECR の `ecr.api`・`ecr.dkr` と、レイヤーを置く S3（Gateway 型）がそろって要り、ログを出すなら CloudWatch Logs も要る。1 つ欠けるとタスクが起動しない。外部の API を呼ぶ要件が後から入ったら NAT（またはプロキシ）を足す設計変更になる。
+- 追試状況: `要確認（未追試）`。タスクに要るエンドポイントの一覧は、使う機能（イメージ取得・ログ・シークレット取得）ごとに AWS のドキュメントで確かめ、本物の環境でタスクが起動することを確かめる。
 
 > **Gateway 型は時間課金・データ処理料ともに無料**（S3・DynamoDB）。Interface 型（AWS PrivateLink・Secrets Manager / SQS / SNS / SES 等ほとんどのサービス）は時間課金 + データ処理料（~$0.01/h/AZ）が乗る（NAT Gateway より安いがゼロではない）。Next.js を Lambda フレーバー（`NextjsGlobalFunctions`）で VPC アタッチする場合の NAT 要否は `nextjs-deploy.md`（同一 patterns ディレクトリ）の「Lambda VPC アタッチ + NAT のトレードオフ」を参照。
 

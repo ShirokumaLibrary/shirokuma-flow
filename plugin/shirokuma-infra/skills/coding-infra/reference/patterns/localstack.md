@@ -6,13 +6,13 @@ LocalStack Community Edition は、ローカル開発向けに AWS サービス�
 
 ## ローカル本番相当の統合像
 
-LocalStack は単体で起動するのではなく、**base compose（`docker-compose.yml`＝db＋app の最小構成）に断片で束ねて 1 つの環境を組む**。AWS 依存（S3 / SQS / SNS / Secrets Manager 等）を使うプロジェクトが「ローカルで本番相当のデータ層・メッセージ層を持つ」ための統合像は次の通り:
+LocalStack は単体で起動するのではなく、**base compose（`compose.yaml`＝db＋app の最小構成）に断片で束ねて 1 つの環境を組む**。AWS 依存（S3 / SQS / SNS / Secrets Manager 等）を使うプロジェクトが「ローカルで本番相当のデータ層・メッセージ層を持つ」ための統合像は次の通り:
 
 - **一次方式は `-f` 多重指定**で base に localstack 断片を重ねる。base ファイルは編集せず、起動コマンド側で「使う断片だけ」を選ぶ:
 
   ```bash
   # base（db＋app）＋ localstack を 1 つの docker compose up に束ねる
-  docker compose -f docker-compose.yml -f compose.localstack.yml up -d
+  docker compose -f compose.yaml -f compose.localstack.yml up -d
   ```
 
 - 断片テンプレ（`compose.localstack.yml`）・`dev-up.sh` の合成引数・top-level `networks:` の扱いは [`docker-compose.md` の「断片合成（service-fragment）」節](docker-compose.md) が正本。本ファイルは localstack 断片の中身（サービス定義・init・エンドポイント設定）を担う。
