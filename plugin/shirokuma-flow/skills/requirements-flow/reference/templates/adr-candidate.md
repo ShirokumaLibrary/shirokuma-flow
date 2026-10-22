@@ -51,7 +51,7 @@ requirements-worker が **ADR 候補 Issue（IssueType `ADR`）** を起案す�
 - {既存への影響・段階移行の要否（ビッグバンを避ける）}
 
 ## 関連する決定
-- {関連 ADR 番号と概要。先行 ADR の決定要素を**すべて**置き換える場合だけ **Supersedes: ADR-{NNN}** と書く。一部の要素だけを置き換える場合は Supersedes にせず、先行 ADR を Accepted のまま残し、どの要素を置き換えたかを本文に書く（Superseded にした ADR は語の取り込みの検査から外れるので、生きた要素を持つ ADR に使うと検査が黙って縮む）}
+- {関連 ADR 番号と概要。先行 ADR の決定要素を**すべて**置き換える場合だけ **Supersedes: ADR-{NNN}** と書く。一部の要素だけを置き換える場合は Supersedes にせず、先行 ADR を Accepted のまま残し、どの要素を置き換えたかを本文に書く（Superseded にした ADR は語の取り込みの検査から外れるので、生きた要素を持つ ADR に使うと検査が黙って縮む）。Supersedes を書いた候補が確定したら、旧 ADR は人が `shirokuma-flow adr supersede <旧 ADR の ID> --by <この ADR の ID> --write` で Superseded にする（確定の `next` に出る）}
 
 ## 着地の見込み
 

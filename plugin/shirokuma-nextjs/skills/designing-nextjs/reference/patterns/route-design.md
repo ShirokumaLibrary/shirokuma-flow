@@ -75,3 +75,11 @@ Next.js（App Router）の route 階層・レイアウト境界・ミドルウ�
 - 各 `page.tsx` に `@screen <Name>` を付け、画面を識別子化する。
 - コンポーネントに `@usedComponents` を付け、画面↔部品の依存を辿れるようにする。
 - これにより `shirokuma-flow nextjs feature-map` で画面↔部品マップを可視化できる。route 階層の設計時にアノテーション粒度（どの単位を 1 画面とみなすか）も併せて決める。
+
+## 認可を経路の一覧で一元管理する構成では route handler を選ぶ
+
+認可を「経路（URL）の一覧」に集めて 1 か所で判定する構成（ミドルウェアや共通の判定が URL を見て許可する形）では、書き込みの口に server action ではなく route handler（`app/**/route.ts`）を選ぶ。
+
+- **何を防ぐか**: server action は、それを呼ぶページの URL に対する POST として届き、どの action かは URL ではなくヘッダで決まる。経路の一覧は action を区別できないので、一覧の外に口ができる（ページの閲覧を許した相手が、そのページから呼べる action をすべて呼べる）。Next.js のドキュメントも、server action は UI を経ずに直接の POST で届くものとして扱い、action ごとに認証と認可を確かめるよう求めている。
+- server action を使うなら、一覧での判定に頼らず action の中で認証・認可を確かめる（coding-nextjs スキルの `reference/patterns/server-action.md`）。
+- 追試状況: `要確認（未追試）`。Next.js 16.4 同梱のドキュメント「data-security」の server action の節と照合した（直接の POST で届くことを手元で再現してはいない）。

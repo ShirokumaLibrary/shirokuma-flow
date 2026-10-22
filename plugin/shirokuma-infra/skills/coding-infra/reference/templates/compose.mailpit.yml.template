@@ -1,7 +1,7 @@
 # Mailpit service-fragment（AWS SES 相当のローカルメール捕捉）
 # base に -f で合成して使う。SMTP でアプリが送ったメールを捕捉し Web UI で確認する。
 # 使用方法:
-#   ./scripts/dev-up.sh "-f docker-compose.yml -f compose.mailpit.yml"
+#   ./scripts/dev-up.sh "-f compose.yaml -f compose.mailpit.yml"
 #
 # 置換変数:
 #   {project}   - プロジェクト名（base と一致させる）
@@ -33,6 +33,6 @@ services:
     networks:
       - {project}-network
 
-# ネットワークの top-level 宣言は base（docker-compose.yml）に任せ、fragment 側では宣言しない。
+# ネットワークの top-level 宣言は base（compose.yaml）に任せ、fragment 側では宣言しない。
 # fragment 側で `external: true` 宣言するとマージで base を上書きし
 # ネットワーク事前作成が必須になる。宣言を省けば base が自動作成し合成 `up` がそのまま通る。

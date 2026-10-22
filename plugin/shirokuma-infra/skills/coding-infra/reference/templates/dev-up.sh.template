@@ -2,12 +2,12 @@
 # dev 環境起動スクリプトテンプレート（起動 + 全 healthcheck 待ち + 接続情報表示）
 # 使用方法: scripts/dev-up.sh として展開し chmod +x する。
 #
-#   # 引数なし = docker-compose.yml 単独（db のみ構成でも動く・後方互換）
+#   # 引数なし = compose.yaml 単独（db のみ構成でも動く）。base を別の名前で持つなら -f で渡すか、下の COMPOSE_ARGS の既定を書き換える
 #   ./scripts/dev-up.sh
 #
 #   # 合成構成 = -f 文字列を 1 引数で渡す（AWS エミュレーション断片を足すとき）
-#   ./scripts/dev-up.sh "-f docker-compose.yml -f compose.localstack.yml"
-#   ./scripts/dev-up.sh "-f docker-compose.yml -f compose.localstack.yml -f compose.mailpit.yml"
+#   ./scripts/dev-up.sh "-f compose.yaml -f compose.localstack.yml"
+#   ./scripts/dev-up.sh "-f compose.yaml -f compose.localstack.yml -f compose.mailpit.yml"
 #
 # 置換変数:
 #   {project}  - プロジェクト名（接続情報表示に使用）
@@ -18,8 +18,8 @@
 #   healthcheck を持つサービスだけ全 healthy になるまで待つ（固定サービス名に依存しない）。
 set -e
 
-# 引数（-f ... 文字列）。省略時は docker-compose.yml 単独。
-COMPOSE_ARGS="${1:--f docker-compose.yml}"
+# 引数（-f ... 文字列）。省略時は compose.yaml 単独。
+COMPOSE_ARGS="${1:--f compose.yaml}"
 
 # shellcheck disable=SC2086  # COMPOSE_ARGS は複数トークン（-f a -f b）として展開させる
 echo "Starting {project} services..."

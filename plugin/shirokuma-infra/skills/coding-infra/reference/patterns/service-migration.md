@@ -14,7 +14,7 @@ Redis 7.4 以降はライセンスが RSALv2 / SSPLv1 のデュアルに変わ�
 # 1. 既存コンテナを停止
 docker compose stop {old-service}
 
-# 2. docker-compose.yml でイメージを変更
+# 2. compose.yaml でイメージを変更
 #    image: redis:7-alpine → image: valkey/valkey:9-alpine
 
 # 3. container_name も更新（任意）
@@ -27,7 +27,7 @@ docker compose up -d {new-service}
 docker compose rm -f {old-service}
 ```
 
-### docker-compose.yml の変更例
+### compose.yaml の変更例
 
 ```yaml
 # 変更前
@@ -55,7 +55,7 @@ valkey:
 
 | ファイル | 更新内容 |
 |---------|---------|
-| `docker-compose.yml` | サービス名・イメージ・ボリューム名 |
+| `compose.yaml` | サービス名・イメージ・ボリューム名 |
 | `.env` / `.env.example` | 環境変数キー名（`REDIS_URL` → `VALKEY_URL` など） |
 | `depends_on` を持つ他サービス | 依存サービス名の更新 |
 | アプリ設定ファイル | 接続文字列（ホスト名がサービス名の場合） |
@@ -70,7 +70,7 @@ valkey:
 docker compose stop {old-name}
 docker compose rm -f {old-name}
 
-# docker-compose.yml の container_name を更新後
+# compose.yaml の container_name を更新後
 docker compose up -d {service-key}
 ```
 
@@ -88,7 +88,7 @@ docker run --rm \
 # 2. 移行確認
 docker run --rm -v {new-volume}:/data alpine ls /data
 
-# 3. docker-compose.yml のボリューム名を更新して起動
+# 3. compose.yaml のボリューム名を更新して起動
 docker compose up -d
 ```
 
@@ -100,8 +100,8 @@ docker compose up -d
 # 新サービスを停止
 docker compose stop {new-service}
 
-# docker-compose.yml を旧設定に戻す
-git checkout docker-compose.yml
+# compose.yaml を旧設定に戻す
+git checkout compose.yaml
 
 # 旧サービスを再起動
 docker compose up -d {old-service}

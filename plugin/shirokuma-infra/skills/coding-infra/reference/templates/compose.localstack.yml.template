@@ -1,8 +1,8 @@
 # LocalStack service-fragment（S3 / SQS / SNS / Secrets Manager のエミュレーション）
-# base（docker-compose.dev.yml.template を展開した docker-compose.yml）に -f で合成して使う。
+# base（docker-compose.dev.yml.template を展開した compose.yaml）に -f で合成して使う。
 # 使用方法:
-#   ./scripts/dev-up.sh "-f docker-compose.yml -f compose.localstack.yml"
-#   docker compose -f docker-compose.yml -f compose.localstack.yml up -d
+#   ./scripts/dev-up.sh "-f compose.yaml -f compose.localstack.yml"
+#   docker compose -f compose.yaml -f compose.localstack.yml up -d
 #
 # 置換変数:
 #   {project}   - プロジェクト名（base と一致させる。コンテナ・ボリューム名のプレフィックス）
@@ -51,7 +51,7 @@ volumes:
   localstack-data:
     name: {project}-localstack-data
 
-# ネットワークの top-level 宣言は base（docker-compose.yml）に任せ、fragment 側では宣言しない。
+# ネットワークの top-level 宣言は base（compose.yaml）に任せ、fragment 側では宣言しない。
 # fragment 側に `networks: {project}-network: external: true` を置くと
 # マージで base の宣言を上書きしネットワークが事前作成必須になる（`up` が "declared as external,
 # but could not be found" で失敗）。宣言を省けば base が name=`{project}-network` を自動作成し、

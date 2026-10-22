@@ -26,7 +26,7 @@ Issue を**全フェーズ自動で**進める orchestrator。各フェーズ or
 
 - 包括委任は**常設の事前授権**である——起動のたびに人へ opt-in を求めない（既定が自律なので、都度の opt-in は向きが逆になる）。これは「ゲートごとの承認」を「規範として人が与えた常設の事前授権」に形を変えるだけで、**承認の主体は人**——AI が verb を実行しても、履歴に記録される判断は人が事前に与えた承認である。暗黙承認ではなく、全自動承認は監査記録に残す。
 - **ゲート付きで自動実行する 2 操作**（`IssueType=ADR` 候補の `approve`＝確定 / `duplicate` による重複 close）は、[irreversible-operations.md](reference/criteria/irreversible-operations.md)「条件付き自動実行」の条件を**対象 1 件ずつ**通したものだけ実行する。1 つでも欠ける・判定に迷うなら止めて人に確認する。**`--force` で通さない。** **本 bullet は当該 2 操作の実行条件を定めるものであって、人ゲート境界そのものの列挙ではない**——`merge` の自律可否の正本は [[branch-workflow]]「自律境界」で、可否はそちらで判定する。
-- **祖先の close は自動化しない**（下記「クローズ提案」は提案まで）。同 criteria「祖先の close は条件付き自動実行に含めない」のとおり、`recommendedAction=done` が付く候補は非完了 close の子を持つ親で、その close は差し替えの子を作る余地を残すために人の判断に残すので、機械的に閉じない（**射程は祖先の close だけ**——ADR 候補の状態が他の作業を止める根拠にはならない・[[concept-gap-to-adr]] 手順 5）。
+- **祖先の close は自動化しない**（下記「クローズ提案」は提案まで）。同 criteria「祖先の close は条件付き自動実行に含めない」のとおり、`recommendedAction=done` が付く候補は非完了 close の子を持つ親で、その close は差し替えの子を作る余地を残すために人の判断に残すので、機械的に閉じない（**射程は祖先の close だけ**——ADR 候補の状態が他の課題を止める根拠にはならない・[[concept-gap-to-adr]] 手順 5）。
 - **「autopilot 配下」の判定**: 本 skill が**常設の事前授権の下で**進めている進行のことを指す。**sub-skill（`implement-flow` 等）を起動するときは委任ブリーフでそれを明示する**——sub-skill は自分で推測せず、明示が無ければ autopilot 配下でないものとして扱う（提案で止まる＝fail-closed 側）。
 
 > **この明示義務は `review-flow` の受信側既定（明示が無ければ非 autopilot として扱う。merge 自体の可否は branch-workflow「自律境界」の授権判定に従い、判定できない回は既定〔人ゲート〕へ倒す）の対**。**Why**: 発信側の義務だけでは、明示が届かなかった回に受信側がどう振る舞うかが決まらない。両方あって初めて「明示が無い＝非 autopilot 扱い（包括委任の枝を使わない。merge の可否は branch-workflow「自律境界」の授権判定に従い、判定不能は既定〔人ゲート〕へ倒す）」が閉じる。**射程が違う**——発信側は「明示せよ」、受信側は「無ければ非 autopilot として扱い、merge 可否は別途 branch-workflow の授権判定・判定不能は人ゲートへ倒す」。**自律 merge 時は [[branch-workflow]]「自律境界」項 5 のとおり、根拠にした `authority`（`pr checks` の `merge` 要素の授権キー `authority.channel.key` と正本の所在 `authority.source`）を応答へ記録する。引けない回は読み取れていない＝人ゲートへ倒す。**
@@ -68,7 +68,7 @@ Issue を**全フェーズ自動で**進める orchestrator。各フェーズ or
 
 承認ゲートを CLI verb で自動通過させる: `submit` → `approve` → `begin` → … → `merge`。
 
-- **`approve` の前に対象の `IssueType` を確認する**——`IssueType=ADR` の候補 Issue を含む `approve` の既定・人が打つ条件・判別手順の正本は [[status-policy]]。**`adr publish` の直打ちは既定では人専有**（config の事前授権がある構成で AI に開く条件は [[permission-boundary]]「verb 名では見分けられない副作用」節が正本）。ADR 候補の確定の打ち手は `next` の `runBy` に従う。 **`--force` は付けない。** **確定を人が持つ候補がある間に止まるのは、その候補の確定と、その候補に依存する課題の次の段だけで、他の作業は止めない**（[[concept-gap-to-adr]] 手順 5）。全停止するのは下記の連続失敗閾値だけである。
+- **`approve` の前に対象の `IssueType` を確認する**——`IssueType=ADR` の候補 Issue を含む `approve` の既定・人が打つ条件・判別手順の正本は [[status-policy]]。**`adr publish` の直打ちは既定では人専有**（config の事前授権がある構成で AI に開く条件は [[permission-boundary]]「verb 名では見分けられない副作用」節が正本）。ADR 候補の確定の打ち手は `next` の `runBy` に従う。 **`--force` は付けない。** **確定を人が持つ候補がある間に止まるのは、その候補の確定と、その候補に依存する課題の次の段だけで、他の課題は止めない**（[[concept-gap-to-adr]] 手順 5）。全停止するのは下記の連続失敗閾値だけである。
 - **`確認モード: guided` の明示がある回は、自分で打たず人の `approve` を待って止まる**（確認対象の所在と次に打つ verb を添える）。
 - **`duplicate`（重複 close）は本手順に紐づかない**——人が重複先を名指しした時点で、同 §2 のゲートを通して実行する。**受理する情報源も対象の条件も正本は §2**（ここで列挙し直さない）。
 

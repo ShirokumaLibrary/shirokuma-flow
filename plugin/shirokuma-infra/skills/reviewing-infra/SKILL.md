@@ -1,6 +1,6 @@
 ---
 name: reviewing-infra
-description: ローカル開発インフラのコードレビューを行う。Dockerfile のベストプラクティス・docker-compose 設計・LocalStack 設定・セキュリティをレビュー。Use when 「Dockerfileレビュー」「docker-composeレビュー」「ローカル環境レビュー」「infra review」「コンテナレビュー」「LocalStackレビュー」と言われたとき。
+description: ローカル開発インフラのコードレビューを行う。Dockerfile のベストプラクティス・Compose ファイルの設計・LocalStack 設定・セキュリティをレビュー。Use when 「Dockerfileレビュー」「docker-composeレビュー」「ローカル環境レビュー」「infra review」「コンテナレビュー」「LocalStackレビュー」と言われたとき。
 allowed-tools: Read, Grep, Glob, Bash, WebSearch, WebFetch
 model: opus
 disable-model-invocation: true
@@ -8,7 +8,7 @@ disable-model-invocation: true
 
 # ローカル開発インフラ コードレビュー
 
-Dockerfile、docker-compose.yml、LocalStack 設定のレビューを行う。イメージサイズ、ビルドキャッシュ効率、セキュリティ、ローカル↔本番の一貫性に集中する。
+Dockerfile、compose（base と断片。`compose.yaml`・`docker-compose*.yml` など）、LocalStack 設定のレビューを行う。イメージサイズ、ビルドキャッシュ効率、セキュリティ、ローカル↔本番の一貫性に集中する。
 
 ## スコープ
 
@@ -31,7 +31,7 @@ Dockerfile、docker-compose.yml、LocalStack 設定のレビューを行う。�
 | `apt-get` の後処理 | キャッシュ削除なし | `&& rm -rf /var/lib/apt/lists/*` を追加 |
 | EXPOSE | ポートを EXPOSE していない | ドキュメント目的で EXPOSE を追加 |
 
-### docker-compose.yml
+### compose（base と断片）
 
 | チェック項目 | 問題 | 修正方針 |
 |------------|------|---------|
@@ -70,8 +70,8 @@ Dockerfile、docker-compose.yml、LocalStack 設定のレビューを行う。�
 # Dockerfile の確認
 find . -name "Dockerfile*" | head -10
 
-# docker-compose ファイルの確認
-find . -name "docker-compose*.yml" -o -name "docker-compose*.yaml" | head -10
+# Compose ファイルの確認（既定名・overlay・ハイフン区切りの名前）
+find . \( -name "compose.yaml" -o -name "compose.yml" -o -name "compose.*.yaml" -o -name "compose.*.yml" -o -name "docker-compose*.yaml" -o -name "docker-compose*.yml" \) | head -10
 
 # .dockerignore の確認
 find . -name ".dockerignore" | head -5
@@ -87,7 +87,7 @@ find . -name ".env*" -not -name "*.example" | head -10
 優先チェック順:
 1. セキュリティ（シークレット漏洩・root 実行）
 2. Dockerfile ベストプラクティス（ビルドキャッシュ・マルチステージ）
-3. docker-compose の健全性設計（ヘルスチェック・依存関係）
+3. Compose ファイルの健全性設計（ヘルスチェック・依存関係）
 4. LocalStack 設定の適切性
 
 ### 3. レポート生成
@@ -112,7 +112,7 @@ find . -name ".env*" -not -name "*.example" | head -10
 {セキュリティ・root 実行問題を列挙}
 
 ### 改善点
-{Dockerfile 最適化・docker-compose 改善提案を列挙}
+{Dockerfile 最適化・Compose ファイルの改善提案を列挙}
 ```
 
 ### 4. レポート保存

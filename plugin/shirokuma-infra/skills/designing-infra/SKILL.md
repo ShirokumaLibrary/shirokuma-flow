@@ -27,12 +27,12 @@ docker-compose サービス構成、Dockerfile 設計、ローカル開発環境
 **最初に**、プロジェクトの `CLAUDE.md` と既存ファイルを確認:
 
 - 使用技術スタック（フレームワーク、ランタイム、DB 等）
-- 既存 docker-compose.yml の構造とサービス一覧
+- 既存 compose（base と断片）の構造とサービス一覧
 - 既存 Dockerfile の構造（マルチステージ有無）
 - ポート割り当て状況
 
 ```bash
-cat docker-compose.yml 2>/dev/null || cat compose.yml 2>/dev/null
+find . -maxdepth 3 \( -name 'compose*.y*ml' -o -name 'docker-compose*.y*ml' \) -not -path '*/node_modules/*'  # 置き場は決め打ちしない。候補の名前は coding-infra の reference/patterns/infra-conventions.md「compose の置き場とファイル名」節
 find . -name "Dockerfile*" | head -10
 ```
 
@@ -77,7 +77,7 @@ find . -name "Dockerfile*" | head -10
 ## 注意事項
 
 - 横断の決定を ADR に切り出したら、その What の着地は `docs-placement` 第 1 節の基準で判定し、カテゴリは `shirokuma-flow gate vocab --field adr-landing-category` から選ぶ（領域固有のカテゴリは無い）。
-- **実装ファイルを生成しない** — 設計ドキュメントのみを出力。docker-compose.yml 等の実装は `coding-infra` の責務
+- **実装ファイルを生成しない** — 設計ドキュメントのみを出力。compose 等の実装は `coding-infra` の責務
 - **AWS 本番設計には踏み込まない** — ローカル↔本番マッピングが必要な場合は `designing-aws` に委任
 - ローカル開発環境はポート競合が起きやすい。既存ポート割り当てを確認してから設計する
 - docker-compose の `version:` フィールドは v3.8+ で非推奨。`compose-spec` 準拠を推奨

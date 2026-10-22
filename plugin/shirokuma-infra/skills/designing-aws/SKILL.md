@@ -26,7 +26,7 @@ disable-model-invocation: true
 
 **最初に**、プロジェクトの `CLAUDE.md` を読んで確認:
 - 使用フレームワーク（Next.js、Node.js 等）とランタイム
-- 既存の docker-compose.yml に定義されているサービス構成
+- 既存の compose（base と断片）に定義されているサービス構成
 - CDK バージョン（v1 / v2）と言語（TypeScript / Python 等）
 - 既存 CDK スタック構成（`infra/` や `cdk/` ディレクトリ等）
 - 対象 AWS アカウント / リージョン
@@ -59,7 +59,7 @@ disable-model-invocation: true
 
 ### 3. ローカル↔本番マッピング分析
 
-既存の docker-compose.yml からサービスを列挙し、各サービスに対応する AWS リソースを決定する。
+既存の compose（base と断片）からサービスを列挙し、各サービスに対応する AWS リソースを決定する。
 
 詳細なマッピングテーブルは [reference/patterns/local-to-prod-mapping.md](reference/patterns/local-to-prod-mapping.md) 参照。
 
