@@ -14,7 +14,7 @@ cdk-nextjs をデプロイ先にする場合、Next.js アプリ側とビルド�
 |------|------|--------------|
 | next.config の `adapterPath` | `adapterPath: import.meta.resolve("cdk-nextjs/adapter")` を設定 | cdk-nextjs が公開 adapter API に接続できずビルドが成立しない |
 | `output: "standalone"` を使わない | cdk-nextjs は Next.js を black box 扱いし standalone 出力とは同時両立しない | 出力形態が衝突する。standalone 前提の Dockerfile は**汎用コンテナ経路**（cdk-nextjs をデプロイ先にしない構成。非 Next.js アプリと、cdk-nextjs を使わないと決めた Next.js アプリの両方を含む）用に残す |
-| Next.js **v16.2 以上** | Image Optimization Caching の公開 API に依存 | 画像最適化キャッシュ API が無くビルドが失敗する |
+| Next.js **v16.4.1 以上** | Next.js 公式ブログのセキュリティ告知（https://nextjs.org/blog/nextjs-security-update-october-14-2026）の修正版。Image Optimization Caching の公開 API に依存するという互換の要件（16.2 系以降）も満たす | 16.2 系より前は画像最適化キャッシュ API が無くビルドが失敗する。16.4.0 以下はビルドが通っても告知の脆弱性が残る |
 | Node **v24** | cdk-nextjs のランタイム前提 | 想定外のランタイムで不整合が出る |
 | Docker 必須 | cdk-nextjs が自前で Dockerfile を生成する | synth / build が Docker を要求して失敗する |
 | 版のピン留め（推奨） | experimental（v0.x・後方非互換更新があり得る）ため版を固定してピン留めする（例: `cdk-nextjs@0.5.3`。入れる版は `npm view cdk-nextjs version` で確かめる） | 更新時に breaking を無自覚に踏む |

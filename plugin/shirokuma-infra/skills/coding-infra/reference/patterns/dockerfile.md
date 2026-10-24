@@ -78,7 +78,7 @@ Next.js アプリの Dockerfile は、本番デプロイ先の選択でビルド
 
 - **cdk-nextjs 経路では本ファイルの standalone Dockerfile を書かない**。cdk-nextjs は Next.js を black box 扱いし、公開 adapter API 経由でビルドして自前で Dockerfile を生成する。`output: "standalone"` と `adapterPath` は同時両立しないため、cdk-nextjs を選ぶなら standalone 設定を外す。
 - **汎用コンテナ経路**: 非 Next.js アプリ・cdk-nextjs を選ばない Next.js アプリでは、本ファイルの standalone マルチステージ Dockerfile を使う。
-- **前提バージョン**: cdk-nextjs 経路は Next.js v16.2 以上・Node v24・Docker 必須。デプロイ先スタックの選定と互換契約は designing-aws スキルの `reference/patterns/nextjs-deploy.md` を参照。
+- **前提バージョン**: Next.js はどちらの経路でも 16 系は v16.4.1 以上・15 系は v15.5.28 以上（Next.js 公式ブログのセキュリティ告知〔https://nextjs.org/blog/nextjs-security-update-october-14-2026〕の修正版）。cdk-nextjs 経路は 16 系だけが対象で（互換の要件〔16.2 系以降〕もこの下限で満たす）、Node v24・Docker 必須。デプロイ先スタックの選定と互換契約は designing-aws スキルの `reference/patterns/nextjs-deploy.md` を参照。
 
 ## 汎用 Node.js アプリ向けパターン
 

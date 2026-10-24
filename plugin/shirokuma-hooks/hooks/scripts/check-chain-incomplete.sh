@@ -5,7 +5,8 @@ set -euo pipefail
 # Used as a Stop hook to enforce chain autonomous progression.
 #
 # The CLI handles:
-#   - Reading transcript JSONL to find latest Tasks (TaskCreate/TaskUpdate/TaskList)
+#   - Reading transcript JSONL to find the latest TodoWrite list (the only shape it reads;
+#     with no such list the stop is allowed -- fail-open)
 #   - Detecting incomplete chain steps (pending/in_progress)
 #   - Outputting block JSON when chain is incomplete
 #   - Continuation cap: consecutive blocks with the same incomplete-task set are counted

@@ -21,6 +21,7 @@ disable-model-invocation: true
 | `specs` | 恒久的な仕様・コンセプト | `.shirokuma/pages/specs/billing-rules/` |
 | `issues` | Issue #N の確認用 What・設計レビュー | `.shirokuma/pages/issues/<番号>/` |
 | `explainers` | Issue 補足の一時的な解説 | `.shirokuma/pages/explainers/{slug}/` |
+| `manuals` | 組織内の運用マニュアルの入口ビュー（正本 md へのファイル単位のリンクだけ。置いてよいもの・前提は規範 `docs-placement`）。確認用の What ではないので、上の「HTML が正本」の宣言と執筆原則 1 の「読者に判断してほしい点」は当てない。記録行は依頼を受けた Issue があるときだけ書く | `.shirokuma/pages/manuals/{slug}/` |
 | `prs` | PR の補足 | `.shirokuma/pages/prs/{N}/` |
 | `reviews` / `status` / `incidents` | レビュー・報告・ポストモーテム | `.shirokuma/pages/reviews/{slug}/` |
 
