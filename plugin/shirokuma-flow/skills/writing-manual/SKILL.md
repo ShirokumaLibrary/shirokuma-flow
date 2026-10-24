@@ -23,6 +23,9 @@ Markdown で体系的なマニュアルを書く。
 - 短い・テキストで足りる → **writing-manual（Markdown）**。
 - 情報密度が高く視覚整理（図・カラー分類・TOC）が読みやすさに直結 → **writing-html-explainer（HTML）**。
 
+## 置き場
+書き始める前に、読み手（一般の利用者か・組織内の運用者か）で置き場を決める。正本は規範 `docs-placement`（`shirokuma-flow rules show docs-placement`）で、組織内の運用マニュアルの正本と HTML の入口ビューの扱いもそこにある。
+
 ## 仕上げ
 `shirokuma-flow lint docs`（構造・リンク）を通す。意思決定の Why は ADR（正本ファイル）、用語は glossary。
 

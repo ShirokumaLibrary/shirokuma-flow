@@ -196,7 +196,10 @@ export class StatelessStack extends cdk.Stack {
     const container = taskDefinition.addContainer('App', {
       image: props.ecrRepository
         ? ecs.ContainerImage.fromEcrRepository(props.ecrRepository, 'latest')
-        : ecs.ContainerImage.fromRegistry('public.ecr.aws/nginx/nginx:latest'),
+        // 仮置きの nginx は 80 番で待ち受けるため、下の containerPort 3000・/health のヘルスチェックを通らない。
+        // stable の系列（1.30）を固定する。系列の最新版を取り込むのは ECS のデプロイが起きた回だけ
+        // （タスク定義かサービスが変わった回。変更の無い cdk deploy では起きないので、--force-new-deployment 等で起こす）。
+        : ecs.ContainerImage.fromRegistry('public.ecr.aws/nginx/nginx:1.30-alpine'),
       environment: {
         NODE_ENV: props.environment,
         DB_HOST: props.dbCluster.clusterEndpoint.hostname,

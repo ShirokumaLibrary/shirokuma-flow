@@ -16,6 +16,7 @@ model: opus
 
 | 領域 | 既定 | 裏付け | 差し替え |
 |------|------|------|---------|
+| Next.js | メジャー 16（15 系も可） | 版の下限はステップ 1 の「Next.js の版の下限」 | 選定と版の方針は coding-nextjs の reference `tech-stack.md` の選定表 |
 | TypeScript | メジャー 6 | 実際の使用で裏付けあり。陳腐化しにくい | TS7 移行前提の踏み台。別バージョンに変更可 |
 | Vitest | メジャー 4 | 実際の使用で裏付けあり。陳腐化しにくい | 別テストランナーに差し替え可（TS の方針は維持できる） |
 | Tailwind CSS | v4（CSS-first） | 使用実績の裏付けなし。陳腐化しやすい | shadcn の前提依存。CSS フレームワークを変えるなら同時に見直す |
@@ -37,8 +38,9 @@ npx create-next-app@latest <app-name> --typescript --tailwind --app --eslint
 
 - **上書き例**: TypeScript のみ採用し Tailwind を見送るなら `--tailwind` を外す。各フラグは独立に取捨できる。
 - 既存リポへ組み込む場合は対話プロンプトで配置先を調整する。
+- **Next.js の版の下限（経路によらない）**: 16 系は **16.4.1 以上**、15 系なら **15.5.28 以上**（Next.js 公式ブログのセキュリティ告知〔https://nextjs.org/blog/nextjs-security-update-october-14-2026〕の修正版。16.0〜16.3 系と 14 系以前には修正版が無い）。`create-next-app@latest` で作った直後も、入った版（`package.json` の `next`）がこの下限を満たすかを確かめる。`@latest` が 17 系以降を入れた場合は、その系列の下限を同じ告知の置き場で確かめる。下限は今後のセキュリティ告知で上がりうるので、版を固定している既存リポは Next.js 公式ブログ（https://nextjs.org/blog）のセキュリティの告知で確かめる。
 
-> **cdk-nextjs をデプロイ先にする場合の版下限メモ**: 本番 AWS デプロイに cdk-nextjs を採用する場合のみ、Next.js は **v16.2 以上**が必要（Image Optimization Caching の公開 adapter API に依存する）・Node は **v24**・Docker が必須。`create-next-app@latest` は通常この下限を満たす版を入れるが、既存リポへ組み込む場合や版を固定している場合は下限を満たすか確認する。cdk-nextjs をデプロイ先にしない場合（**汎用コンテナ経路**。語の定義は `shirokuma-infra` の designing-aws reference `nextjs-deploy.md`「2 つのコンテナ経路」節が正本）はこの下限メモは適用されず、上のフラグ選定だけで足りる。この互換メモは実際のデプロイで裏付けていない暫定的な既定で、上書き可能な既定として提示する（デプロイ先の選定を強制しない）。
+> **cdk-nextjs をデプロイ先にする場合の版下限メモ**: 本番 AWS デプロイに cdk-nextjs を採用する場合のみ、Next.js は **v16.4.1 以上**が必要（Next.js 公式ブログのセキュリティ告知〔https://nextjs.org/blog/nextjs-security-update-october-14-2026〕の修正版。Image Optimization Caching の公開 adapter API に依存するという cdk-nextjs の互換の要件〔16.2 系以降〕も満たす）・Node は **v24**・Docker が必須。確かめ方は上の「Next.js の版の下限」と同じ。cdk-nextjs をデプロイ先にしない場合（**汎用コンテナ経路**。語の定義は `shirokuma-infra` の designing-aws reference `nextjs-deploy.md`「2 つのコンテナ経路」節が正本）はこの下限メモは適用されず、上のフラグ選定だけで足りる。この互換メモは実際のデプロイで裏付けていない暫定的な既定で、上書き可能な既定として提示する（デプロイ先の選定を強制しない）。
 
 ### ステップ 2: ESLint の最新版追従確認
 

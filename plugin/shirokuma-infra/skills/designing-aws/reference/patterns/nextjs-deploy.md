@@ -98,7 +98,7 @@ cdk-nextjs をデプロイ先にする場合、Next.js アプリ側に以下の�
 
 - **next.config に `adapterPath` を追加**: `adapterPath: import.meta.resolve("cdk-nextjs/adapter")` を設定する。cdk-nextjs は Next.js の公開 adapter API を使う。
 - **`output: "standalone"` は使わない**: cdk-nextjs は Next.js を black box 扱いし、standalone 出力前提とは同時両立しない。既存の汎用 Dockerfile（standalone 前提）は**汎用コンテナ経路**（cdk-nextjs を使わない構成）用に残し、cdk-nextjs 経路では使わない。
-- **バージョン下限**: Next.js **v16.2 以上**（Image Optimization Caching の公開 API 依存）・Node **v24**・Docker 必須。cdk-nextjs が自前で Dockerfile を生成する。
+- **バージョン下限**: Next.js **v16.4.1 以上**（Next.js 公式ブログのセキュリティ告知〔https://nextjs.org/blog/nextjs-security-update-october-14-2026〕の修正版。Image Optimization Caching の公開 API に依存するという互換の要件〔16.2 系以降〕も満たす）・Node **v24**・Docker 必須。cdk-nextjs が自前で Dockerfile を生成する。
 - **成熟度リスク（版固定推奨）**: cdk-nextjs は experimental（v0.x・後方非互換更新があり得る）。**版を固定してピン留めする**（例: `cdk-nextjs@0.5.3`）ことを推奨し、更新時は breaking の有無を確認してから上げる。cdk-nag で AWS ベストプラクティスが適用される。
 
 ## ローカル開発ループには Lambda/API Gateway エミュレーションが不要

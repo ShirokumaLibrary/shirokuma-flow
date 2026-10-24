@@ -87,7 +87,7 @@ Bash で `shirokuma-flow rules inject --scope orchestrator --rules trust-boundar
 
 ### 段 5. コミット & PR
 
-**段 5 は commit を `commit-worker`、PR の作成を `pr-worker` へ委任する**（[[orchestration-discipline]] C16）。両 worker の委任ブリーフには skill `committing-and-opening-pr` の SKILL.md の絶対パス（本 skill のディレクトリの隣）を渡す。`pr-worker` のブリーフには、閉じる課題・実行の証跡の値（`finalize-worker` の報告表の所在・終了コード・検査対象 head sha）・4d-3 の記録行の値を渡す。両 worker が返すのは SHA と PR 番号（止まった回はその理由の一言）だけ。サブ Issue は親の `epic/{親番号}-{slug}` をターゲット（[[branch-workflow]]）。4d で HTML 化した回は PR 本文の最上部（BLUF）へ**確認ビューのリポジトリ内パス**を添付する（**URL は書かない**）。**コード差分を持たないサブはこの段から段 7 までに乗らない**（下記「PR を伴わないサブの終端」）。
+**段 5 は commit を `commit-worker`、PR の作成を `pr-worker` へ委任する**（[[orchestration-discipline]] C16）。両 worker の委任ブリーフには skill `committing-and-opening-pr` の SKILL.md の絶対パス（本 skill のディレクトリの隣）を渡す。`pr-worker` のブリーフには、閉じる課題・実行の証跡の値（`finalize-worker` の報告表の所在・終了コード・検査対象 head sha）・4d-3 の記録行の値・`coding-worker` のサマリーの「予定の着地」行（あった回だけ。PR 本文にそのまま書かせる）を渡す。両 worker が返すのは SHA と PR 番号（止まった回はその理由の一言）だけ。サブ Issue は親の `epic/{親番号}-{slug}` をターゲット（[[branch-workflow]]）。4d で HTML 化した回は PR 本文の最上部（BLUF）へ**確認ビューのリポジトリ内パス**を添付する（**URL は書かない**）。**コード差分を持たないサブはこの段から段 7 までに乗らない**（下記「PR を伴わないサブの終端」）。
 
 - **`Closes` の書き方**: **計画スキップ経路の課題**（`next` が `plan_skipped_not_needed` を返し、normal 直下に承認済みの設計子だけが在る回）は PR 本文の `Closes` に **normal と設計子の両方**を素の行で並べる——計画が無いので cascade の起点が無く、並べないと設計子が誰にも閉じられない（書き忘れて normal だけが Done になった回は `reconcile` が `plan-skip-design-not-done` として報告する。`--fix` では直さない）。計画が実在する通常経路ではサブ自身だけを `Closes` する。
 - **配布物を変更した PR は反映遅延を PR 本文へ 1 行で明示する（要否は 4d-1 の記録行が決める）**: **判定をここで取り直さない**（同じ判定を 2 箇所で持つと食い違う）。**記録行の母集団は `plugin/**` に固定されている**ので、プラグインのソースを別の置き場に持つ導入先では記録行が「変更なし」に倒れ、この 1 行は出ない（fail-open）。値が `plugin/**` の変更ありを表すものの回に、次の 1 行を PR 本文へ逐語で書く:
@@ -136,4 +136,4 @@ Bash で `shirokuma-flow rules inject --scope orchestrator --rules trust-boundar
 
 > 不変則: **メインは方向の指示・委任・状態遷移・人への確認だけを行い、作業と GitHub への記録は worker が行う**（[[orchestration-discipline]] C16）（どの段を誰が実行するかは「誰が何を行うか」節）。skill 自体はツール制限が効かないため、これは運用規範であり、機構的強制は **worker(agent) 側の tools 制限**で担保する。状態遷移は `flow` verb のみ。判定は `shirokuma-flow next` に一元化。
 >
-> チェーン規律: 継続（C1）・全ステップの事前登録（C2）・判定の構造化文字列（C3）・指摘の処理（C12）は rule `orchestration-discipline` が正本（ここには写さない）。
+> チェーン規律: 継続（C1）・ステップの把握（C2）・判定の構造化文字列（C3）・指摘の処理（C12）は rule `orchestration-discipline` が正本（ここには写さない）。
