@@ -16,6 +16,8 @@
 - **`<head sha>`**: **checkout 済みの head ブランチに対する `git -C '<作業ツリー絶対パス>' rev-parse HEAD`** から取る。再レビューの増分母集団（R2）と、レビュー worker への差分基準の裏取りに使う。**`pr show` / `pr checks` からは取らない**——`pr show` が返す `head` は**ブランチ名**であって sha ではない。`pr show` の `head_oid` は**リモートの PR head の完全 sha** を返すが、R1 の 3 本が母集団にするのは checkout 済みの作業ツリーなので、未 push のコミットがある回はローカルの HEAD と食い違う（出所をローカルに揃える）。`pr checks` は **`head_sha` を返さない**（実測: `pr checks` の JSON にキーが無い。`head_sha` を持つのは `pr logs` で、取得不能時は null ではなく throw する）。**値域 `^[0-9a-f]{7,40}$` を差し込み前に検査してから**（下記「コマンド行へ値を差し込む前に検査する」）**R1 の 3 本の委任ブリーフへ渡す**。**Why**: ブランチ名を sha として渡すと値域検査で必ず落ち、R2 の増分母集団は一度も成立しない（**倒れる向きは fail-closed**——全差分へ倒れるので安全側だが、節約の機構が死んだまま気づかれない）。
 - **`<issue#>`**: `pr show` の **linked issues** から取る。結果ファイルの**標準命名**（`.shirokuma/tmp/security-review-<issue#>.md` / `code-review-<issue#>.md` / `asset-safety-review-<issue#>.md`）に使う。
 - **`<ADR 候補の PR か>`**: `pr show` の `adr_candidate_pr`（`true` / `false` / `null`）を R1 の委任前に読む。`true` の回は下記「R1. 並走レビュー」の ADR 候補の PR の項の形にする。`false` / `null` の回・欄が無い回（この欄を返さない版の CLI）は通常のレビューへ倒す（重い側＝fail-closed）。
+- **やり切り方式の PR を入れ子で回す回**（`op=open-pr` の `review=nested`）: この節の 3 値は `issue-run-worker` が確定し、R1・R1b・R2 の巡と判定器が要る回（sub PR）の判定器を固定形のブリーフ（[nested-review-brief.md](nested-review-brief.md)）で入れ子に呼ぶ。`<base>`・3 本目の有無・テスト実走の授権の行・結果ファイルと検出器記録の置き場は、メインが `op=open-pr` で渡した値の写しで、worker は引き直さない。Nit の適用主体（R1b は `code-review-worker`、R2 は是正する側＝worker）・ループ上限・判定行の導き方は下の各段のまま。メインは `REVIEWED` を受けて `gate nested-check` で照らし、`gate artifacts` / `gate verdict` を `pr show` の head・自分の `gate token`・照合が数えた巡の数で打ち直してから段 2 の記録を打つ（手順は `issue-run.md`）。
+- **やり切り方式の PR をメイン経由で回す回**（`review=main`）: 作業ツリーは `issue-run-worker` の結果行の `tree=` とし、`<head sha>` はそのツリーで取る。R1 の委任の前に、その sha が `pr show` の `head_oid` と一致し、`git -C '<tree>' status --porcelain` が空であることを確かめる（食い違えば R1 を委任せず worker に理由を返させる）。
 - **linked issues が空の回は Issue 番号を解決できない**ので、結果ファイルのパスを組めない。**その回は R1 を委任せず停止して報告する**（**fail-closed**。適当な番号へ丸めない）。
 
 ## gate の呼び方（R1 / R2 に共通・機械契約）
@@ -87,6 +89,8 @@
 ## R1b / R2. ループ制御は `gate verdict` の `nextActions` に従う
 
 **R1 の後に `shirokuma-flow gate verdict` を `--round <n>`（共有のループ上限を消費した巡の数・初回は 0）付きで引き、`nextActions[]` を順に辿る。** 記録の無い役割の再委任も R2 と同じ上限を 1 巡消費するので、再委任の後は `--round` を 1 増やし、その直後の 1 回にだけ `--redelegated` を付ける（後の巡へ持ち越さない）。どの段へ進むか・ループ上限（2 回）・次に委任する worker・増分の母集団の base は verb が決めるので、ここでは組み直さない。`--round` を渡さない回、verb はループの手を出さず判断（人）へ倒す。限界は `shirokuma-flow gate limits --sub verdict` の N9。
+
+**やり切り方式の PR をメイン経由で回す回は、是正・R1b の反映・base の取り込み・人が起点の入口の委任を `implement-flow` の `reference/docs/issue-run.md` の対応表に従って `issue-run-worker` への SendMessage に置き換える**（R2 の 3 worker を委任しない）。段の集合・`--round`・ループ上限・判定記録は変えない。
 
 | 手 | 読み方 |
 |---|---|

@@ -79,7 +79,7 @@ shirokuma-flow lint coverage      # 実装ファイル ↔ テストファイル
 ## 8. 最終確認
 
 - [ ] プロジェクトの test / lint / 型チェック（package.json scripts）がすべて green
-- [ ] `.next/` の無い作業ツリー（新しく作った作業ツリー・clone 直後）で型チェックするときは、`tsc` の前に `next typegen` を打った（`PageProps` などの経路の型は `next dev` / `next build` / `next typegen` が `.next/types` に作る。無いまま `tsc` を打つと、コードに誤りが無くても型エラーになる。追試状況: 実測（Next.js 16.4.2。`typegen` は 15.5 から））
+- [ ] `.next/` の無い作業ツリー（新しく作った作業ツリー・clone 直後）で型チェックするときは、`tsc` の前に `next typegen` を打った（`PageProps` などの経路の型は `next dev` / `next build` / `next typegen` が `.next/types` に作る。無いまま `tsc` を打つと、コードに誤りが無くても型エラーになる。追試状況: 実測（Next.js 16.4.2））
 - [ ] `shirokuma-flow nextjs lint -p .` が error 0（**拡張が入っている環境のみ**。入っていなければ §4 の「前提」のフォールバック②に落とし、この項目は `skip(理由: 拡張未導入)` として記録する——実行していない検査を pass にしない）
 
 ## 9. 公開する応答と本番の観測（本番に出すアプリのとき）

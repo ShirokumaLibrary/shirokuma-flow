@@ -1,6 +1,6 @@
 # Next.js 本番 AWS デプロイパターン（cdk-nextjs 既定）
 
-Next.js アプリを本番 AWS へデプロイするときの**上書き可能な既定**を定める。cdklabs/cdk-nextjs（v0.5.3 を前提に書いている）を Next.js アプリの既定 AWS デプロイスタックとする。
+Next.js アプリを本番 AWS へデプロイするときの**上書き可能な既定**を定める。cdklabs/cdk-nextjs（0.5 系を前提に書いている。入れる版は `shirokuma-flow versions --npm cdk-nextjs` で確かめる）を Next.js アプリの既定 AWS デプロイスタックとする。
 
 > **位置づけ（上書き可能な既定）**: cdk-nextjs は **「上書き可能な既定」**（固定強制ではない）。Next.js アプリの出発点は cdk-nextjs とし、要件に応じてコンテナフレーバー（cdk-nextjs 内）・汎用コンテナ経路（cdk-nextjs 外）へ差し替える余地を残す（下記「2 つのコンテナ経路」）。designing-aws の[フレームワーク判定ゲート](../../SKILL.md)で Next.js を選んだ設計者はまずこの既定に到達する。実 API（prop 名・`overrides` 構造）はピン版の型定義を正とし coding 時に版照合する（experimental v0.x）。
 
@@ -69,7 +69,7 @@ cdk-nextjs は "One architecture does not fit all" として 4 つの construct 
 | `NextjsGlobal*` ⇄ `NextjsRegional*` | **高コスト（実質再設計）** | CloudFront の有無で配信・URL・キャッシュ経路の構成が大きく変わる。エッジ配信を前提にした設計を Regional（API Gateway / ALB 直）へ組み替えるため実質再設計 |
 
 - **設計上の勧め（移行を安くする）**: 拡大が視野にあるなら**最初からキャッシュ層（S3 `cacheBucket`・DynamoDB `revalidationTable`）を BYO（別スタックに分離）で持つ**。construct を差し替えてもキャッシュ資産が保持され、移行が破壊的でなくなる。BYO の受け渡しは `overrides` の `IBucket` / `ITable` 型で行う。
-- **実キー名・overrides 構造は版照合**: BYO で渡す prop の実キー名・`overrides` の構造は cdk-nextjs 版に追随する（experimental v0.x）。ピン版（例 `cdk-nextjs@0.5.3`）の型定義を正とし、coding 時に `node_modules/cdk-nextjs` で照合する。
+- **実キー名・overrides 構造は版照合**: BYO で渡す prop の実キー名・`overrides` の構造は cdk-nextjs 版に追随する（experimental v0.x）。ピン留めした版の型定義を正とし、coding 時に `node_modules/cdk-nextjs` で照合する。
 
 ## 既定フレーバー `NextjsGlobalFunctions` の理由
 
@@ -98,8 +98,8 @@ cdk-nextjs をデプロイ先にする場合、Next.js アプリ側に以下の�
 
 - **next.config に `adapterPath` を追加**: `adapterPath: import.meta.resolve("cdk-nextjs/adapter")` を設定する。cdk-nextjs は Next.js の公開 adapter API を使う。
 - **`output: "standalone"` は使わない**: cdk-nextjs は Next.js を black box 扱いし、standalone 出力前提とは同時両立しない。既存の汎用 Dockerfile（standalone 前提）は**汎用コンテナ経路**（cdk-nextjs を使わない構成）用に残し、cdk-nextjs 経路では使わない。
-- **バージョン下限**: Next.js **v16.4.1 以上**（Next.js 公式ブログのセキュリティ告知〔https://nextjs.org/blog/nextjs-security-update-october-14-2026〕の修正版。Image Optimization Caching の公開 API に依存するという互換の要件〔16.2 系以降〕も満たす）・Node **v24**・Docker 必須。cdk-nextjs が自前で Dockerfile を生成する。
-- **成熟度リスク（版固定推奨）**: cdk-nextjs は experimental（v0.x・後方非互換更新があり得る）。**版を固定してピン留めする**（例: `cdk-nextjs@0.5.3`）ことを推奨し、更新時は breaking の有無を確認してから上げる。cdk-nag で AWS ベストプラクティスが適用される。
+- **バージョン要件**: Next.js **16.2 系以降**（Image Optimization Caching の公開 API に依存する互換の要件）かつ安全な版の下限 **16.4.1 以上**（セキュリティ告知による下限。告知で上がりうるので `shirokuma-flow versions --npm next` の `vulnerabilities` で確かめる）・Node **v24**・Docker 必須。cdk-nextjs が自前で Dockerfile を生成する。
+- **成熟度リスク（版固定推奨）**: cdk-nextjs は experimental（v0.x・後方非互換更新があり得る）。**版を固定してピン留めする**（`cdk-nextjs@<版>` の形。入れる版は `shirokuma-flow versions --npm cdk-nextjs` で確かめる）ことを推奨し、更新時は breaking の有無を確認してから上げる。cdk-nag で AWS ベストプラクティスが適用される。
 
 ## ローカル開発ループには Lambda/API Gateway エミュレーションが不要
 

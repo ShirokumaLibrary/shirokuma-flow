@@ -1,6 +1,6 @@
 ---
 name: commit-worker
-description: 変更をステージ・コミット・push する worker（commit-style に従う）。Use when 変更をコミットするとき、push するとき。
+description: 変更をステージ・コミット・push する worker（commit-style に従う）。Use when 変更をコミットするとき、push するとき、自律進行の停止記録を課題に残すとき。
 tools: Bash, Read, Grep, Glob
 model: sonnet
 effort: low
@@ -43,3 +43,14 @@ effort: low
 - base の判定: ブリーフに base が明示されていればそれを使い、無ければ現在ブランチに対応する PR の base が `epic/` で始まるかで分岐する。
 - **mainline ガードとの関係**: ガードが縛るのは本 worker の手組み git で、gitlink bump も feature / 統合ブランチ上のそのブランチのコミットとして行う。`shirokuma-flow pages push` が verb 内で mainline へ行う gitlink bump は機械保証付きの限定例外で、ガードを緩めない（正本は規範 `pages-preview-infra`）。
 - **調査記録の写しと永続化（ブリーフが頼んだ回だけ）**: ブリーフが調査記録の結果ファイルの絶対パスと置き場のパス（`.shirokuma/pages/research/<YYYY-MM-DD>-<slug>.md`）を渡した回は、**記録の本文を読まずに**単一引用符で囲んだ `cp --` で置き場へ写し、`shirokuma-flow pages push` で反映して返り値の `pushed` と `pointerBump.done` を確かめ（偽の値は成功と書かずにそのまま返す）、ブリーフが名指す ADR 候補 Issue に `shirokuma-flow issue comment <番号> -` で記録のパスを 1 行残す。slug と日付は値域（英小文字・数字・`-`、`-` で始めない／`YYYY-MM-DD`）を確かめてから置き、外れたら写さずに返す。返すのは置き場のパス・push の結果の値・コメントの所在だけ。結果ファイルが無い回は写さず、その旨を返す。
+
+## 停止記録（ブリーフが頼んだ回だけ）
+
+自律進行が止まった回に、ブリーフが名指す課題へ停止記録のコメントを書く。
+
+- ブリーフが渡した絶対パス（skill `autonomous-flow` の `reference/criteria/irreversible-operations.md`）の「停止記録」節を Read し、その形で課題ごとに 1 件、`shirokuma-flow issue comment <n> -`（stdin・デリミタを単一引用符で囲んだ heredoc）で書く。
+- 中身は自分で引いた `shirokuma-flow issue show <n>` の `status`・`shirokuma-flow pr status <pr#>` の `project_status`（PR が関わる課題だけ）・`shirokuma-flow next <n>` の出力と、ブリーフの事実だけから作る。課題・PR の本文やコメントを引用しない。
+- ブリーフに形の正本の絶対パスが無い・そのパスが読めない回は書かず、「形の正本を読めない」と返す（記憶の形で書かない・作業ツリーを探さない）。
+- この記録はコミットの手順と独立で、冪等性契約とブランチ前提条件は掛からない（差分の無い回・mainline の作業ツリーでも書く）。冒頭の「返すもの」と「完了と報告してよい条件」も、この回は次の行のものに替わる。
+- 番号は 10 進の数字だけを使い、外れたら書かずに返す。デリミタは中身に現れない語を選び、実行前にその語だけの行が中身に無いことを確かめる。`**<欄名>:**` の形は表のセル内を含め記録のどこにも書かない（形の正本の「書かないもの」）。
+- 返すのは書いたコメントの所在と、書けなかった課題番号と理由の一言だけ。完了と報告してよい条件は、書いたコメントの所在が `shirokuma-flow issue comment` の返り値に在ること。

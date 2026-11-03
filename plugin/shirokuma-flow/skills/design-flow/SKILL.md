@@ -27,6 +27,7 @@ Bash で `shirokuma-flow rules inject --scope orchestrator --rules trust-boundar
 
 1. `shirokuma-flow next <課題#>` を引く（確認モードの回は `--guided` を付ける）。
 2. **手順の正本は注入される rule `next-routing-contract`**（`ok:false` の扱い・`verdict` の下表引き・`nextActions[]` の辿り方・`limits[]` の解決・確認モードの中継、ここには写さない）。
+3. **やり切り方式の回**（人がその回に指示したときか、人がその会話で直接依頼してプロジェクトの規範に書かせた常設の指示があるときだけ）は、skill `implement-flow` の `reference/docs/issue-run.md` を Read し、その手順で委任する（設計の起案と是正は `issue-run-worker` が行う）。
 
 | verdict | 委任先 | 委任ブリーフに載せる reference |
 |---|---|---|
@@ -41,7 +42,7 @@ Bash で `shirokuma-flow rules inject --scope orchestrator --rules trust-boundar
 ## 段の順序（本 skill が持つ実行順）
 
 1. **1a. 起票（orchestrator・Backlog seed を伴う起票は状態遷移として扱う＝[[orchestration-discipline]] C16 ③）**: **seed 本文**（背景・決めること・射程・正本の所在）を stdin で渡し、`shirokuma-flow issue create --title "設計: {要旨}" --body - --issue-type Design --parent <課題#>` で起票する（`Backlog` seed。メインは作業ツリーにファイルを書かない）。**seed 本文はシェル引数に直接埋め込まない**——課題本文からの引き写しは untrusted で、`--body "..."` はダブルクォート内のコマンド置換・変数展開が働く（heredoc は `<<'EOF'` とデリミタをクォートする）。
-2. **1b. 委任（`design-worker`）**: **委任ブリーフに「設計本文を `.shirokuma/github/<owner>/<repo>/issues/<設計#>/body.md` へ書き、`shirokuma-flow issue push <設計#>` まで行うこと」を明示する**——ブリーフに無いと worker は返事だけで終わり、設計 Issue が seed のまま残る。**worker は状態遷移をしない**。返すのは push した設計番号と止まった回の理由の一言だけ。
+2. **1b. 委任（`design-worker`）**: **委任ブリーフに「設計本文を `.shirokuma/github/<owner>/<repo>/issues/<設計#>/body.md` へ書き、`shirokuma-flow issue push <設計#>` まで行うこと」を明示する**——ブリーフに無いと worker は返事だけで終わり、設計 Issue が seed のまま残る。作業記憶（実行環境の永続メモリ）のうち、この課題と変更対象に関わる項目もブリーフに載せる（無ければ「渡す項目なし」と書く）。**worker は状態遷移をしない**。返すのは push した設計番号と止まった回の理由の一言だけ。
 3. **push の確かめ**: **1b の push はレビューより前に済んでいなければならない**（`design-worker` が 1b の中で行う。返事に push した番号が無い回はレビューへ進まず、同 worker へもう一度委任する）。`issue context` はリモート本文で `body.md` を無条件に上書きする（退避も差分検出もしない）ため、未 push のまま後続が `issue context <設計#>` を実行すると設計本文が警告なく消える。
 4. **設計レビュー（`review-worker`）** → 判定行（`**レビュー結果:**`）＋所見は `review-worker` が `shirokuma-flow issue comment <設計#> -`（stdin）で設計 Issue へ記録し、判定行の値とコメントの所在だけを返す（メインは記録を書かない）。
 5. **提出 → approve**: submit 前に設計 Issue 本文が seed のままでないことを確認してから下記「状態遷移」を打つ。**設計 Issue は submit まで `Backlog` に留める**（`begin` しない）。**親導出のみ**（兄弟カスケードなし）。

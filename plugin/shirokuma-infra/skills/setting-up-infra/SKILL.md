@@ -1,6 +1,6 @@
 ---
 name: setting-up-infra
-description: ローカル開発インフラ（docker-compose）の初期セットアップを行う。推奨スタック（PostgreSQL 18 / Valkey 9 / Node 24）の compose 一式を出発点に開発環境ベースを bootstrap する。Use when 「開発インフラ初期化」「docker-compose セットアップ」「ローカル DB/キャッシュ立ち上げ」「dev 環境 bootstrap」と言われたとき。
+description: ローカル開発インフラ（docker-compose）の初期セットアップを行う。推奨スタック（PostgreSQL / Valkey / Node）の compose 一式を出発点に開発環境ベースを bootstrap する。Use when 「開発インフラ初期化」「docker-compose セットアップ」「ローカル DB/キャッシュ立ち上げ」「dev 環境 bootstrap」と言われたとき。
 allowed-tools: Read, Write, Edit, Bash, Grep, Glob
 model: opus
 ---
@@ -13,7 +13,7 @@ model: opus
 
 ## 上書き可能な既定
 
-ここで展開するテンプレートは **「固定強制ではなく上書き可能な既定の出発点」** である。推奨スタック（PostgreSQL 18 / Valkey 9 / Node 24）は、何も選んでいないプロジェクトが毎回ゼロから議論せず立ち上がれる既定値として提供する。プロジェクトが別のイメージ・バージョン・サービス構成を選ぶなら、コピー後に自由に差し替えてよい。
+ここで展開するテンプレートは **「固定強制ではなく上書き可能な既定の出発点」** である。推奨スタック（PostgreSQL / Valkey / Node）は、何も選んでいないプロジェクトが毎回ゼロから議論せず立ち上がれる既定値として提供する。プロジェクトが別のイメージ・バージョン・サービス構成を選ぶなら、コピー後に自由に差し替えてよい。
 
 - イメージのメジャーバージョンはピン固定（`latest` 禁止）するが、プロジェクト要件に合わせて変更可能。
 - db のみコンテナ・app はホスト実行、といった構成変更もテンプレートのコメントに従って行える。
@@ -39,6 +39,8 @@ model: opus
 プロジェクトの `CLAUDE.md` でサービス構成・命名規則を確認する。コンテナ名は `{project}-{service}`、ボリュームは `{project}-{service}-data`、ネットワークは `{project}-network` のプレフィックス命名に揃える（プロジェクト名プレフィックスで他プロジェクトとのコンテナ名衝突を防ぐ）。
 
 ### ステップ 2: compose 一式を作成する
+
+版は先に coding-infra スキルの `reference/patterns/infra-conventions.md`「推奨版と確かめ方」節のコマンド（コア CLI の `shirokuma-flow versions`）を打って決め、下の雛形のイメージのタグ（作成時点の値）を差し替える（読み方とコマンドが無い・失敗した回の扱いも同節）。
 
 `{compose-dir}` に以下の最小構成を用意し、置換変数を実値に埋める。`{compose-dir}` と base の名前の決め方は coding-infra スキルの `reference/patterns/infra-conventions.md`「compose の置き場とファイル名」節（既存の compose があればその置き場と名前を使う）。
 
@@ -198,7 +200,7 @@ db の healthcheck が green になり、app が `service_healthy` を待って�
 
 ## 注意事項
 
-- **バージョンピン固定** — `latest` タグを避け、メジャーバージョンを明示する（既定: PostgreSQL 18 / Valkey 9）。
+- **バージョンピン固定** — `latest` タグを避け、メジャーバージョンを明示する（既定の版と確かめ方は coding-infra の reference `infra-conventions.md`「推奨版と確かめ方」節）。
 - **ヘルスチェック必須** — db / Valkey にはヘルスチェックを設定し、app は `service_healthy` を待つ。
 - **ポート管理** — ホスト公開ポートは `.env` でずらせるようにし、コンテナ本体には固定値を書き込まない。
 - **既存構造を踏襲** — プロジェクトに既存 compose があれば、それを尊重しテンプレートで上書きしない。

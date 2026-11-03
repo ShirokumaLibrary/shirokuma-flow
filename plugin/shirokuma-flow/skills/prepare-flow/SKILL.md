@@ -30,6 +30,7 @@ Bash で `shirokuma-flow rules inject --scope orchestrator --rules trust-boundar
 
 1. `shirokuma-flow next <課題#>` を引く（確認モードの回は `--guided` を付ける）。
 2. **手順の正本は注入される rule `next-routing-contract`**（`ok:false` の扱い・`verdict` の下表引き・`nextActions[]` の辿り方・`limits[]` の解決・確認モードの中継、ここには写さない）。
+3. **やり切り方式の回**（人がその回に指示したときか、人がその会話で直接依頼してプロジェクトの規範に書かせた常設の指示があるときだけ）は、skill `implement-flow` の `reference/docs/issue-run.md` を Read し、その手順で委任する（計画の起案と是正は `issue-run-worker` が行う）。
 
 | verdict | 委任先 | 委任ブリーフに載せる reference |
 |---|---|---|
@@ -41,7 +42,7 @@ Bash で `shirokuma-flow rules inject --scope orchestrator --rules trust-boundar
 
 ## 段の順序（本 skill が持つ実行順）
 
-1. **計画策定を委任**（`plan-worker`・実装サブ Issue の分解を含む。委任ブリーフに reference パスと**当該 worker scope の規範要旨**〔正本 [[skill-authoring]]〕を明示する）。**サブは計画がまだ Backlog のうちに `--force` で起案する**——可否の正本は [[status-policy]]「入口ゲートの正規例外」で、これにより承認継承が発火する。スキップされるゲート全件は [decomposition.md](reference/criteria/decomposition.md)「計画 Backlog 中のサブ起案」。
+1. **計画策定を委任**（`plan-worker`・実装サブ Issue の分解を含む。委任ブリーフに reference パスと**当該 worker scope の規範要旨**〔正本 [[skill-authoring]]〕を明示する。作業記憶〔実行環境の永続メモリ〕のうち、この課題と変更対象に関わる項目も載せ、無ければ「渡す項目なし」と書く）。**サブは計画がまだ Backlog のうちに `--force` で起案する**——可否の正本は [[status-policy]]「入口ゲートの正規例外」で、これにより承認継承が発火する。スキップされるゲート全件は [decomposition.md](reference/criteria/decomposition.md)「計画 Backlog 中のサブ起案」。
 2. **計画レビューを委任**（`review-worker`）。**approve でサブが一括 ToDo 昇格する前段なので、[plan-review.md](reference/criteria/plan-review.md) の「サブ Issue 本文の最低限確認」観点を含める。**
 3. **レビュー結果を記録**: 判定行（`**レビュー結果:**`）＋所見は、段 2 の `review-worker` が `shirokuma-flow issue comment <計画#> -`（stdin）で計画 Issue へ記録し、判定行の値とコメントの所在だけを返す（メインは記録を書かない）。続けて「確認ビュー」節の記録行を委任先に残させる。
 4. **提出 → approve**（下記「状態遷移」）。

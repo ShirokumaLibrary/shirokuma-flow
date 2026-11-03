@@ -8,20 +8,43 @@
 
 | 領域 | 採用 | バージョン方針 | 裏付け | 理由 |
 |------|------|--------------|------|------|
-| Next.js | 16（15 系も可） | メジャー 16 固定（15 系も可）・下限は 16 系が 16.4.1 以上・15 系が 15.5.28 以上・マイナー/パッチは追従させる | Next.js 公式ブログのセキュリティ告知（https://nextjs.org/blog/nextjs-security-update-october-14-2026）の修正版。下限は今後の告知で上がりうるので、版を固定している既存リポは Next.js 公式ブログ（https://nextjs.org/blog）のセキュリティの告知で確かめる | 16.0〜16.3 系と 14 系以前には修正版が無い |
-| TypeScript | 6 | メジャー 6 固定（TS7 移行前提の踏み台） | 実際の使用で裏付けあり（6.0.3）。陳腐化しにくい | — |
-| Vitest | 4 | メジャー 4 | 実際の使用で裏付けあり（4.1.9）。陳腐化しにくい | — |
+| Next.js | 16 | 作成時点はメジャー 16・マイナー/パッチは追従させる（新しいメジャーの扱いは下の「推奨版と確かめ方」節） | 下の「推奨版と確かめ方」節 | — |
+| TypeScript | 6 | メジャー 6 固定 | 実際の使用で裏付けあり | — |
+| Vitest | 4 | メジャー 4 | 実際の使用で裏付けあり | — |
 | Tailwind CSS | v4 | 現行メジャー・CSS-first | 使用実績の裏付けなし。陳腐化しやすい | shadcn の前提依存 |
 | shadcn/ui | Tailwind v4 対応版 | — | 使用実績の裏付けなし。陳腐化しやすい | copy-in 方式でロックインしない＝「上書き可能」と整合 |
 
 裏付けのない行は、採用前に現行版の公式ドキュメントで方針が変わっていないかを確かめる。
+
+## 推奨版と確かめ方
+
+各スタックは 1 系列だけを推奨する。下表はプラグイン作成時点（2026-10）の推奨で、設定時は次を打ち、返った最新版・導入先の版・既知の脆弱性で版を決める（`versions` はコア CLI の verb で、拡張パッケージは要らない。打つ場所はリポ直下でよく、npm / pnpm の workspaces は各パッケージまで読む）。
+
+```bash
+shirokuma-flow versions --npm next react typescript vitest tailwindcss eslint eslint-config-next --node-lts
+```
+
+- **読み方**: 各要素の `latest` が推奨する版、`current` が導入先の版、`vulnerabilities` が導入済みの版の既知の脆弱性。`verified` が `false` なら、`unverified` の要素（`current` が `unreadable` の要素を含む）は確かめられていない（問題なしではない）ので、下表の確かめる先を読むか人に伝える。
+- **新しいメジャー**: `latest` が下表より新しいメジャーを返したら、新しく作るプロジェクトはそのメジャーを採る。既存の導入先ではメジャーの移行として人に確かめる。
+- **コマンドが無い・失敗した回**（`versions` を持たない古い CLI・ネットワークが無い環境）: 全要素を未確認として扱い、下表の確かめる先とともに人に伝える。下表の値で確かめたことにしない。
+- **最低版**: Next.js の行の最低版はセキュリティ告知による下限で、CLI の結果によらず満たす（告知で上がりうるので、`vulnerabilities` が空でないときは告知の置き場で確かめる）。
+
+| 対象 | 作成時点の推奨 | 確かめる先 |
+|------|------------|----------|
+| Next.js | 16 系（16.4.1 以上。それより前の 16 系にはセキュリティ告知の脆弱性が残る） | https://nextjs.org/blog ・ https://github.com/vercel/next.js/releases ・ https://github.com/vercel/next.js/security/advisories |
+| TypeScript | 6 系 | https://github.com/microsoft/TypeScript/releases |
+| Vitest | 4 系 | https://github.com/vitest-dev/vitest/releases |
+| Tailwind CSS | v4 系 | https://github.com/tailwindlabs/tailwindcss/releases |
+| shadcn/ui | Tailwind v4 対応版 | https://ui.shadcn.com/docs/changelog |
+| ESLint | 最新版 | https://github.com/eslint/eslint/releases |
+| Node.js | LTS 系列を使う | https://nodejs.org/en/about/previous-releases |
 
 ## cdk-nextjs をデプロイ先にする場合の互換メモ
 
 本番 AWS デプロイに cdk-nextjs を採用する場合のみ、Next.js アプリ側に以下の互換設定が要る。cdk-nextjs 採用時の暫定的な互換メモ（実際のデプロイで裏付けていない）であり、デプロイ先の選定を強制するものではない（cdk-nextjs を使わない場合はこの節は適用されず、上の選定表だけで足りる）。
 
 - **next.config に `adapterPath` を追加**: `adapterPath: import.meta.resolve("cdk-nextjs/adapter")` を設定する。cdk-nextjs は Next.js の公開 adapter API を使うため、この解決パスをアプリ側で指す。
-- **版下限**: Next.js は **v16.4.1 以上**（Next.js 公式ブログのセキュリティ告知（https://nextjs.org/blog/nextjs-security-update-october-14-2026）の修正版。Image Optimization Caching の公開 adapter API に依存するという cdk-nextjs の互換の要件〔16.2 系以降〕も満たす）・Node は **v24**・Docker が必須。上の選定表のバージョン方針とは独立に、cdk-nextjs 採用時のハード要件としてこの下限を満たす。
+- **版の要件**: Next.js は **16.2 系以降**（cdk-nextjs が Image Optimization Caching の公開 adapter API に依存する）・Node は **v24**・Docker が必須。セキュリティ上の安全な版（16.4.1 以上）は上の「推奨版と確かめ方」節で別に確かめる。
 - **`output: "standalone"` は使わない**: cdk-nextjs は Next.js を black box として扱い、standalone 出力前提とは同時に成立しない。**汎用コンテナ経路**（cdk-nextjs をデプロイ先にしない構成）向けの standalone 設定は、cdk-nextjs 経路では外す。語の定義は `shirokuma-infra` の designing-aws reference `nextjs-deploy.md`「2 つのコンテナ経路」節にある。
 
 本番 AWS デプロイ側の construct 選定・キャッシュ層・コスト等の詳細は `shirokuma-infra` の designing-aws reference（`nextjs-deploy.md`）を参照する。
@@ -36,7 +59,7 @@
 
 ## 陳腐化対策
 
-- **メジャーバージョン固定 + 定期見直し**: 各領域はメジャーで固定し（マイナー/パッチはフロート可）、陳腐化はメジャー更新タイミングの定期見直しで対処する。
+- **導入先ではメジャーを固定し、新しいメジャーは見直しの回に移す**: 導入先の各領域はメジャーで固定し（マイナー/パッチはフロート可）、配布元の最新が新しいメジャーになったら、見直しの回にメジャーの移行として人に確かめる。新しく作るプロジェクトは「推奨版と確かめ方」節の手順で最新を採る。
 
 ## 関連
 
