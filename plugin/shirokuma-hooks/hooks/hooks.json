@@ -1,5 +1,5 @@
 {
-  "description": "Safety hooks and chain completion enforcement. Blocks destructive commands and prevents premature stop during workflow chains.",
+  "description": "Safety hooks and chain completion enforcement. Blocks destructive commands, blocks Claude session URLs in commit messages and worker briefs, and prevents premature stop during workflow chains.",
   "hooks": {
     "PreToolUse": [
       {
@@ -8,6 +8,26 @@
           {
             "type": "command",
             "command": "bash ${CLAUDE_PLUGIN_ROOT}/hooks/scripts/block-destructive-commands.sh",
+            "timeout": 5
+          }
+        ]
+      },
+      {
+        "matcher": "Agent|Task",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "bash ${CLAUDE_PLUGIN_ROOT}/hooks/scripts/block-session-url.sh",
+            "timeout": 5
+          }
+        ]
+      },
+      {
+        "matcher": "Agent|Task|SendMessage",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "bash ${CLAUDE_PLUGIN_ROOT}/hooks/scripts/block-nested-review.sh",
             "timeout": 5
           }
         ]

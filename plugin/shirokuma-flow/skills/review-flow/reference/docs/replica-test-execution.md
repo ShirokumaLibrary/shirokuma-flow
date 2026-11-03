@@ -1,6 +1,6 @@
 # 授権された回の群 B 複製実走（code-review-worker 向け手順書）
 
-`code-review-worker` が、委任ブリーフに `テスト実走の授権: <値>（出所: <出所>）` の行を受け取った回だけ読む手順書。導入先の config `review.testExecution` が `replica-after-read` のとき、orchestrator がこの行と本書の絶対パスをブリーフで渡す。
+`code-review-worker` が、委任ブリーフに `テスト実走の授権: <値>（出所: <出所>）` の行を受け取った回だけ読む手順書。導入先の config `review.testExecution` が `replica-after-read` のとき、orchestrator がこの行と本書の絶対パスをブリーフで渡す。やり切り方式で入れ子にする回は、値を `config get` で引くのはメインのままで、メインが `op=open-pr` で渡した値と本書・config の絶対パスを `issue-run-worker` が固定形のブリーフ（`review-flow` の `reference/docs/nested-review-brief.md`）の `test-exec=`・`ref=`・`config=` へ逐語で写す。その欄はこの行と同じに読む（worker は config を自分で読まず、自分の判断で授権の値を書かない）。
 
 **目的**: 差分のテスト（群 B）を全件読んで外向き処理が無いと判定できた回に限り、作業ツリーの外の隔離ツリー（head sha の複製）でテストを実走し、テストの主張をレビューが独立に裏付けられるようにする。
 

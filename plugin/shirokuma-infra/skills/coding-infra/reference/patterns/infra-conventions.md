@@ -71,10 +71,33 @@
 
 | 用途 | 推奨サービス | 理由 |
 |------|------------|------|
-| リレーショナルDB | PostgreSQL 18 | 推奨技術スタックの既定（上書き可能な出発点） |
-| キャッシュ / セッション | Valkey 9 | OSS ライセンス（BSD-3-Clause）。本番に ElastiCache を使うなら、採用前に ElastiCache が対応する Valkey の版を AWS のドキュメントで確かめ、ローカルと版を揃える |
+| リレーショナルDB | PostgreSQL | 推奨技術スタックの既定（上書き可能な出発点） |
+| キャッシュ / セッション | Valkey | OSS ライセンス（BSD-3-Clause） |
 | ローカルメール | Mailpit | 軽量、Web UI 付き |
 | AWS サービスエミュレーション | LocalStack Community Edition | 無料、AWS アカウント不要 |
+
+## 推奨版と確かめ方
+
+shirokuma-infra の版の正本はこの節。各スタックは 1 系列だけを推奨する。下表とテンプレート・例の版はプラグイン作成時点（2026-10）の値で、設定時は次を打ち、返った最新版（Node は最新の LTS）と導入先の compose / Dockerfile の版（浅い階層まで読む）で決める。`versions` はコア CLI の verb で、拡張パッケージは要らない。使わない要素（CDK を使わないなら `--npm` 以下）は外してよい。
+
+```bash
+shirokuma-flow versions --docker postgres valkey/valkey axllent/mailpit --node-lts --aws-rds postgres --aws-elasticache valkey --npm aws-cdk-lib cdk-nextjs
+```
+
+- **PostgreSQL と Valkey**: AWS での利用を前提に、AWS が提供する最新の系列を推奨し、ローカルの compose のイメージもそれに揃える（上流の最新に合わせない）。版は `aws-rds` / `aws-elasticache` の要素の `latest` で決め、`docker` の要素の `latest`（上流の最新）は参考にとどめる。AWS の提供版は `aws` CLI（認証済みの環境）で引き、引けない回は `unverified` になる。
+- **`verified` が `false` の回**: `unverified` の要素は確かめられていない（問題なしではない）ので、下表の確かめる先を読むか人に伝える。
+- **コマンドが無い・失敗した回**（`versions` を持たない古い CLI・ネットワークが無い環境）: 全要素を未確認として扱い、下表の確かめる先とともに人に伝える。下表やテンプレートの値で確かめたことにしない。
+- **新しいメジャー**: `latest` が下表より新しいメジャーを返したら、新しく作る構成はそのメジャーを採る。既存の導入先ではメジャーの移行として人に確かめる。
+
+| 対象 | 作成時点の推奨 | 確かめる先 |
+|------|------------|----------|
+| PostgreSQL | AWS（RDS / Aurora PostgreSQL）が提供する最新の系列 | https://docs.aws.amazon.com/AmazonRDS/latest/PostgreSQLReleaseNotes/postgresql-versions.html ・ https://www.postgresql.org/support/security/ |
+| Valkey | ElastiCache for Valkey が提供する最新の系列 | https://docs.aws.amazon.com/AmazonElastiCache/latest/dg/engine-versions.html ・ https://github.com/valkey-io/valkey/security/advisories |
+| Node.js | LTS 系列を使う | https://nodejs.org/en/about/previous-releases ・ https://nodejs.org/en/blog/vulnerability |
+| Mailpit | v1 | https://github.com/axllent/mailpit/releases |
+| AWS CDK（aws-cdk-lib） | 2 系 | https://github.com/aws/aws-cdk/releases |
+| cdk-nextjs | 0.5 系（版を固定する） | https://github.com/cdklabs/cdk-nextjs/releases |
+| GitHub Actions の action | 各 action の現行メジャー（SHA でピン留め） | 各 action のリポジトリの releases ・ https://github.com/advisories |
 
 > **Redis は非推奨**: Redis 7.4 以降は RSALv2 / SSPLv1 のデュアル（8.0 から AGPLv3 も選べる）。新規追加は Valkey を使用すること。
 

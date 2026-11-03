@@ -16,9 +16,9 @@ model: opus
 
 | 領域 | 既定 | 裏付け | 差し替え |
 |------|------|------|---------|
-| Next.js | メジャー 16（15 系も可） | 版の下限はステップ 1 の「Next.js の版の下限」 | 選定と版の方針は coding-nextjs の reference `tech-stack.md` の選定表 |
-| TypeScript | メジャー 6 | 実際の使用で裏付けあり。陳腐化しにくい | TS7 移行前提の踏み台。別バージョンに変更可 |
-| Vitest | メジャー 4 | 実際の使用で裏付けあり。陳腐化しにくい | 別テストランナーに差し替え可（TS の方針は維持できる） |
+| Next.js | メジャー 16 | 版はステップ 1 の「版の決め方」で決める（最低版 16.4.1 はセキュリティ告知による下限） | 選定と版の方針は coding-nextjs の reference `tech-stack.md` の選定表 |
+| TypeScript | メジャー 6 | 実際の使用で裏付けあり | 別バージョンに変更可 |
+| Vitest | メジャー 4 | 実際の使用で裏付けあり | 別テストランナーに差し替え可（TS の方針は維持できる） |
 | Tailwind CSS | v4（CSS-first） | 使用実績の裏付けなし。陳腐化しやすい | shadcn の前提依存。CSS フレームワークを変えるなら同時に見直す |
 | shadcn/ui | Tailwind v4 対応版 | 使用実績の裏付けなし。陳腐化しやすい | copy-in 方式（コンポーネントをプロジェクト内にコピー）でロックインしない＝採用後の撤去が容易 |
 
@@ -38,9 +38,9 @@ npx create-next-app@latest <app-name> --typescript --tailwind --app --eslint
 
 - **上書き例**: TypeScript のみ採用し Tailwind を見送るなら `--tailwind` を外す。各フラグは独立に取捨できる。
 - 既存リポへ組み込む場合は対話プロンプトで配置先を調整する。
-- **Next.js の版の下限（経路によらない）**: 16 系は **16.4.1 以上**、15 系なら **15.5.28 以上**（Next.js 公式ブログのセキュリティ告知〔https://nextjs.org/blog/nextjs-security-update-october-14-2026〕の修正版。16.0〜16.3 系と 14 系以前には修正版が無い）。`create-next-app@latest` で作った直後も、入った版（`package.json` の `next`）がこの下限を満たすかを確かめる。`@latest` が 17 系以降を入れた場合は、その系列の下限を同じ告知の置き場で確かめる。下限は今後のセキュリティ告知で上がりうるので、版を固定している既存リポは Next.js 公式ブログ（https://nextjs.org/blog）のセキュリティの告知で確かめる。
+- **版の決め方（経路によらない）**: 雛形を作った後、coding-nextjs の reference `tech-stack.md`「推奨版と確かめ方」節のコマンド（コア CLI の `shirokuma-flow versions`）を打ち、結果で各スタックの版を決める（読み方も同節）。出力の `verified` が `false` なら、`unverified` の要素を人に伝える。コマンドが無い・失敗した回は、全要素を未確認として同節の確かめる先とともに人に伝える。どの経路でも Next.js は 16.4.1 以上（セキュリティ告知による下限）を満たす。
 
-> **cdk-nextjs をデプロイ先にする場合の版下限メモ**: 本番 AWS デプロイに cdk-nextjs を採用する場合のみ、Next.js は **v16.4.1 以上**が必要（Next.js 公式ブログのセキュリティ告知〔https://nextjs.org/blog/nextjs-security-update-october-14-2026〕の修正版。Image Optimization Caching の公開 adapter API に依存するという cdk-nextjs の互換の要件〔16.2 系以降〕も満たす）・Node は **v24**・Docker が必須。確かめ方は上の「Next.js の版の下限」と同じ。cdk-nextjs をデプロイ先にしない場合（**汎用コンテナ経路**。語の定義は `shirokuma-infra` の designing-aws reference `nextjs-deploy.md`「2 つのコンテナ経路」節が正本）はこの下限メモは適用されず、上のフラグ選定だけで足りる。この互換メモは実際のデプロイで裏付けていない暫定的な既定で、上書き可能な既定として提示する（デプロイ先の選定を強制しない）。
+> **cdk-nextjs をデプロイ先にする場合の版の要件メモ**: 本番 AWS デプロイに cdk-nextjs を採用する場合のみ、Next.js は **16.2 系以降**（cdk-nextjs が Image Optimization Caching の公開 adapter API に依存する互換の要件。安全な版の下限 16.4.1 は上の「版の決め方」のとおり別に満たす）・Node は **v24**・Docker が必須。cdk-nextjs をデプロイ先にしない場合（**汎用コンテナ経路**。語の定義は `shirokuma-infra` の designing-aws reference `nextjs-deploy.md`「2 つのコンテナ経路」節が正本）はこの要件メモは適用されず、上のフラグ選定だけで足りる。この互換メモは実際のデプロイで裏付けていない暫定的な既定で、上書き可能な既定として提示する（デプロイ先の選定を強制しない）。
 
 ### ステップ 2: ESLint の最新版追従確認
 
