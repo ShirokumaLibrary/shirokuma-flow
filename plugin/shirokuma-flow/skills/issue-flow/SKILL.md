@@ -1,6 +1,6 @@
 ---
 name: issue-flow
-description: 課題を Issue 化しトリアージして次フェーズへ誘導する入口。Use when 課題を Issue 化するとき、トリアージするとき、次フェーズへ誘導するとき。
+description: 課題を Issue 化しトリアージして次フェーズへ誘導する入口。やり切り方式を作業セッションで回す課題の起票では起動せず、implement-flow の reference/docs/issue-run.md の「作業セッションで回す回」に従う。Use when 課題を Issue 化するとき、トリアージするとき、次フェーズへ誘導するとき。
 model: opus
 ---
 
@@ -20,7 +20,7 @@ Bash で `shirokuma-flow rules inject --scope orchestrator --rules trust-boundar
 
 ## 流れ
 
-階層は 課題 > 設計(0..1) > 計画(0..n) > 実装サブ(0..n)（計画と実装サブは PR を 2 本以上に分ける課題だけに作る）。本 skill は課題本体 Issue を起票（IssueType = nature 型 Feature / Bug / Task…・`Backlog` で開始）し、トリアージで着手可能状態まで運ぶ。要件が曖昧なら `requirements-flow` を案内する。種別（kind）は GitHub の IssueType から導出する。
+階層は 課題 > 設計(0..1) > 計画(0..n) > 実装サブ(0..n)（計画と実装サブは PR を 2 本以上に分ける課題だけに作る）。本 skill は課題本体 Issue を起票（IssueType = nature 型 Feature / Bug / Task…・`Backlog` で開始）し、トリアージで着手可能状態まで運ぶ。要件が曖昧なら `requirements-flow` を案内する。種別（kind）は GitHub の IssueType から導出する。やり切り方式を作業セッションで回す課題は、本 skill を起動せず `implement-flow` の `reference/docs/issue-run.md` の「作業セッションで回す回」で起票して渡す（トリアージは作業セッションが本 skill の手順を読んで行う）。
 
 ## 課題本体の本文の書き手と、提出前の分析
 
