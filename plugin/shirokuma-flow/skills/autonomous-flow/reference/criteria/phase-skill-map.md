@@ -1,11 +1,13 @@
-# phase → skill マッピング（単一正本）
+# phase → skill マッピングと段の担い手（単一正本）
 
-> **目的**: `next` コマンドの `nextPhase` 出力から orchestrator が **一意に**起動 skill を特定するための単一正本。
+> **目的**: ① `next` コマンドの `nextPhase` 出力から orchestrator が **一意に**起動 skill を特定するための単一正本（表 1・表 2）。
 > orchestrator は `next <n>` を呼んだ後、返ってきた `nextPhase`（と必要なら `reason`）でこの表を引き、
 > 対応する skill を `Skill` ツールで決定的に起動する。判定ロジックを skill 側で再実装しない。
+> ② 方式ごとに各段を誰が担うかを引く一覧（表 3）。
 
 判定の正本はあくまで CLI の `next`。
-本表は「CLI が返す値 → 起動 skill」の対応だけを一意に固定する（命名の非対称や `null` 分岐の扱いを含む）。
+表 1・表 2 は「CLI が返す値 → 起動 skill」の対応だけを一意に固定する（命名の非対称や `null` 分岐の扱いを含む）。
+表 3 は、方式ごとに各段を誰が担うかの一覧（担い手の名と手順の正本の所在だけ）を持つ。
 
 ## 表1: `next` 出力（`nextPhase`）→ skill マッピング
 
@@ -33,12 +35,40 @@
 | Requirements | requirements-flow | orchestrator が要件未確定を検知した時・または人が明示指示した時（issue-flow の前後） |
 | Reviewing | review-flow | implement-flow 手順6: PR 作成後、`submit <pr>`（Backlog→Review）前の AI レビューとして起動 |
 
+## 表3: 方式 × 段 → 担い手
+
+方式は 3 つ: 段ごとの委任（既定）・worker 方式・作業セッション方式（後の 2 つはやり切り方式。選び方は `implement-flow` の `reference/docs/issue-run.md` の「方式の選び方」）。表が持つのは担い手の名と手順の正本の所在だけで、責務・条件・手順は所在の側が持つ（ここに写さない）。「メイン」は方式を回すセッションのメイン、「作業セッション」は作業セッションのメイン、「管理セッション」は作業セッションへ渡す側のメイン。
+
+| 段 | 段ごとの委任 | worker 方式 | 作業セッション方式 | 手順の正本 |
+|---|---|---|---|---|
+| 課題本文（起票・仕上げ） | メイン（起票）・`requirements-worker`（本文） | 同左 | 管理セッション（seed の起票）・作業セッション（本文） | `issue-flow`「課題本体の本文の書き手と、提出前の分析」「確認ビュー」／`implement-flow` の `reference/docs/issue-run.md`「作業セッションで回す回」・`issue-run-flow`「トリアージの段」 |
+| 提出前の分析 | `review-worker` | 同左 | 同左 | `analyze-issue` |
+| トリアージの遷移 | メイン | 同左 | 作業セッション | `issue-flow`「状態遷移（打ち方）」 |
+| 設計の起案 | `design-worker` | `issue-run-worker` | 作業セッション | `design-flow`「段の順序」1b・`design-worker`／`issue-run-worker`「段と手順書」 |
+| 設計レビュー | `review-worker` | 同左 | 同左 | `design-flow`「段の順序」4 |
+| 計画要否の契約 | `design-worker` | 同左 | 作業セッション | `design-flow`「段の順序」5b／`issue-run-flow`「自分で打つもの・委任するもの」 |
+| ADR 候補の起草 | `requirements-worker` | 同左 | 作業セッション | `requirements-flow`「ADR の状態遷移（打ち方）」／`issue-run-flow`「ADR 候補の段」 |
+| ADR 候補の整合のレビュー | `review-worker` | 同左 | 同左 | `requirements-flow`「ADR の状態遷移（打ち方）」 |
+| 計画の起案 | `plan-worker` | `issue-run-worker` | 作業セッション | `prepare-flow`「段の順序」1・`plan-worker`／`issue-run-worker`「段と手順書」 |
+| 計画レビュー | `review-worker` | 同左 | 同左 | `prepare-flow`「段の順序」2 |
+| 実装 | `coding-worker` | `issue-run-worker` | 作業セッション | `implement-flow`「段の順序」3・`coding-worker`／`issue-run-worker`「段と手順書」 |
+| 品質ゲート | `finalize-worker` | `issue-run-worker` | 作業セッション | `implement-flow`「段の順序」4・`finalize-worker` |
+| commit / PR 作成 | `commit-worker`・`pr-worker` | `issue-run-worker` | 作業セッション | `committing-and-opening-pr` |
+| PR のレビュー（R1） | `security-review-worker`・`code-review-worker`・`asset-safety-review-worker` | 同左（`issue-run-worker` が入れ子で呼ぶ） | 同左 | `review-flow`「段の順序」／`implement-flow` の `reference/docs/issue-run.md`「PR のレビューを入れ子で回す回」 |
+| R2 の是正 | `coding-worker`・`finalize-worker`・`commit-worker` | `issue-run-worker` | 作業セッション | `review-flow` の `reference/docs/review-gate.md`「R1b / R2」 |
+| 判定記録・記録行・状態遷移 | メイン | 同左 | 作業セッション | 規範 `orchestration-discipline` C16 ③ |
+| 確認ビューの生成 | `explainer-worker` | 同左 | 同左 | 規範 `html-report-criteria` |
+| merge | メイン | 同左 | 管理セッション | 規範 `branch-workflow`「自律境界」 |
+
+**倒れる向き**: 表は各定義と別に置くので、担い手の交代や節の改名に表が追いつかないことがある。照らす機械段は無い（fail-open）。食い違ったら所在の側に従う。
+
 ## 使い方
 
 1. orchestrator が `next <n>` を呼ぶ。
 2. 返ってきた `nextPhase` の値で **表1** を引き、対応 skill を決定的に特定して `Skill` ツールで起動する。
    `nextPhase` が `null` の場合は skill を起動せず、`reason` に応じた次手（表1 の右列）を実行する。
 3. `Requirements`・`Reviewing` は `next` を経由しない。**表2** のタイミングで orchestrator が文脈判断で起動する。
+4. 段を誰が担うかを引くときは **表3** を見て、手順は所在の側を読む。
 
 ## 注記
 

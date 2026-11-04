@@ -30,7 +30,7 @@ Bash で `shirokuma-flow rules inject --scope orchestrator --rules trust-boundar
 
 1. `shirokuma-flow next <課題#>` を引く（確認モードの回は `--guided` を付ける）。
 2. **手順の正本は注入される rule `next-routing-contract`**（`ok:false` の扱い・`verdict` の下表引き・`nextActions[]` の辿り方・`limits[]` の解決・確認モードの中継、ここには写さない）。
-3. **やり切り方式の回**（人がその回に指示したときか、人がその会話で直接依頼してプロジェクトの規範に書かせた常設の指示があるときだけ）は、skill `implement-flow` の `reference/docs/issue-run.md` を Read し、その手順で委任する（計画の起案と是正は `issue-run-worker` が行う）。
+3. **やり切り方式の回**（人がその回に指示したときか、人がその会話で直接依頼してプロジェクトの規範に書かせた常設の指示があるときだけ）は、skill `implement-flow` の `reference/docs/issue-run.md` を Read し、その手順で回す（計画の起案と是正は担い手〔`issue-run-worker` か作業セッション〕が行う。担い手の選び方も同ファイル）。
 
 | verdict | 委任先 | 委任ブリーフに載せる reference |
 |---|---|---|
