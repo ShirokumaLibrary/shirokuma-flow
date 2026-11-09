@@ -15,7 +15,7 @@ Bash で `shirokuma-flow rules inject --scope orchestrator --rules trust-boundar
 - `branch-workflow`: 「段の順序」節の計画要否の判定（Plan ケース）に入る
 - `concept-gap-to-adr`: 計画が ADR 候補を含む
 - `html-report-criteria`: 「確認ビュー」節で生成条件を判定する
-- `confirmation-style`: 確認モードの解決値を委任ブリーフへ書く／確認モードの回に人へ確認を出す
+- `confirmation-style`: 人へ確認・報告を出す（AskUserQuestion を含む）／確認モードの解決値を委任ブリーフへ書く
 - `skill-authoring`: 委任先 worker の定義から宣言集合の値が取れない
 
 参照集合（常時は注入しない。契機に当たったら `<rule-index>` の `file` から Read する）。
@@ -39,6 +39,7 @@ Bash で `shirokuma-flow rules inject --scope orchestrator --rules trust-boundar
 | `gated` | — | `nextActions` が指す `submit` / `approve` を打つ（下記「状態遷移」の条件つき） |
 | `reclassify` | — | `nextActions` に従い（`issue set-kind <n> normal` → `next <n>`）、引き直した verdict でこの表を引き直す |
 | `working` | — | `implement-flow` へ渡す（**計画を作らない**——`plan_skipped_not_needed` の課題は信頼投稿者の `**計画要否:** NOT_NEEDED` 契約〔analyze-issue、または設計の承認の後に design-flow が残す〕で計画フェーズがスキップされている） |
+| `done` | — | 課題は Done（終端）。計画を起案せず、終わっていることを報告する（戻すかは人が決める）。`nextActions` に要素があれば規範 `next-routing-contract` 手順 3 のとおり辿る |
 
 ## 段の順序（本 skill が持つ実行順）
 

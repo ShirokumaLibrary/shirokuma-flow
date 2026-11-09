@@ -2,7 +2,7 @@
 
 orchestrator が「この決定を **ADR 候補 Issue** にするか／通常進行で足りるか」を判定する基準。requirements-worker が起案前に対象が ADR に値するかを見極める際にも使う。
 
-> 原則は **Why-first**: Why を先に記録 → What を作る → 人が What を確定。ADR は「不可逆／構造的な決定の Why を残す」ための装置。判断の質を上げる軸であって、何でも ADR にするためのものではない。
+> 原則は **Why-first**: Why を先に記録 → What を作る → What を確定（確定の打ち手は `next` の `runBy` に従う。正本は [[status-policy]] の `approve` 条項）。ADR は「不可逆／構造的な決定の Why を残す」ための装置。判断の質を上げる軸であって、何でも ADR にするためのものではない。
 
 ## ADR に値する（候補 Issue を作る）
 

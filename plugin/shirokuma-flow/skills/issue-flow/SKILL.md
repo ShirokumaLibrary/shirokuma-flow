@@ -14,7 +14,7 @@ Bash で `shirokuma-flow rules inject --scope orchestrator --rules trust-boundar
 
 - `concept-gap-to-adr`: 本文に横断の判断（既存 ADR の変更・規約の確立）を含む
 - `html-report-criteria`: 「確認ビュー」節で生成条件を判定する
-- `confirmation-style`: 確認モードの解決値を委任ブリーフへ書く／確認モードの回に人へ確認を出す
+- `confirmation-style`: 人へ確認・報告を出す（AskUserQuestion を含む）／確認モードの解決値を委任ブリーフへ書く
 
 参照集合（常時は注入しない。契機に当たったら `<rule-index>` の `file` から Read する）。
 
@@ -52,6 +52,7 @@ Bash で `shirokuma-flow rules inject --scope orchestrator --rules trust-boundar
 | `gated` | `nextActions` が指す `submit` / `approve` を打つ（下記「状態遷移」の条件つき） |
 | `designing` / `preparing` / `working` / `requirements` | 対応フェーズの skill へ渡す（表引きの正本は `autonomous-flow` の `reference/criteria/phase-skill-map.md`） |
 | `select_child` / `all_children_done` / `leaf` / `reclassify` | `nextActions` に従う |
+| `done` | 課題は Done（終端）。次フェーズへ渡さず、終わっていることを報告する（戻すかは人が決める）。`nextActions` に要素があれば規範 `next-routing-contract` 手順 3 のとおり辿る |
 
 ## 状態遷移（打ち方）
 

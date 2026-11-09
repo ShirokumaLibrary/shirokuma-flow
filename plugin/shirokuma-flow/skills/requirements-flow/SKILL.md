@@ -14,7 +14,7 @@ Bash で `shirokuma-flow rules inject --scope orchestrator --rules trust-boundar
 
 - `docs-placement`: 「Why 調査の委任と調査記録」節で research-worker へ Why 調査を委任する
 - `html-report-criteria`: 「確認ビュー」節で生成条件を判定する
-- `confirmation-style`: 確認モードの解決値を委任ブリーフへ書く／確認モードの回に人へ確認を出す
+- `confirmation-style`: 人へ確認・報告を出す（AskUserQuestion を含む）／確認モードの解決値を委任ブリーフへ書く
 - `skill-authoring`: 委任先 worker の定義から宣言集合の値が取れない
 
 参照集合（常時は注入しない。契機に当たったら `<rule-index>` の `file` から Read する）。
@@ -50,6 +50,7 @@ ADR の Why 調査を `research-worker` へ委任する回は、調査の結果�
 | `gated` | `nextActions` が指す `submit` / `approve` を打つ（下記「ADR の状態遷移」の条件つき） |
 | `designing` / `preparing` / `working` | 完了後の受け渡し先（`design-flow` / `prepare-flow` / `implement-flow`） |
 | `select_child` / `all_children_done` / `leaf` / `reclassify` | `nextActions` に従う |
+| `done` | 課題は Done（終端）。受け渡し先は無く、終わっていることを報告する（戻すかは人が決める）。`nextActions` に要素があれば規範 `next-routing-contract` 手順 3 のとおり辿る |
 
 ## ADR の状態遷移（打ち方）
 

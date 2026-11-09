@@ -14,7 +14,7 @@ Bash で `shirokuma-flow rules inject --scope orchestrator --rules trust-boundar
 
 - `concept-gap-to-adr`: `next` が ADR 候補に関わる reason を返す／設計本文の決定表に「横断→ADR」の行がある
 - `html-report-criteria`: 「確認ビュー（4d-3）」節で、人へ出す成果物（実装サマリー等）を返す
-- `confirmation-style`: 確認モードの解決値を委任ブリーフへ書く／確認モードの回に人へ確認を出す
+- `confirmation-style`: 人へ確認・報告を出す（AskUserQuestion を含む）／確認モードの解決値を委任ブリーフへ書く
 - `delegation-and-checks`: 委任ブリーフで拡張併用の判定を書くとき
 - `workflow-reconcile`: base が `epic/*` の PR を merge する
 - `skill-authoring`: 委任先 worker の定義から宣言集合の値が取れない
@@ -37,6 +37,7 @@ Bash で `shirokuma-flow rules inject --scope orchestrator --rules trust-boundar
 | `gated` | `nextActions` が指す `submit` / `approve` を打つ（下記「入口の状態遷移」の条件つき） |
 | `designing` / `preparing` | 対応フェーズ skill へ渡す（本 skill は着手しない） |
 | `select_child` / `all_children_done` / `leaf` / `reclassify` | `nextActions` に従う |
+| `done` | 課題は Done（終端）。段の順序に入らず、終わっていることを報告する（戻すかは人が決める）。`nextActions` に要素があれば規範 `next-routing-contract` 手順 3 のとおり辿る |
 
 ①で降りた回と②の回は、段 1〜5 の `<n>`（`status <n>`・`begin <n>`・`branch name <n>`・PR 本文の `Closes`・終端の `done <サブ番号>`）をすべて降りた先のサブの番号に置き換える。最初に渡された課題や計画の番号は使わない。
 
@@ -67,7 +68,7 @@ Bash で `shirokuma-flow rules inject --scope orchestrator --rules trust-boundar
    - **入口の確かめ（決定の段の直後に計画レビューが無い回）**: 射程は、決定の段が計画の回（設計を経ない課題）と、決定の段が設計で reason が `plan_skipped_not_needed` の回（計画を飛ばした課題）の 2 つ。決定の段が起こした ADR 候補の確定と、確定後の追従・決定の段が定めた glossary・`domain/` の更新を入れた ADR 候補の PR の既定ブランチへの取り込みを確かめる（順序の正本は [[concept-gap-to-adr]] 手順 5 で、条件はここに写さない）。確かめる時点は、`ToDo` の回は `begin` の前、計画を飛ばした `In progress` の回は段 3 の前。確定していない候補・取り込まれていない PR があり、この作業がそれに依存するなら、その時点で止まり（`ToDo` の回は `begin` しない）、理由を報告する。他の課題は止めない。決定の段が設計で計画がある回は計画レビューが確かめる側で、この確かめの射程外である。
      - **計画を飛ばした回は、設計本文の「計画要否」が `NOT_NEEDED` であることも確かめる**。`NEEDED` の回と、「計画要否」節が無い回は段 3 以降へ進まずに止まり、`design-flow` の「段の順序」5b（計画要否の契約）へ回す（契約コメントは本 skill では書かない）。
      - **この確かめは orchestrator 自身の自己検査で、機械段は無く、記録の最下段は自己申告である**（読み落とした回は素通りする＝fail-open）。
-   - **統合ブランチ配下のサブ**: ADR 候補の PR は既定ブランチへ入るので、統合ブランチ（`epic/*`）配下のサブでは、取り込みの後、実装のサブ PR を作る前に統合ブランチへ既定ブランチを取り込む。取り込みと push は `commit-worker` へ委任し、手の正本は [[branch-workflow]]「統合」。衝突したら解かずに止めて人に渡す。
+   - **統合ブランチ配下のサブ**: ADR 候補の PR は既定ブランチへ入るので、統合ブランチ（`epic/*`）配下のサブでは、取り込みの後、実装のサブ PR を作る前に統合ブランチへ既定ブランチを取り込む。取り込みと push は `commit-worker` へ委任し、手の正本は [[branch-workflow]]「統合」。衝突したら解かずに止めて人に渡す（統合ブランチへの取り込みは直接 push で、解いた結果を merge の前に見る段が無いため。理由の正本は同節）。
    - **実装の途中で起こした ADR 候補**: 確定と ADR 候補の PR の取り込みを、実装 PR のコードレビュー（`review-flow`）より前に済ませ、実装ブランチを取り込み後の既定ブランチへ追従させる（正本は [[concept-gap-to-adr]] 手順 5）。
 2. **着手**: `shirokuma-flow begin <n>`（ToDo → In progress）。打つのは `status <n>` の許可遷移に `begin` がある回だけ。reason が `plan_skipped_not_needed` で `In progress` の回は打たない（着手済み）。この回は `begin` が付ける担当者（config `project.assignee`）が付かないので、要る導入先では人が付ける。
 3. **実装を委任**（`coding-worker`。やり切り方式の回は `reference/docs/issue-run.md` の手順で、担い手は `issue-run-worker` か作業セッション）。委任ブリーフに下表の reference パス（TDD 詳細）と**当該 worker scope の規範要旨**（正本 [[skill-authoring]]）を明示し、「**動作確認・テストで実 GitHub に書き込まない**（CLI 実走検証は `--fixture`・実書き込みが必要なら実行せず理由を添えて返す）」を添える。計画を飛ばした課題（reason が `plan_skipped_not_needed`）では、設計本文の「受け入れ基準」節を満たすべき基準として名指す。リポにドメイン拡張（nextjs / infra）が見えるなら「拡張プラグイン候補」のヒントを書く——**判定はしない**（拡張併用の判定は worker の自己判定）。worker は**圧縮サマリー**を返す。orchestrator はコードを直接編集しない。
