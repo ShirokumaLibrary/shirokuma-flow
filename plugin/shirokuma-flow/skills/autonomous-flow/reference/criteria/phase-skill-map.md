@@ -24,6 +24,7 @@
 | `null` | `sub_design_needed`（verdict `reclassify`） | skill 起動しない・`nextActions` に従い `issue set-kind <n> normal` で課題（normal）へ切り替えてから `next <n>` を引き直す（EPIC / Research 直下の sub に信頼投稿者の `**設計要否:** NEEDED` がある回。ToDo / In progress のときだけ） |
 | `null` | `*_select_child` | skill 起動しない・次に着手する子を選んで `next <子番号>` |
 | `null` | `*_all_children_done` | skill 起動しない・継続型（epic/research）の全子完了。次課題追加 or 人の判断で `shirokuma-flow done <n>`（COMPLETED close・正常終了）／取りやめは `cancel`（NOT_PLANNED） |
+| `null` | `issue_done`（verdict `done`） | skill 起動しない・課題（kind normal / design / plan）自身が Done（終端）。子の状態や設計要否・計画要否の契約によらず段を返さない。終わっていることを報告する（戻すかは人が決める）。`nextActions` に要素があれば規範 `next-routing-contract` 手順 3 のとおり辿る |
 | `null` | `undetermined` | skill 起動しない・`shirokuma-flow status <n>` で状態確認して判断 |
 
 ## 表2: `next` 非経由の skill 起動トリガー

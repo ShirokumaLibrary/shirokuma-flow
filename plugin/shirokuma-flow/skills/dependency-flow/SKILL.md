@@ -12,7 +12,7 @@ Bash で `shirokuma-flow rules inject --scope orchestrator --rules trust-boundar
 
 **参照する規範**
 
-- `confirmation-style`: 「課題化レーン」節で発見結果を人へ提示する
+- `confirmation-style`: 人へ確認・報告を出す（AskUserQuestion を含む）／「課題化レーン」節で発見結果を人へ提示する
 - `branch-workflow`: 依存更新 PR を merge する
 - `skill-authoring`: 委任先 worker の定義から宣言集合の値が取れない
 

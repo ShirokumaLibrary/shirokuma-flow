@@ -115,7 +115,14 @@ experimental:
 - `fix`: Important の是正（`nit-candidates=merge` なら改善提案表の Nit も同じ巡で当てる・`human=` があれば人の指摘も当てる）→ 品質ゲートと実装サマリーの記録行 → `FINALIZED`。push はしない。
 - `r1b-apply`: レビュアーが作業ツリーに当てた Nit を品質ゲートに通す → `FINALIZED`。報告表に `fail` があれば、続きの `r1b-apply` で当てた Nit を戻す。
 - `commit`: commit / push → `FIXED`。変更が無い回（照合が合わずメイン経由の R1 に移る前に、目印を消すために届いた回）は commit も push もせずに `FIXED` を返す。
-- `rebase`: `origin/<base>` を取り込み、品質ゲート → commit / push → `FIXED`。衝突したら解かずに `BLOCKED reason=rebase-conflict`。展開した submodule の HEAD が取り込んだ後の gitlink と違う回は、commit の前に `git -C <submodule のパス> switch --detach <gitlink の sha>` で合わせる（合わせられなければ `BLOCKED reason=pages-out-of-sync`。そのまま commit すると gitlink を古い sha へ戻す）。
+- `rebase`: `origin/<base>` を merge で取り込み（force なし）、品質ゲート → commit / push → `FIXED`。衝突したら、衝突箇所ごとに次の 3 区分に当て、すべての箇所がどれかに当たる回だけ解く。
+  - **足し合わせ**: 両側が別々の行・欄・要素を足した（隣り合う行への追記・表や配列への行の追加・フィールドとコンストラクタへの追記）。両方を残す。
+  - **片方が他方を含む**: 片側の変更がもう片側の変更をすでに含む。含む側を採る。
+  - **数え直し**: 件数・凍結値・テストの期待値のように、取り込んだ後の内容から一意に決まる値。両側の値を足し引きせず、取り込んだ後の内容から数え直し、品質ゲートで確かめる。
+  - 1 箇所でも、どちらかの意図を捨てないと解けない・解いた結果が両側のどちらにも無い挙動を持ち込む・人ゲートの対象（授権キーを持つ設定・permission の設定・hooks の定義・秘匿値・CI / デプロイの定義）に触れる・どの区分に当たるか迷う、のどれかに当たる回は、`git merge --abort` で取り込みごと取り消し（一部だけ解いて止まらない）、`BLOCKED reason=rebase-conflict` で返す。結果行の前に、衝突したファイルとファイルごとに当たった区分（または人に上げた理由）を書く。
+  - 解いた回は、取り込みの commit メッセージの本文に解いたファイルと区分を書く（レビュアーが読む材料）。解いた箇所は、メインが回す増分の再レビューの母集団に入る（`review-flow` の `reference/docs/review-gate.md`「base を取り込んだ後の増分再レビュー」）。
+  - 倒れる向き: 区分の判定と人ゲートの対象に触れるかの読み取りは自分の判定で、読み違えて解いた回を受けるのは増分の再レビューと、判定記録が PR の head と合うことを求める merge 条件だけである（レビュアーが見落とせば取り込まれる＝fail-open）。
+  - 展開した submodule の HEAD が取り込んだ後の gitlink と違う回は、commit の前に `git -C <submodule のパス> switch --detach <gitlink の sha>` で合わせる（合わせられなければ `BLOCKED reason=pages-out-of-sync`。そのまま commit すると gitlink を古い sha へ戻す）。
 - 形に合わない・自分が返した番号と head sha を言えない（`design-fix`・`plan`・`implement` の回は issue 番号と設計番号〔設計を持つ課題〕と head sha、`plan-fix` の回は計画番号と head sha、`op=open-pr` の回は issue 番号と head sha、それ以降の op は PR 番号と head sha。課題の続きとして委任された回の最初の 1 通は、ブリーフで渡された番号と最初の一手 2 で控えた sha で照らす）ときは何もせず `BLOCKED reason=resume-mismatch` で返す。
 
 ## 結果行（最後の 1 行・固定形）

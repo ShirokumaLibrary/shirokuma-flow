@@ -13,7 +13,7 @@ Bash で `shirokuma-flow rules inject --scope orchestrator --rules trust-boundar
 **参照する規範**
 
 - `html-report-criteria`: 「確認ビュー」節で生成条件を判定する
-- `confirmation-style`: 確認モードの解決値を委任ブリーフへ書く／確認モードの回に人へ確認を出す
+- `confirmation-style`: 人へ確認・報告を出す（AskUserQuestion を含む）／確認モードの解決値を委任ブリーフへ書く
 - `delegation-and-checks`: 委任ブリーフで拡張併用の判定を書くとき
 - `branch-workflow`: 計画要否が NEEDED
 
@@ -38,6 +38,7 @@ Bash で `shirokuma-flow rules inject --scope orchestrator --rules trust-boundar
 | `preparing` / `working`（設計の承認の後で 5b がまだの回） | — | 段の順序 5b から入る（課題に設計を出所とする `**計画要否:**` のコメントがまだ無い回） |
 | `preparing` | — | `prepare-flow` へ渡す |
 | `working` | — | `implement-flow` へ渡す（計画を飛ばした課題。`implement-flow` から戻された回は段の順序 5b から入る） |
+| `done` | — | 課題は Done（終端）。設計を起案せず、終わっていることを報告する（戻すかは人が決める）。`nextActions` に要素があれば規範 `next-routing-contract` 手順 3 のとおり辿る |
 
 ## 段の順序（本 skill が持つ実行順）
 

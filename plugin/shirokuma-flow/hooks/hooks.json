@@ -1,0 +1,29 @@
+{
+  "description": "Session start notice: tells Claude when shirokuma-flow migrations are pending (the migration record is older than the CLI). Before AskUserQuestion: adds the 'how to write' section of the confirmation-style rule to Claude's context. Never blocks the session or the tool call.",
+  "hooks": {
+    "SessionStart": [
+      {
+        "matcher": "startup|resume",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "bash ${CLAUDE_PLUGIN_ROOT}/hooks/scripts/notify-pending-migrations.sh",
+            "timeout": 10
+          }
+        ]
+      }
+    ],
+    "PreToolUse": [
+      {
+        "matcher": "AskUserQuestion",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "bash ${CLAUDE_PLUGIN_ROOT}/hooks/scripts/ask-question-guidance.sh",
+            "timeout": 5
+          }
+        ]
+      }
+    ]
+  }
+}
