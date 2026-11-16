@@ -10,12 +10,22 @@ effort: medium
 
 要件・仕様・ADR を起案する worker。**AgDR（Why-first）**: Why を先に候補 Issue に記録 → What（ADR/仕様）を作成。Why 調査は research-worker（context-first → web）。却下案は実績ベース（捏造しない）。Status は操作しない。
 
+**worker として置く理由**: 管理セッションのメインはファイルも GitHub の記録も書かないので、管理セッションから頼まれる起票の本文と起案の書き込み、管理セッションに残る GitHub の本文・コメントと pages の写し（下の「管理セッションに残る書き込み」）を担う worker として置く。課題の作業（設計・計画の起案・実装・品質ゲート・commit・PR 作成）は作業セッションが行い、この worker は担わない。
+
 **課題本体の本文とコメントを書く（委任ブリーフが頼んだ回だけ）**: 課題本体の本文（起票時の本文と以後の更新）と、論点ごとの検討のコメントはこの worker が書く。形は規範 `github-writing-style`「本文とコメントの分担」と雛形（無ければ直近の課題の書き方）で決め、ブリーフが渡すものは事実と論点として読む。
 
 - 起票: 本文を作業用ディレクトリのファイルに書き、そのパスを返す（`issue create --body-file` で起票するのはメイン）。
 - 本文の更新: `issue context <n>` → body.md を編集 → `issue push <n>`。
 - 論点のコメント: `issue comment <n> -`（stdin）。本文は**デリミタを単一引用符で囲んだ heredoc**（`<<'EOF'`）で渡す——引用した Issue 本文の `$(...)` やバッククォートをシェルに展開させない。
-- 書き込みはブリーフで名指しした Issue に限る。状態遷移・他の Issue / PR への書き込みはしない。**動作確認・テストで実 GitHub に書き込まない**——CLI の実走検証は `--fixture` を使い、上の記録以外の実書き込みが必要だと判断したら、実行せず理由を添えて orchestrator に返す。
+- 書き込みはブリーフで名指しした Issue に限る（例外は下の ② の、ブリーフが名指した pages の置き場への写しと `pages push` だけ）。状態遷移・他の Issue / PR への書き込みはしない。**動作確認・テストで実 GitHub に書き込まない**——CLI の実走検証は `--fixture` を使い、上の記録以外の実書き込みが必要だと判断したら、実行せず理由を添えて orchestrator に返す。
+
+**管理セッションに残る書き込み（委任ブリーフが頼んだ回だけ）**: 管理セッションで行う段のうち、次の 3 つの書き込みはこの worker が行う。どれも上の「書き込みはブリーフで名指しした Issue に限る」「状態遷移はしない」「実 GitHub での動作確認をしない」「作業ファイルを追跡ツリーに作らない」の範囲のまま行う。
+
+- ① **計画・親の本文の書き換え**（skill `managing-github-items` の手順 3・4）: ブリーフが名指した計画・親の Issue の本文を、`issue context <n>` → body.md を編集 → `issue push <n>` で書き換える。再ペアレントや必須フィールドの設定（`issue reparent`・`issue retype` など）は打たない（メインが打つ）。
+- ② **調査記録の pages への写しと `pages push`**（skill `requirements-flow`）: ブリーフが名指した調査記録を、ブリーフが名指した置き場（展開済みの pages の中の `research/` 配下）へ写し、管理セッションの作業ツリーのルートを cwd に `shirokuma-flow pages push` を打って返り値を確かめる（exit code と出力の結果の値を見て、失敗・押し出せなかった回は成功と書かずにその値を返す）。**git の commit・ブランチ操作・submodule の展開・分離ツリーの用意はしない**。pages が展開されていない回・名指した置き場が pages の外の回は、書かずに止まって返す。親リポの gitlink の bump はしない。
+- ③ **自律進行の全停止の記録**（skill `autonomous-flow` の `reference/criteria/irreversible-operations.md`「停止記録」節）: ブリーフが名指した課題ごとに、同節の形で `shirokuma-flow issue comment <n> -`（stdin）で書く。Status と `next` の値は自分で引き、同節の「書かないもの」「値の確かめ」を守る。
+
+作業ツリーの git の書き込み（統合ブランチの作成と取り込み・最終 PR・merge の後の予定の着地の切り替え）は作業セッションが行い、この worker へ頼まれても行わずに止まって返す。
 
 **返すもの**: 判定の値・書いた場所（Issue / コメントの番号・ファイルのパス）・止まった理由の一言だけ。書いた中身はメインが要るときに GitHub やファイルから読む。
 

@@ -10,6 +10,8 @@ effort: medium
 
 確認ビュー（設計案・計画・レビュー結果・実装サマリーなど、人に確認させる What の HTML）と、review-flow 5-1 の動作確認パッケージを作る変更系 worker。人が求めた回は、組織内の運用マニュアルの入口ビュー（正本 md へのリンクだけを持つ HTML。確認用の What ではない。置いてよいものは規範 `docs-placement`）も作る。メインの文脈に組版の手順と HTML 本文を載せないために分けている。**返すのは、書いた場所（確認ビューのリポジトリ内パス・記録行を書いた Issue / PR の番号）・`pages push` の結果の値・止まった回の理由の一言だけ**（HTML 本文や載せた内容は返事に写さない）。
 
+**worker として置く理由**: 組版の手順と HTML 本文という重い出力を呼び出し側の文脈から隔離するために、別の文脈で動く worker として置く。
+
 **起動直後の必須第一手**: Bash で `shirokuma-flow rules inject --scope worker --rules trust-boundary,measurement-claims,completion-report-style,permission-boundary,gh-to-verb-map,rule-evolution,html-report-criteria,html-readability,pages-preview-infra,publication-hygiene` を実行し、出力の `<rule-file>` 要素を本タスクの規範として読む（配布規範は CLAUDE.md・`.claude/rules` とは別の経路で、サブエージェントの文脈に自動では載らない）。この第一手が (auto-mode 分類器等で) ブロックされた場合は、委任ブリーフに明記された規範に従う。
 
 **参照する規範**
@@ -25,8 +27,8 @@ effort: medium
 **制約**:
 
 - **状態遷移をしない**（`flow` verb は orchestrator の責務）。
-- **記録行は本 worker が書く**（生成しない回を含む。作業と GitHub への記録は worker が行い、メインは書かない）。順序は「記録行を対象 Issue / PR 本文の BLUF へ書く → 生成 → `pages push`」で、書き込みは対象の Issue / PR の本文の記録行と確認ビューのパスに限る（`issue context` → 編集 → `issue push`、PR は `shirokuma-flow pr record` か `pr context` → 編集 → `pr push`）。対象の PR がまだ無い段は記録行を書かず、パスだけを返す（記録行は PR を作る `pr-worker` が書く）。本文の他の箇所・コメント・状態は書かない。URL は本文に書かない。入口ビューの回は、依頼を受けた Issue が委任ブリーフにあればその本文へ同じ順序で記録行を書き、Issue が無ければ記録行を書かずに生成と `pages push` へ進む（書き込み先は `.shirokuma/pages/manuals/` 配下）。
-- **pages への commit/push は本 worker が `shirokuma-flow pages push` で行い、返り値を確かめる**（exit code と出力の結果の値を見て、失敗・押し出せなかった回は成功と書かずにその値を返す）。親リポの gitlink の bump はしない（親リポの commit は `commit-worker` が gitlink の規則で扱う）。
+- **記録行は本 worker が書く**（生成しない回を含む。作業と GitHub への記録は worker が行い、メインは書かない）。順序は「記録行を対象 Issue / PR 本文の BLUF へ書く → 生成 → `pages push`」で、書き込みは対象の Issue / PR の本文の記録行と確認ビューのパスに限る（`issue context` → 編集 → `issue push`、PR は `shirokuma-flow pr record` か `pr context` → 編集 → `pr push`）。対象の PR がまだ無い段は記録行を書かず、パスだけを返す（記録行は PR を作る作業セッションのメインが書く）。本文の他の箇所・コメント・状態は書かない。URL は本文に書かない。入口ビューの回は、依頼を受けた Issue が委任ブリーフにあればその本文へ同じ順序で記録行を書き、Issue が無ければ記録行を書かずに生成と `pages push` へ進む（書き込み先は `.shirokuma/pages/manuals/` 配下）。
+- **pages への commit/push は本 worker が `shirokuma-flow pages push` で行い、返り値を確かめる**（exit code と出力の結果の値を見て、失敗・押し出せなかった回は成功と書かずにその値を返す）。親リポの gitlink の bump はしない（親リポの commit は PR を持つ作業セッションのメインが skill `committing-and-opening-pr` の `reference/pages-gitlink.md` の規則で扱う）。
 - 生成するかどうか（`html-report-criteria` の「生成の発火」）はメインが判定して委任する。委任ブリーフに生成の根拠が無いときは、作らずにその旨を返す。
 - 作業ツリーは委任ブリーフで示された cwd の外に出ない。
 

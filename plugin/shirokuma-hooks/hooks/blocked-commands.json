@@ -113,23 +113,6 @@
       "guardUnknown": "pattern-only"
     },
     {
-      "id": "issue-run-push",
-      "pattern": "(^|[\\s;&|(){}])([^\\s;&|(){}<>]*/)?git($|[\\s;&|)<>#]).*push|(commit-push|pages\\s+push|direct-commit|branch\\s+prune)",
-      "reason": "A push by the issue-run worker (agent type `issue-run-worker`) was stopped before it ran. For that worker only, a push is allowed when all of these hold: the push runs in a linked worktree whose lock names this agent (the runtime locks the worktree it creates for an agent with the reason `claude agent <name> (...)`), the worktree is not a verification tree created by `shirokuma-flow isolated-tree`, the destination is one issue branch (`<type>/<number>` or `<type>/<number>-<slug>`; not `epic/*`, not a protected branch or the mainline, not a name ending in `-cont-<k>`), the checked-out branch is that branch or `<branch>-cont-<k>`, and the destination is the same as this agent's first push (a new branch must not already exist as `origin/<branch>` locally). A `git push` must name a remote configured in the repository (not a URL or a path) and must not carry a flag that sends more refs (`--tags`, `--follow-tags`, `--all` ...). A push on a line that changes the working directory first (`cd`, `pushd`, a subshell with `cd`, `env -C`) is denied, because the check cannot tell which working tree it would push from. `git direct-commit` and `branch prune` are not steps of that worker; `pages push` is checked for the worktree only. Anything the check cannot read is denied. Commits and every other agent's pushes are not affected by this rule. Which condition applied is stated on the line below.",
-      "enabled": true,
-      "guard": "issue-run-push",
-      "guardUnknown": "pattern-only"
-    },
-    {
-      "id": "issue-run-nested-review",
-      "pattern": "^\\u0000issue-run-nested-review\\u0000$",
-      "reason": "A nested review call by the issue-run worker (agent type `issue-run-worker`) was stopped before it ran. This rule is judged on the Agent / Task / SendMessage input by `shirokuma-flow hooks evaluate-nested-review` (hook script block-nested-review.sh), not on Bash command lines; its pattern never matches a Bash command. For that worker only, an Agent / Task call passes when the callee is one of the four review workers (code-review-worker, security-review-worker, asset-safety-review-worker, review-worker), the prompt is exactly the one-line fixed brief defined in the review-flow skill (reference/docs/nested-review-brief.md), and the role in the brief matches the callee; a SendMessage passes only as the exact R1b continuation `R1b: 適用してよい round=<n>`. Each call it lets through is added to a ledger in the shared git dir, which `shirokuma-flow gate nested-check` reads. Anything the check cannot read is denied. Calls without `agent_type` (the main session) and other agents are not affected. When stopped, the worker returns `review=unavailable` instead of reviewing another way.",
-      "enabled": true,
-      "guard": "issue-run-nested-review",
-      "guardUnknown": "pattern-only",
-      "tool": "Agent|Task|SendMessage"
-    },
-    {
       "id": "gh-issue-view",
       "pattern": "gh issue view",
       "reason": "Read verbs come in two tracks: a pure-read track and an edit-then-push track. To just read, use `shirokuma-flow issue show <number>` (pure read; add `--comments` for comment bodies; it never touches the cache and by design returns no comment ids). To edit the issue body and write it back, use `shirokuma-flow issue context <number>` (caches body.md) then `shirokuma-flow issue push <number>`. To edit a comment, use `shirokuma-flow issue comments <number>` -- that is the only verb that returns ids for comments on an issue (database_id); `pr comments` returns ids too, but only for comments on a pull request. It caches the bodies whose id it could read as {database_id}.md -- then `shirokuma-flow issue push <number> <comment-id>`, which pushes that comment only and does not touch the issue body. These read verbs also work in the bootstrap stage (`project.number` still blank in .shirokuma/config.yaml); there `issue show` returns `status: null`, which means no project is configured -- and nothing else. Do not use `gh issue view`.",

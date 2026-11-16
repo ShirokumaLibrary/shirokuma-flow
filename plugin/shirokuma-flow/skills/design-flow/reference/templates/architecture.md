@@ -1,6 +1,6 @@
 # アーキテクチャ対応表雛形（architecture）
 
-design-worker が **DDD レベル L2**（[../criteria/ddd-adoption.md](../criteria/ddd-adoption.md)）の課題で、BC を実装の所在へ対応づけるときに埋める雛形。プロジェクトの `domain/architecture.md` の下敷きにする。[bounded-contexts.md](bounded-contexts.md) で BC を切り、[domain-model.md](domain-model.md) で集約を立ててから本雛形で実装へ写す。
+設計の起案者（作業セッションのメイン）が **DDD レベル L2**（[../criteria/ddd-adoption.md](../criteria/ddd-adoption.md)）の課題で、BC を実装の所在へ対応づけるときに埋める雛形。プロジェクトの `domain/architecture.md` の下敷きにする。[bounded-contexts.md](bounded-contexts.md) で BC を切り、[domain-model.md](domain-model.md) で集約を立ててから本雛形で実装へ写す。
 
 書き方の規律:
 

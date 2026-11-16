@@ -3,11 +3,11 @@
 > **目的**: ① `next` コマンドの `nextPhase` 出力から orchestrator が **一意に**起動 skill を特定するための単一正本（表 1・表 2）。
 > orchestrator は `next <n>` を呼んだ後、返ってきた `nextPhase`（と必要なら `reason`）でこの表を引き、
 > 対応する skill を `Skill` ツールで決定的に起動する。判定ロジックを skill 側で再実装しない。
-> ② 方式ごとに各段を誰が担うかを引く一覧（表 3）。
+> ② 各段を誰が担うかを引く一覧（表 3）。
 
 判定の正本はあくまで CLI の `next`。
 表 1・表 2 は「CLI が返す値 → 起動 skill」の対応だけを一意に固定する（命名の非対称や `null` 分岐の扱いを含む）。
-表 3 は、方式ごとに各段を誰が担うかの一覧（担い手の名と手順の正本の所在だけ）を持つ。
+表 3 は、各段を誰が担うかの一覧（担い手の名と手順の正本の所在だけ）を持つ。
 
 ## 表1: `next` 出力（`nextPhase`）→ skill マッピング
 
@@ -18,8 +18,8 @@
 | `Designing` | `no_children` / `design_child_incomplete` | design-flow |
 | `Preparing` | `design_approved_plan_missing` / `plan_child_incomplete` / `no_plan_child` / `design_not_needed_plan_needed` | prepare-flow |
 | `Working` | `plan_child_approved` / `plan_child_active` / `no_sub_child` / `sub_child_present` / `design_skipped_not_needed` / `plan_skipped_not_needed` / `sub_ready` / `sub_started` | implement-flow |
-| `null` | `triage_incomplete` | skill 起動しない・既定は orchestrator が `submit`／`approve`を打って再 `next`（`IssueType=ADR` の候補 Issue も既定は orchestrator が打つ）。確認モード（`確認モード: guided` の明示がある回）では人の `approve` を待つ |
-| `null` | `awaiting_approval` | skill 起動しない・既定は orchestrator が `approve`を打って再 `next`（`IssueType=ADR` の候補 Issue も既定は orchestrator が打つ）。確認モード（`確認モード: guided` の明示がある回）では人の `approve` を待つ |
+| `null` | `triage_incomplete` | skill 起動しない・既定は orchestrator が `submit`／`approve`を打って（打ち手は `next` の `runBy` に従う）再 `next`（`IssueType=ADR` の候補 Issue も既定は orchestrator が打つ）。確認モード（`確認モード: guided` の明示がある回）では人の `approve` を待つ |
+| `null` | `awaiting_approval` | skill 起動しない・既定は orchestrator が `approve`を打って（打ち手は `next` の `runBy` に従う）再 `next`（`IssueType=ADR` の候補 Issue も既定は orchestrator が打つ）。確認モード（`確認モード: guided` の明示がある回）では人の `approve` を待つ |
 | `null` | `sub_leaf` | skill 起動しない・`nextActions` に従う。sub は Done / Blocked の回だけ `leaf` になる。空なら何もしない（`done` を打たない） |
 | `null` | `sub_design_needed`（verdict `reclassify`） | skill 起動しない・`nextActions` に従い `issue set-kind <n> normal` で課題（normal）へ切り替えてから `next <n>` を引き直す（EPIC / Research 直下の sub に信頼投稿者の `**設計要否:** NEEDED` がある回。ToDo / In progress のときだけ） |
 | `null` | `*_select_child` | skill 起動しない・次に着手する子を選んで `next <子番号>` |
@@ -36,30 +36,32 @@
 | Requirements | requirements-flow | orchestrator が要件未確定を検知した時・または人が明示指示した時（issue-flow の前後） |
 | Reviewing | review-flow | implement-flow 手順6: PR 作成後、`submit <pr>`（Backlog→Review）前の AI レビューとして起動 |
 
-## 表3: 方式 × 段 → 担い手
+## 表3: 段 → 担い手
 
-方式は 3 つ: 段ごとの委任（既定）・worker 方式・作業セッション方式（後の 2 つはやり切り方式。選び方は `implement-flow` の `reference/docs/issue-run.md` の「方式の選び方」）。表が持つのは担い手の名と手順の正本の所在だけで、責務・条件・手順は所在の側が持つ（ここに写さない）。「メイン」は方式を回すセッションのメイン、「作業セッション」は作業セッションのメイン、「管理セッション」は作業セッションへ渡す側のメイン。
+課題の作業は作業セッションで回す（方式は 1 つ。管理セッションでの渡し方は `implement-flow` の `reference/docs/issue-run.md`「作業セッションで回す回」）。表が持つのは担い手の名と手順の正本の所在だけで、責務・条件・手順は所在の側が持つ（ここに写さない）。「作業セッション」は作業セッションのメイン、「管理セッション」は作業セッションへ渡す側のメイン。
 
-| 段 | 段ごとの委任 | worker 方式 | 作業セッション方式 | 手順の正本 |
-|---|---|---|---|---|
-| 課題本文（起票・仕上げ） | メイン（起票）・`requirements-worker`（本文） | 同左 | 管理セッション（seed の起票）・作業セッション（本文） | `issue-flow`「課題本体の本文の書き手と、提出前の分析」「確認ビュー」／`implement-flow` の `reference/docs/issue-run.md`「作業セッションで回す回」・`issue-run-flow`「トリアージの段」 |
-| 提出前の分析 | `review-worker` | 同左 | 同左 | `analyze-issue` |
-| トリアージの遷移 | メイン | 同左 | 作業セッション | `issue-flow`「状態遷移（打ち方）」 |
-| 設計の起案 | `design-worker` | `issue-run-worker` | 作業セッション | `design-flow`「段の順序」1b・`design-worker`／`issue-run-worker`「段と手順書」 |
-| 設計レビュー | `review-worker` | 同左 | 同左 | `design-flow`「段の順序」4 |
-| 計画要否の契約 | `design-worker` | 同左 | 作業セッション | `design-flow`「段の順序」5b／`issue-run-flow`「自分で打つもの・委任するもの」 |
-| ADR 候補の起草 | `requirements-worker` | 同左 | 作業セッション | `requirements-flow`「ADR の状態遷移（打ち方）」／`issue-run-flow`「ADR 候補の段」 |
-| ADR 候補の整合のレビュー | `review-worker` | 同左 | 同左 | `requirements-flow`「ADR の状態遷移（打ち方）」 |
-| 計画の起案 | `plan-worker` | `issue-run-worker` | 作業セッション | `prepare-flow`「段の順序」1・`plan-worker`／`issue-run-worker`「段と手順書」 |
-| 計画レビュー | `review-worker` | 同左 | 同左 | `prepare-flow`「段の順序」2 |
-| 実装 | `coding-worker` | `issue-run-worker` | 作業セッション | `implement-flow`「段の順序」3・`coding-worker`／`issue-run-worker`「段と手順書」 |
-| 品質ゲート | `finalize-worker` | `issue-run-worker` | 作業セッション | `implement-flow`「段の順序」4・`finalize-worker` |
-| commit / PR 作成 | `commit-worker`・`pr-worker` | `issue-run-worker` | 作業セッション | `committing-and-opening-pr` |
-| PR のレビュー（R1） | `security-review-worker`・`code-review-worker`・`asset-safety-review-worker` | 同左（`issue-run-worker` が入れ子で呼ぶ） | 同左 | `review-flow`「段の順序」／`implement-flow` の `reference/docs/issue-run.md`「PR のレビューを入れ子で回す回」 |
-| R2 の是正 | `coding-worker`・`finalize-worker`・`commit-worker` | `issue-run-worker` | 作業セッション | `review-flow` の `reference/docs/review-gate.md`「R1b / R2」 |
-| 判定記録・記録行・状態遷移 | メイン | 同左 | 作業セッション | 規範 `orchestration-discipline` C16 ③ |
-| 確認ビューの生成 | `explainer-worker` | 同左 | 同左 | 規範 `html-report-criteria` |
-| merge | メイン | 同左 | 管理セッション | 規範 `branch-workflow`「自律境界」 |
+| 段 | 担い手 | 手順の正本 |
+|---|---|---|
+| 課題本文（起票・仕上げ） | 管理セッション（seed の起票）・作業セッション（本文）。課題を作業セッションへ渡す前に管理セッションでトリアージする回は `requirements-worker`（本文） | `issue-flow`「課題本体の本文の書き手と、提出前の分析」「確認ビュー」／`implement-flow` の `reference/docs/issue-run.md`「作業セッションで回す回」・`issue-run-flow`「トリアージの段」 |
+| 提出前の分析 | `review-worker` | `analyze-issue` |
+| トリアージの遷移 | 作業セッション（管理セッションでトリアージする回は管理セッション） | `issue-flow`「状態遷移（打ち方）」 |
+| 設計の起案 | 作業セッション | `design-flow`「段の順序」1b・`design-flow` の `reference/docs/drafting.md` |
+| 設計レビュー | `review-worker` | `design-flow`「段の順序」4 |
+| 計画要否の契約 | 作業セッション | `design-flow`「段の順序」5b／`issue-run-flow`「自分で打つもの・委任するもの」 |
+| ADR 候補の起草 | 作業セッション | `issue-run-flow`「ADR 候補の段」 |
+| ADR 候補の整合のレビュー | `review-worker` | `requirements-flow`「ADR の状態遷移（打ち方）」 |
+| 計画の起案 | 作業セッション | `prepare-flow`「段の順序」1・`prepare-flow` の `reference/docs/drafting.md` |
+| 計画レビュー | `review-worker` | `prepare-flow`「段の順序」2 |
+| 統合ブランチの作成・取り込み・最終 PR | 作業セッション | `implement-flow` の `reference/docs/issue-run.md`「PR やブランチが 2 本以上になる課題」・`issue-run-flow` の `reference/procedure.md` |
+| 実装 | 作業セッション | `implement-flow`「段の順序」3・`implement-flow` の `reference/docs/coding.md` |
+| 品質ゲート | 作業セッション | `implement-flow`「段の順序」4・`implement-flow` の `reference/docs/finalize.md` |
+| commit / PR 作成 | 作業セッション | `committing-and-opening-pr` |
+| PR のレビュー（R1） | `security-review-worker`・`code-review-worker`・`asset-safety-review-worker` | `review-flow`「段の順序」 |
+| R2 の是正 | 作業セッション | `review-flow` の `reference/docs/review-gate.md`「R1b / R2」 |
+| 判定記録・記録行・状態遷移 | 作業セッション（作業セッションの外の課題選び・merge の後の遷移は管理セッション） | 規範 `orchestration-discipline` C16 ③ |
+| 確認ビューの生成 | `explainer-worker` | 規範 `html-report-criteria` |
+| 計画・親の本文の書き換え・調査記録の写し・自律進行の全停止の記録 | `requirements-worker`（管理セッションが委任） | `managing-github-items`・`requirements-flow`・`autonomous-flow` の `reference/criteria/irreversible-operations.md`「停止記録」 |
+| merge | 管理セッション | 規範 `branch-workflow`「自律境界」 |
 
 **倒れる向き**: 表は各定義と別に置くので、担い手の交代や節の改名に表が追いつかないことがある。照らす機械段は無い（fail-open）。食い違ったら所在の側に従う。
 

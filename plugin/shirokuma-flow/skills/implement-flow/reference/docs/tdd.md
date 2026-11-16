@@ -1,6 +1,6 @@
 # TDD ワークフロー詳細
 
-coding-worker が実装時に回す TDD（red → green → refactor）の刻み方とテスト粒度。worker 本文の原則「失敗するテストを先に書く → 実装で green」の詳細。委任ブリーフにこのパスが明示されたら Read する。
+作業セッションのメインが実装の段で回す TDD（red → green → refactor）の刻み方とテスト粒度。`coding.md` の原則「失敗するテストを先に書く → 実装で green」の詳細。実装の段に入るときに Read する。
 
 ## サイクルと刻み方
 
@@ -56,4 +56,4 @@ shirokuma-flow lint areas tests   # @testdoc / skip-reason 検査
 
 lint・型チェックのコマンドはプロジェクトの CLAUDE.md / package.json scripts に従う。
 
-> テストの省略は不可（例外なし）。テストなしで実装サマリーを返さない。コミット・状態遷移は worker の責務外（commit-worker / orchestrator が行う）。
+> テストの省略は不可（例外なし）。テストなしで実装サマリーを確定しない。コミットと状態遷移は実装の段の外（skill `committing-and-opening-pr` と `implement-flow` の段の順序）で行う。

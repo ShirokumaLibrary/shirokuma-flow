@@ -1,6 +1,6 @@
 # 境界づけられたコンテキスト雛形（bounded-contexts）
 
-design-worker が **DDD を採用する課題**（[../criteria/ddd-adoption.md](../criteria/ddd-adoption.md) の採用契機に該当）で、ドメインを境界づけられたコンテキスト（BC）に分割するときに埋める雛形。プロジェクトの `domain/bounded-contexts.md` の下敷きにする。**DDD を採らない課題では作らない**（過剰なモデリングを避ける・非採用下限を参照）。
+設計の起案者（作業セッションのメイン）が **DDD を採用する課題**（[../criteria/ddd-adoption.md](../criteria/ddd-adoption.md) の採用契機に該当）で、ドメインを境界づけられたコンテキスト（BC）に分割するときに埋める雛形。プロジェクトの `domain/bounded-contexts.md` の下敷きにする。**DDD を採らない課題では作らない**（過剰なモデリングを避ける・非採用下限を参照）。
 
 書き方の規律:
 

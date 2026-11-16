@@ -1,6 +1,6 @@
 # 計画 Issue 雛形
 
-plan-worker が計画 Issue（IssueType = Plan・**設計があれば設計の子・設計が無い課題なら課題直下**）を起案する際の本文雛形。埋めれば計画 Issue 本文になる。
+計画の起案者（作業セッションのメイン）が計画 Issue（IssueType = Plan・**設計があれば設計の子・設計が無い課題なら課題直下**）を起案する際の本文雛形。埋めれば計画 Issue 本文になる。
 
 > 計画 Issue はタイトル「計画: {要旨}」で、**設計があれば設計の子・設計が無い課題なら課題直下**（`--parent` の指し先も同旨：設計があれば設計#・無ければ課題#）として作る。実装サブ Issue の粒度・親子構造は [../criteria/decomposition.md](../criteria/decomposition.md) を参照。
 >

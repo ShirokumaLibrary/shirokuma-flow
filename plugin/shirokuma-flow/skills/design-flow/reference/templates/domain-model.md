@@ -1,6 +1,6 @@
 # ドメインモデル雛形（domain-model）
 
-design-worker が **DDD を採用する課題**（[../criteria/ddd-adoption.md](../criteria/ddd-adoption.md) の採用契機に該当）で、各 BC の集約・不変条件・ユースケースを記述するときに埋める雛形。プロジェクトの `domain/domain-model.md` の下敷きにする。[bounded-contexts.md](bounded-contexts.md) 雛形で BC を切ってから本雛形でモデルを厚くする。
+設計の起案者（作業セッションのメイン）が **DDD を採用する課題**（[../criteria/ddd-adoption.md](../criteria/ddd-adoption.md) の採用契機に該当）で、各 BC の集約・不変条件・ユースケースを記述するときに埋める雛形。プロジェクトの `domain/domain-model.md` の下敷きにする。[bounded-contexts.md](bounded-contexts.md) 雛形で BC を切ってから本雛形でモデルを厚くする。
 
 書き方の規律:
 

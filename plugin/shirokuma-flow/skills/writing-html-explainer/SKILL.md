@@ -1,12 +1,12 @@
 ---
 name: writing-html-explainer
-description: 確認用 What を HTML で可視化する解説ページを、pages submodule の共有テンプレートで生成する手順。基本は worker explainer-worker が SKILL.md を Read して使う。model が Skill ツールで起動してよいのは、作業セッション（skill issue-run-flow を起動したセッション）のメインが確認ビューを作る段で explainer-worker を使えない回だけ。それ以外のメイン（管理セッション・既定の方式・worker 方式）は起動せず explainer-worker へ委任する。Use when 作業セッションのメインが確認ビューを作る段で、Agent ツールが無い・explainer-worker が agent の一覧に無い・worker が起動しなかったか起動がエラーで返ったとき。
+description: 確認用 What を HTML で可視化する解説ページを、pages submodule の共有テンプレートで生成する手順。基本は worker explainer-worker が SKILL.md を Read して使う。model が Skill ツールで起動してよいのは、作業セッション（skill issue-run-flow を起動したセッション）のメインが確認ビューを作る段で explainer-worker を使えない回だけ。それ以外のメイン（管理セッション・既定の方式）は起動せず explainer-worker へ委任する。Use when 作業セッションのメインが確認ビューを作る段で、Agent ツールが無い・explainer-worker が agent の一覧に無い・worker が起動しなかったか起動がエラーで返ったとき。
 model: opus
 ---
 
 # writing-html-explainer（確認用 HTML 解説の執筆）
 
-人に確認させる **What**（設計案・コンセプト・レビュー結果・計画・実装サマリー）を、Markdown では潰れる情報密度のまま HTML 1 枚に可視化する手順。**読み手は worker `explainer-worker`**（本 SKILL.md を全文 Read して従う）で、メインはこの skill を起動しない。例外は、作業セッション（skill `issue-run-flow` を起動したセッション）のメインが `explainer-worker` を使えない回だけで、そのメインが Skill ツールで起動して読み手を兼ねる（使えない回の範囲と、記録行の順序・書き込み範囲など worker の定義の「制約」節から当てる項目は skill `issue-run-flow` が持つ）。Issue / Discussion / PR の本文には**概要**を残し、図・案比較・全決定の**詳細はこの HTML が正本**になる。この宣言は**生成した回に掛かる**——[[html-report-criteria]] の節「生成の発火（既定は生成しない）」は**既定を生成しない側に置く**ので、生成しなかった回（＝同節の OR 条件がどれも成立しなかった回）の詳細の正本は Issue / PR 本文である。状態遷移はしない（orchestrator の責務）。pages submodule への commit/push（`shirokuma-flow pages push`）と返り値の確かめは、生成した `explainer-worker` 自身が直後に行う（下の「返す前に」）。親リポの通常の commit は `commit-worker` が行う。
+人に確認させる **What**（設計案・コンセプト・レビュー結果・計画・実装サマリー）を、Markdown では潰れる情報密度のまま HTML 1 枚に可視化する手順。**読み手は worker `explainer-worker`**（本 SKILL.md を全文 Read して従う）で、メインはこの skill を起動しない。例外は、作業セッション（skill `issue-run-flow` を起動したセッション）のメインが `explainer-worker` を使えない回だけで、そのメインが Skill ツールで起動して読み手を兼ねる（使えない回の範囲と、記録行の順序・書き込み範囲など worker の定義の「制約」節から当てる項目は skill `issue-run-flow` が持つ）。Issue / Discussion / PR の本文には**概要**を残し、図・案比較・全決定の**詳細はこの HTML が正本**になる。この宣言は**生成した回に掛かる**——[[html-report-criteria]] の節「生成の発火（既定は生成しない）」は**既定を生成しない側に置く**ので、生成しなかった回（＝同節の OR 条件がどれも成立しなかった回）の詳細の正本は Issue / PR 本文である。状態遷移はしない（orchestrator の責務）。pages submodule への commit/push（`shirokuma-flow pages push`）と返り値の確かめは、生成した `explainer-worker` 自身が直後に行う（下の「返す前に」）。親リポの通常の commit は PR を持つ作業セッションのメインが skill `committing-and-opening-pr` の手順で行う。
 
 短い説明や図の要らない内容は HTML 化しない（`writing-manual` で Markdown）。HTML を選ぶのは「視覚整理が読みやすさに直結する」場合のみ。
 

@@ -174,7 +174,7 @@ npx tsc --noEmit                      # 型チェック（デプロイ前に必�
 
 ```
 実装完了。次のステップ:
-→ `implement-flow` の手順でコミットへ進む（コミットは `commit-worker` が行う）
+→ `implement-flow` の手順でコミットへ進む（コミットは作業セッションのメインが skill `committing-and-opening-pr` の手順で行う）
 ```
 
 ## 注意事項

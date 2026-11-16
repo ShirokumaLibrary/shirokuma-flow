@@ -1,6 +1,6 @@
 ---
 name: implement-flow
-description: Working フェーズを統括し、ToDo の Issue を実装して PR を作りレビュー人ゲートまで進める（実作業は worker に委任）。Use when Issue を実装するとき、PR を作るとき、Working フェーズを進めるとき。
+description: Working フェーズを統括し、ToDo の Issue を実装して PR を作りレビュー人ゲートまで進める（課題の作業は作業セッションで回し、管理セッションは作業セッションを開いて渡す）。Use when Issue を実装するとき、PR を作るとき、Working フェーズを進めるとき。
 model: opus
 ---
 
@@ -15,16 +15,15 @@ Bash で `shirokuma-flow rules inject --scope orchestrator --rules trust-boundar
 - `concept-gap-to-adr`: `next` が ADR 候補に関わる reason を返す／設計本文の決定表に「横断→ADR」の行がある
 - `html-report-criteria`: 「確認ビュー（4d-3）」節で、人へ出す成果物（実装サマリー等）を返す
 - `confirmation-style`: 人へ確認・報告を出す（AskUserQuestion を含む）／確認モードの解決値を委任ブリーフへ書く
-- `delegation-and-checks`: 委任ブリーフで拡張併用の判定を書くとき
+- `delegation-and-checks`: 作業セッションのメインが実装の段で拡張併用を判定するとき
 - `workflow-reconcile`: base が `epic/*` の PR を merge する
-- `skill-authoring`: 委任先 worker の定義から宣言集合の値が取れない
 - `pages-preview-infra`: 差分が `.shirokuma/pages` の gitlink を動かす
 
 参照集合（常時は注入しない。契機に当たったら `<rule-index>` の `file` から Read する）。
 
 ## 流れ
 
-階層は 課題 > 設計(0..1) > 計画(0..n) > 実装サブ(0..n)（計画と実装サブは PR を 2 本以上に分ける課題だけに作る）。本 skill は ToDo の Issue（計画を飛ばした課題は In progress）を **実装 → PR → レビュー待ち**まで進める。**メインが行うのは方向の指示・worker への委任・状態遷移・人への確認だけで、作業と GitHub への記録はすべて worker へ委任する**（[[orchestration-discipline]] C16）（レビュー層は PR 作成後の `review-flow` が委任する。どの段を誰が実行するかは下記「誰が何を行うか」節）。状態遷移は `flow` CLI verb のみ。flow CLI の実行には Projects v2 を読み書きできるトークンが要る。終端は PR 作成と、同じ応答の中での `review-flow` の起動（手順 6。merge を誰が打つかは手順 7 が指す正本で判定し、既定は人ゲート・コード差分を持たないサブは `done` で終端する）。
+階層は 課題 > 設計(0..1) > 計画(0..n) > 実装サブ(0..n)（計画と実装サブは PR を 2 本以上に分ける課題だけに作る）。本 skill は ToDo の Issue（計画を飛ばした課題は In progress）を **実装 → PR → レビュー待ち**まで進める。**課題の作業は作業セッションで回す**——管理セッションで本 skill を起動した回は、段の順序に入らず、作業セッションを開いて課題を渡し、締めの報告を受けて merge へ進める（[reference/docs/issue-run.md](reference/docs/issue-run.md)「作業セッションで回す回」）。段の順序は作業セッションのメインが reference を手順書として自分で回す（[[orchestration-discipline]] C16。レビュー層は PR 作成後の `review-flow` が委任する。どの段を誰が実行するかは下記「誰が何を行うか」節）。状態遷移は `flow` CLI verb のみ。flow CLI の実行には Projects v2 を読み書きできるトークンが要る。終端は PR 作成と、同じ応答の中での `review-flow` の起動（手順 6。merge を誰が打つかは手順 7 が指す正本で判定し、既定は人ゲート・コード差分を持たないサブは `done` で終端する）。
 
 ## routing
 
@@ -33,7 +32,7 @@ Bash で `shirokuma-flow rules inject --scope orchestrator --rules trust-boundar
 
 | verdict | 次手 |
 |---|---|
-| `working`（上から順に当てる） | ① `descendTo` がある → 段の順序に入らず、`nextActions` の `next <descendTo>` を打ち、降りた先の verdict でこの表を引き直す<br>② reason が `sub_started` → 段の順序に入らず、[reference/docs/recovery.md](reference/docs/recovery.md)「実装サブを In progress から再開する」から再開する（`begin` は打たない）<br>③ reason が `sub_ready` / `design_skipped_not_needed` / `plan_skipped_not_needed` / `no_sub_child` → 下記「段の順序」へ入る<br>④ それ以外 → 停止して報告する |
+| `working`（上から順に当てる） | ① `descendTo` がある → 段の順序に入らず、`nextActions` の `next <descendTo>` を打ち、降りた先の verdict でこの表を引き直す<br>② reason が `sub_started` → 管理セッションの回は段の順序に入らず、`reference/docs/issue-run.md`「作業セッションで回す回」で作業セッションへ渡す（課題を閉じる open な PR があれば、作業セッションは skill `issue-run-flow` の「是正の続き」から続ける）。作業セッションの回は段の順序に入らず、[reference/docs/recovery.md](reference/docs/recovery.md)「実装サブを In progress から再開する」から再開する（`begin` は打たない）<br>③ reason が `sub_ready` / `design_skipped_not_needed` / `plan_skipped_not_needed` / `no_sub_child` → 管理セッションの回は段の順序に入らず、`reference/docs/issue-run.md`「作業セッションで回す回」で作業セッションへ渡す。作業セッションの回は下記「段の順序」へ入る<br>④ それ以外 → 停止して報告する |
 | `gated` | `nextActions` が指す `submit` / `approve` を打つ（下記「入口の状態遷移」の条件つき） |
 | `designing` / `preparing` | 対応フェーズ skill へ渡す（本 skill は着手しない） |
 | `select_child` / `all_children_done` / `leaf` / `reclassify` | `nextActions` に従う |
@@ -43,23 +42,19 @@ Bash で `shirokuma-flow rules inject --scope orchestrator --rules trust-boundar
 
 ### 入口の状態遷移（打ち方）
 
-- **既定（自律）は orchestrator が `shirokuma-flow approve <n>` を打って進む**。`IssueType=ADR` の候補 Issue を含む `approve` の既定・人が打つ条件・判別手順の正本は [[status-policy]]（詳しい手順は `requirements-flow`）。
+- **既定（自律）は orchestrator が `shirokuma-flow approve <n>` を打って進む**（打ち手は `next` の `runBy` に従う）。`IssueType=ADR` の候補 Issue を含む `approve` の既定・人が打つ条件・判別手順の正本は [[status-policy]]（詳しい手順は `requirements-flow`）。
 - **確認モードの回は人の `approve` を待って止まる**（確認対象の所在と確認後に打つ verb を添える。逐語は `next --guided` の `nextActions[].runBy:"human"` が運ぶ）。
 - **見るのは対象 Issue 自身の Status だけ**——関連する ADR 候補 Issue の Status はこのゲートの対象ではない。決定の段が起こした候補の確定と ADR 候補の PR の取り込みを先に済ませる順序は、このゲートではなく下記「段の順序」1 の入口の確かめが持つ（正本は [[concept-gap-to-adr]] 手順 5）。
 
 ## 誰が何を行うか
 
-**メインと worker の線引きの正本は [[orchestration-discipline]] C16**（ここには写さない）。本フェーズの各段は次の worker へ委任する（作業の大きさによらない。メインはファイルを編集せず、commit・PR 作成・本文の記録も行わない）。
+**メインと作業の担い手の線引きの正本は [[orchestration-discipline]] C16**（ここには写さない）。
 
-- 実装は `coding-worker`、品質ゲートは `finalize-worker`（段 4）、commit は `commit-worker`、PR の作成は `pr-worker`（段 5）。
-- **方式の選び方**: 上が既定の方式（段ごとの委任）。人がその回にやり切り方式を指示したとき、または人がその会話で直接依頼してプロジェクトの規範に書かせた常設の指示があるときだけ、やり切り方式で回す。担い手は 2 つある。
-  - **worker 方式**: `issue-run-worker` 1 本が、各 worker の定義を手順書として読み、設計の起案・計画の起案（実装サブの起票を含む）・実装・品質ゲート・commit・PR 作成・PR のレビュー（レビュー worker を固定形のブリーフで入れ子に呼ぶ）・是正を行う。PR やブランチが 2 本以上になる段・設計レビューと計画レビュー・判定の照合と記録・状態遷移は外に残る。
-  - **作業セッション方式**: 別のセッション（作業セッション）が skill `issue-run-flow` を回す。このセッションは渡して締めの報告を受け、merge へ進める。
-
-  担い手の選び方・既定へ戻す条件・メインに残す段・作業セッションへの渡し方と受け取り方・`review-flow` とのつなぎは [reference/docs/issue-run.md](reference/docs/issue-run.md) が正本で、やり切り方式の回は段 2 の前に必ず Read する。方式ごとに段を誰が担うかの一覧は `autonomous-flow` の `reference/criteria/phase-skill-map.md` の表 3。
+- **課題の作業は作業セッションのメインが行う**（作業の大きさによらない）。実装は `reference/docs/coding.md`、品質ゲートは `reference/docs/finalize.md`（段 4）、commit と PR の作成は skill `committing-and-opening-pr`（段 5）を、作業セッションのメインが手順書として読んで自分で行う。作業セッションの中の段の割り当ては skill `issue-run-flow` とその reference が持つ。
+- **管理セッションは課題の作業をしない**。本 skill を管理セッションで起動した回は、作業セッションを開いて課題を渡し、締めの報告を受けて merge へ進める。管理セッションのメインはファイルを編集せず、commit・PR 作成・本文の記録も行わない。使える条件・作業セッションを使えない回の戻り先・作業セッションへの渡し方と受け取り方・作業セッションの中で別の worker に残す段は [reference/docs/issue-run.md](reference/docs/issue-run.md) が正本で、管理セッションの回は渡す前に必ず Read する。段を誰が担うかの一覧は `autonomous-flow` の `reference/criteria/phase-skill-map.md` の表 3。
 - **段の集合は不変**。レビュー層は本フェーズで委任せず、PR 作成後の `review-flow` が委任する（R1 / R2）。4d-2 はメインの自己検査で、merge の手前の動作確認ステージ（材料は `review-flow` 5-1・適用可否は規範 `html-report-criteria` の必須ステージ表「動作確認」行）も省略しない。
-- **実行の証跡を PR 本文に残す**: 回した機械段（`finalize-worker` の報告表の所在）・終了コード・`検査対象 head sha: <完全 sha>`。回さなかった段は回さなかったと書き、「検査が実行されなかったこと」を緑と読ませない。書くのは `pr-worker`（値は委任ブリーフで渡す。書き方は skill `committing-and-opening-pr` の「PR 作成」節）。自己申告で、照合する層は無い。
-- **`finalize-worker` の報告表に対する機械検証（4c）**: `orchestration-discipline` C6 が見るのは**報告表の完全性**であって**表に書かれた結果が事実かどうかは見ない**ので、**「回していないのに `pass` と書いた」形は C6 を通る**。**回したかどうかの裏取りは無い。**
+- **実行の証跡を PR 本文に残す**: 回した機械段（品質ゲートの報告表の所在）・終了コード・`検査対象 head sha: <完全 sha>`。回さなかった段は回さなかったと書き、「検査が実行されなかったこと」を緑と読ませない。書くのは PR を作る作業セッションのメイン（値は実装サマリーから取る。書き方は skill `committing-and-opening-pr` の「PR 作成」節）。自己申告で、照合する層は無い。
+- **品質ゲートの報告表に対する自己検査（4c）**（品質ゲートを通した作業セッションのメインが自分で走査するので、`gate finalize` を引いても機械検証ではない）: `orchestration-discipline` C6 が見るのは**報告表の完全性**であって**表に書かれた結果が事実かどうかは見ない**ので、**「回していないのに `pass` と書いた」形は C6 を通る**。**回したかどうかの裏取りは無い。**
 - **段 4 の是正で実装差分が変わっても、本フェーズにはレビュー層が無いので戻る先も無い**（レビューは PR 作成後の `review-flow` R1 / R2 が一手に持つ）。**したがって本フェーズにレビューのループ上限は無い**——上限 2 回は R2 が持つ。
 
 ## 段の順序
@@ -68,19 +63,19 @@ Bash で `shirokuma-flow rules inject --scope orchestrator --rules trust-boundar
    - **入口の確かめ（決定の段の直後に計画レビューが無い回）**: 射程は、決定の段が計画の回（設計を経ない課題）と、決定の段が設計で reason が `plan_skipped_not_needed` の回（計画を飛ばした課題）の 2 つ。決定の段が起こした ADR 候補の確定と、確定後の追従・決定の段が定めた glossary・`domain/` の更新を入れた ADR 候補の PR の既定ブランチへの取り込みを確かめる（順序の正本は [[concept-gap-to-adr]] 手順 5 で、条件はここに写さない）。確かめる時点は、`ToDo` の回は `begin` の前、計画を飛ばした `In progress` の回は段 3 の前。確定していない候補・取り込まれていない PR があり、この作業がそれに依存するなら、その時点で止まり（`ToDo` の回は `begin` しない）、理由を報告する。他の課題は止めない。決定の段が設計で計画がある回は計画レビューが確かめる側で、この確かめの射程外である。
      - **計画を飛ばした回は、設計本文の「計画要否」が `NOT_NEEDED` であることも確かめる**。`NEEDED` の回と、「計画要否」節が無い回は段 3 以降へ進まずに止まり、`design-flow` の「段の順序」5b（計画要否の契約）へ回す（契約コメントは本 skill では書かない）。
      - **この確かめは orchestrator 自身の自己検査で、機械段は無く、記録の最下段は自己申告である**（読み落とした回は素通りする＝fail-open）。
-   - **統合ブランチ配下のサブ**: ADR 候補の PR は既定ブランチへ入るので、統合ブランチ（`epic/*`）配下のサブでは、取り込みの後、実装のサブ PR を作る前に統合ブランチへ既定ブランチを取り込む。取り込みと push は `commit-worker` へ委任し、手の正本は [[branch-workflow]]「統合」。衝突したら解かずに止めて人に渡す（統合ブランチへの取り込みは直接 push で、解いた結果を merge の前に見る段が無いため。理由の正本は同節）。
+   - **統合ブランチ配下のサブ**: ADR 候補の PR は既定ブランチへ入るので、統合ブランチ（`epic/*`）配下のサブでは、取り込みの後、実装のサブ PR を作る前に統合ブランチへ既定ブランチを取り込む。取り込みと push はそのサブを回す作業セッションのメインが行い（手順は skill `issue-run-flow` の `reference/procedure.md`）、手の正本は [[branch-workflow]]「統合」。衝突したら解かずに止めて人に渡す（統合ブランチへの取り込みは直接 push で、解いた結果を merge の前に見る段が無いため。理由の正本は同節）。
    - **実装の途中で起こした ADR 候補**: 確定と ADR 候補の PR の取り込みを、実装 PR のコードレビュー（`review-flow`）より前に済ませ、実装ブランチを取り込み後の既定ブランチへ追従させる（正本は [[concept-gap-to-adr]] 手順 5）。
 2. **着手**: `shirokuma-flow begin <n>`（ToDo → In progress）。打つのは `status <n>` の許可遷移に `begin` がある回だけ。reason が `plan_skipped_not_needed` で `In progress` の回は打たない（着手済み）。この回は `begin` が付ける担当者（config `project.assignee`）が付かないので、要る導入先では人が付ける。
-3. **実装を委任**（`coding-worker`。やり切り方式の回は `reference/docs/issue-run.md` の手順で、担い手は `issue-run-worker` か作業セッション）。委任ブリーフに下表の reference パス（TDD 詳細）と**当該 worker scope の規範要旨**（正本 [[skill-authoring]]）を明示し、「**動作確認・テストで実 GitHub に書き込まない**（CLI 実走検証は `--fixture`・実書き込みが必要なら実行せず理由を添えて返す）」を添える。計画を飛ばした課題（reason が `plan_skipped_not_needed`）では、設計本文の「受け入れ基準」節を満たすべき基準として名指す。リポにドメイン拡張（nextjs / infra）が見えるなら「拡張プラグイン候補」のヒントを書く——**判定はしない**（拡張併用の判定は worker の自己判定）。worker は**圧縮サマリー**を返す。orchestrator はコードを直接編集しない。
-   - **作業ブランチの用意（委任の前提）**: 委任前に現在ブランチを確認し、mainline（config `project.defaultBranch ?? "main"`）上なら**先に作業ブランチへ切り替える**。ブランチ名は `shirokuma-flow branch name <n>` で導出し（**手組みしない**）、サブ Issue で統合ブランチを使う場合は [[branch-workflow]] の検出順に従う。**mainline 上で実装を進めると PR による人ゲートを迂回する**ため、この前提が満たされない限り段 5 の `commit-worker` は commit せず止まって返す（同 worker のブランチ前提条件）。
-   - **並行実装時の作業ツリー分離**: 複数サブ Issue を**並行**して実装する場合は、各サブを**別々の作業ツリー**（`git worktree add` 等）に分離し、その**パスを coding-worker の cwd として**委任ブリーフに明示する。責務分担は **orchestrator が分離を用意しパスを渡す／worker はそのツリー内で作業する**。**注記（分離ツリーで走る検査の射程）**: `git worktree add` では submodule は展開されない（gitlink は空ディレクトリのまま）。そのツリーで走る **submodule 配下を読む検査は黙って skip され、skip は終了コードに出ない**（**fail-open**）。分離ツリーで得た緑を、それらの検査まで含む緑と読まない。その skip を閉じるために分離ツリーへ submodule を展開するときは、次の形に限る。
+3. **実装**（作業セッションのメインが `reference/docs/coding.md` を手順書として行う）。TDD の詳細は下表の `reference/docs/tdd.md`。**動作確認・テストで実 GitHub に書き込まない**（CLI 実走検証は `--fixture`・実書き込みが必要なら実行せず理由を添えて依頼元へ返す）。計画を飛ばした課題（reason が `plan_skipped_not_needed`）では、設計本文の「受け入れ基準」節を満たすべき基準とする。拡張併用（nextjs / infra）は作業セッションのメインが規範 `delegation-and-checks` の「拡張スキルの併用判定」で自分で判定する。
+   - **作業ブランチの用意（実装の前提）**: 実装の前に現在ブランチを確認し、mainline（config `project.defaultBranch ?? "main"`）上なら**先に作業ブランチへ切り替える**。ブランチ名は `shirokuma-flow branch name <n>` で導出し（**手組みしない**）、サブ Issue で統合ブランチを使う場合は [[branch-workflow]] の検出順に従う。**mainline 上で実装を進めると PR による人ゲートを迂回する**ため、この前提が満たされない限り段 5 では commit せず止まって返す（skill `committing-and-opening-pr` の「コミット」節のブランチの前提）。作業セッションでは skill `issue-run-flow` の `reference/procedure.md`「実装の段の入口」がこの切り替えを行う。
+   - **並行実装時の作業ツリー分離**: 複数サブ Issue を**並行**して実装する場合は、サブごとに別の作業セッション（それぞれの linked worktree）で回す（並列の条件は規範 `orchestration-discipline` C14）。下の展開の形は、作業セッションの外で `git worktree add` の分離ツリーを用意して作業・検査する回（検査用の隔離ツリーなど）に使う。**注記（分離ツリーで走る検査の射程）**: `git worktree add` では submodule は展開されない（gitlink は空ディレクトリのまま）。そのツリーで走る **submodule 配下を読む検査は黙って skip され、skip は終了コードに出ない**（**fail-open**）。分離ツリーで得た緑を、それらの検査まで含む緑と読まない。その skip を閉じるために分離ツリーへ submodule を展開するときは、次の形に限る。
      - **ネットワーク取得をしない**（`git submodule update` / `clone` / `fetch` を展開に使わない）。展開は `git -C "<submodule の絶対パス>" worktree add --detach -- "<分離ツリーの絶対パス>/<submodule パス>" "<SHA>"` だけで行う。
      - **差し込む値は、コマンド行へ載せる前に形を確かめる**。`<SHA>` は分離ツリー自身の `git -C "<分離ツリーの絶対パス>" ls-files -s -- "<submodule パス>"` から読んだ gitlink の値で、空でなく 16 進数字（`0`〜`9` / `a`〜`f`）だけからなること。`<分離ツリーの絶対パス>` は自分が用意した分離ツリーの絶対パスに限り、`shirokuma-flow gate vocab` の `isolatedTreeRootAllowlist` の条件を満たすこと。`<submodule パス>` はリポジトリ相対パスで、`gate vocab` の `isolatedTreeSubmodulesAllowlist` の条件（許可する文字・`/` や `-` で始まらない・`..` を含まない など）を満たすこと——値は二重引用符の中に置くが、二重引用符は `$(…)` やバッククォートの展開を止めないので、条件を満たさない値を引用で無害にできると読まない。満たさない値は載せず、その submodule を未展開として申告する。
      - **展開する前に、人の作業ツリーで submodule が展開済みであることを確かめる**（`<submodule の絶対パス>/.git` が在る）。展開済みでない・その SHA が submodule に無い（`add` が非 0）回は展開せず、**未展開として申告する**（その submodule 配下を読む検査は skip されたままである）。
      - **撤去は submodule 側の worktree を、親の分離ツリーより先に** `git -C "<submodule の絶対パス>" worktree remove --force -- "<分離ツリーの絶対パス>/<submodule パス>"` で外す（逆順にすると submodule 側の登録が孤立する）。`worktree remove --force` の対象は、この手順で自分が作った分離ツリー側の worktree に限る（人の作業ツリーの worktree を対象にしない）。
-     - **展開した pages に出た変更**（`adr land` / `adr render --write` など）は、そのツリーで作業する worker（`coding-worker` / `finalize-worker` など）が、その分離ツリー（cwd を分離ツリーの根）で `shirokuma-flow pages push` を打って記録する（orchestrator は打たない）。人の作業ツリーの pages の checkout は動かさない（運用ブランチは人の作業ツリー側が checkout 済みで、`pages push` はその回だけ HEAD を早送りして運用ブランチへ push する。止まった回は返り値の guide に従う）。
-     - **やり切り方式の `issue-run-worker` の作業ツリー**（実行環境が作る linked worktree）は上の形を使わない——共有の checkout を `-C` や `cd` で対象にした git は、実行環境の作業ツリーの分離の検査が読み取りでも拒む。その作業ツリーでは worker が `shirokuma-flow pages expand`（人の作業ツリーの module リポを取得元にしたローカル clone。人の module に gitlink の sha が無い回は、同じ課題の前の worker の作業ツリーの clone を `--source-tree` で取得元にする。どちらもネットワークに出ない）で展開する。手順と展開できない回の扱いは `reference/docs/issue-run.md` の submodule の項、展開した clone の `pages push` の扱いは規範 `pages-preview-infra` が持つ。
-4. **品質ゲート（機械段のみ）**: 4c（finalize）→ 4d（実装サマリーの確定と HTML 化判定）の順で通す。**レビュー層 3 本と差し戻し判定は `review-flow` が持つ**——**深いレビューの置き場は PR 作成後**で、本フェーズの終端は「finalize 緑＋PR 作成」である。**手順・分岐・記録行の正本は [reference/docs/quality-gate.md](reference/docs/quality-gate.md) で、段 4 に入る前に必ず Read する**（4c は `finalize-worker` へ委任する）。ここには条件・値域・分岐を写さない。段 4 に入る前に本 SKILL.md が断定しておくのは次の 4 点だけである。
+     - **展開した pages に出た変更**（`adr land` / `adr render --write` など）は、そのツリーで作業する担い手が、その分離ツリー（cwd を分離ツリーの根）で `shirokuma-flow pages push` を打って記録する（管理セッションのメインは打たない）。人の作業ツリーの pages の checkout は動かさない（運用ブランチは人の作業ツリー側が checkout 済みで、`pages push` はその回だけ HEAD を早送りして運用ブランチへ push する。止まった回は返り値の guide に従う）。
+     - **作業セッションの作業ツリー**（linked worktree）は上の形を使わない——共有の checkout を `-C` や `cd` で対象にした git は、実行環境の作業ツリーの分離の検査が読み取りでも拒む。その作業ツリーでは作業セッションのメインが `shirokuma-flow pages expand`（人の作業ツリーの module リポを取得元にしたローカル clone。ネットワークに出ない）で展開する。手順と展開できない回の扱いは skill `issue-run-flow` の `reference/procedure.md` の「実装の段の入口」、展開した clone の `pages push` の扱いは規範 `pages-preview-infra` が持つ。
+4. **品質ゲート（機械段のみ）**: 4c（finalize）→ 4d（実装サマリーの確定と HTML 化判定）の順で通す。**レビュー層 3 本と差し戻し判定は `review-flow` が持つ**——**深いレビューの置き場は PR 作成後**で、本フェーズの終端は「finalize 緑＋PR 作成」である。**手順・分岐・記録行の正本は [reference/docs/quality-gate.md](reference/docs/quality-gate.md) で、段 4 に入る前に必ず Read する**（4c の各段は `reference/docs/finalize.md` の手順で作業セッションのメインが通す）。ここには条件・値域・分岐を写さない。段 4 に入る前に本 SKILL.md が断定しておくのは次の 4 点だけである。
    - **機械判定は読み取り専用 verb `shirokuma-flow gate <サブコマンド>` が行い、本 skill は呼び出しと結果による分岐（routing）だけを定める。** 欄名・値域は `shirokuma-flow gate vocab`、検査の限界は `shirokuma-flow gate limits --sub <サブコマンド>` が正本で、**逐語を配布物へ写さない**。
    - **判定 JSON の `build` ブロック（`sourceMatch` / `dirty` / `degraded`・欠落した回の読み方を含む）の読み方は `shirokuma-flow gate limits --sub limits` の `H19` が正本**（ここに写さない）。`stale` を名乗った回・`build` ブロックそのものが無い回は、その判定を現ソースの値として読まない。`stale` と `build.dirty: true` が同時に立つ回は、その判定を根拠に使わない。`build.dirty: null`（焼いていない）は、再現性の担保が無い側として `build.dirty: true` と同じに読む。
    - **判定不能を pass に読まない**。`complete` が無い回・`ok: false` の回・verb を解決できない回は **`判定不能` であって「指摘 0 件」ではない**（exit code は 0 / 2 / 1 の 3 値で、**非 0 を一律「検査が何か言った」と読まない**）。判定不能の回は、その段の pass を前提にする分岐へ進まない（**fail-closed**）。
@@ -94,7 +89,7 @@ Bash で `shirokuma-flow rules inject --scope orchestrator --rules trust-boundar
 
 ### 段 5. コミット & PR
 
-**段 5 は commit を `commit-worker`、PR の作成を `pr-worker` へ委任する**（[[orchestration-discipline]] C16。やり切り方式の回は `issue-run-worker` への `op=open-pr` で、手順は `reference/docs/issue-run.md`）。両 worker の委任ブリーフには skill `committing-and-opening-pr` の SKILL.md の絶対パス（本 skill のディレクトリの隣）を渡す。`pr-worker` のブリーフには、閉じる課題・実行の証跡の値（`finalize-worker` の報告表の所在・終了コード・検査対象 head sha）・4d-3 の記録行の値・`coding-worker` のサマリーの「予定の着地」行（あった回だけ。PR 本文にそのまま書かせる）を渡す。両 worker が返すのは SHA と PR 番号（止まった回はその理由の一言）だけ。サブ Issue は親の `epic/{親番号}-{slug}` をターゲット（[[branch-workflow]]）。4d で HTML 化した回は PR 本文の最上部（BLUF）へ**確認ビューのリポジトリ内パス**を添付する（**URL は書かない**）。**コード差分を持たないサブはこの段から段 7 までに乗らない**（下記「PR を伴わないサブの終端」）。
+**段 5 の commit と PR の作成は、作業セッションのメインが skill `committing-and-opening-pr` の SKILL.md（本 skill のディレクトリの隣）を手順書として読んで行う**（[[orchestration-discipline]] C16）。PR 本文には、閉じる課題・実行の証跡の値（品質ゲートの報告表の所在・終了コード・検査対象 head sha）・4d-3 の記録行の値・実装サマリーの「予定の着地」行（あった回だけ。そのまま写す）を書く。サブ Issue は親の `epic/{親番号}-{slug}` をターゲット（[[branch-workflow]]）。4d で HTML 化した回は PR 本文の最上部（BLUF）へ**確認ビューのリポジトリ内パス**を添付する（**URL は書かない**）。**コード差分を持たないサブはこの段から段 7 までに乗らない**（下記「PR を伴わないサブの終端」）。
 
 - **`Closes` の書き方**: **計画スキップ経路の課題**（`next` が `plan_skipped_not_needed` を返し、normal 直下に承認済みの設計子だけが在る回）は PR 本文の `Closes` に **normal と設計子の両方**を素の行で並べる——計画が無いので cascade の起点が無く、並べないと設計子が誰にも閉じられない（書き忘れて normal だけが Done になった回は `reconcile` が `plan-skip-design-not-done` として報告する。`--fix` では直さない）。計画が実在する通常経路ではサブ自身だけを `Closes` する。
 - **配布物を変更した PR は反映遅延を PR 本文へ 1 行で明示する（要否は 4d-1 の記録行が決める）**: **判定をここで取り直さない**（同じ判定を 2 箇所で持つと食い違う）。**記録行の母集団は `plugin/**` に固定されている**ので、プラグインのソースを別の置き場に持つ導入先では記録行が「変更なし」に倒れ、この 1 行は出ない（fail-open）。値が `plugin/**` の変更ありを表すものの回に、次の 1 行を PR 本文へ逐語で書く:
@@ -104,11 +99,11 @@ Bash で `shirokuma-flow rules inject --scope orchestrator --rules trust-boundar
   ```
 
   **「次のリリースまで反映されない」とは書かない**——キャッシュがリリースに固定されているのは事実だが、**実行時の定義がそのキャッシュであるとは限らない**。**契機を断定しない。**
-- **gitlink 集約遅延（`commit-worker` が当てる条件・base はブリーフで渡す）**: **サブ PR の base が `epic/*`（統合ブランチ）なら、親リポの `.shirokuma/pages` gitlink は bump せず統合の集約まで遅らせる。submodule の内容（HTML）の push は base に関わらず行う**（`commit-worker` の gitlink の節）。
+- **gitlink 集約遅延（commit の段で当てる条件）**: **サブ PR の base が `epic/*`（統合ブランチ）なら、親リポの `.shirokuma/pages` gitlink は bump せず統合の集約まで遅らせる。submodule の内容（HTML）の push は base に関わらず行う**（skill `committing-and-opening-pr` の `reference/pages-gitlink.md`）。
 
 ## 確認ビュー（4d-3）
 
-**4d-3. 実装サマリー HTML 化判定**: 4d-1 で確定した作業ファイルを入力として要否を判定する。**HTML 化要否・生成の発火条件（既定は生成しない）・記録行の欄 id（`confirmation-view-record` / `decision-hesitation`）と値域・生成の委任先の正本は [[html-report-criteria]]（ここには写さない）**。**記録行の書き込み・生成・`pages push` は、生成しない回も含めて正本の定める委任先へ委任する**（メインは本文も pages も書かない。委任先と順序は正本から引く）。この段では PR がまだ無いので、生成は `explainer-worker` が行ってパスを返し（ブリーフに skill `writing-html-explainer` の SKILL.md の絶対パス〔本 skill のディレクトリの隣〕を渡す）、記録行は段 5 で `pr-worker` が作成時の PR 本文に書く（正本の定める例外。値は委任ブリーフで渡す）。（軽微＝typo 修正級は PR 本文の Markdown 要約で足りる）。**書き込み経路**: 生成した回も生成しなかった回も、`pr-worker` が PR 本文の BLUF へ記録行を残す（行の有無を生成／非生成の分岐に依存させない。**書き落としを検知する機械段は無い**＝**fail-silent**）。生成した回は**確認ビューのリポジトリ内パス**（`.shirokuma/pages/<カテゴリ>/<スラッグ>/index.html`）を同じ BLUF に添付する。**URL は本文へ書かない**——`preview-url-guard` が `pages.baseUrl` 起点の URL を本文へ新たに書く回を拒否するので、書くと `pr push` が通らない。**倒れる向きの申告**: 記録行と直下の字下げ行を同じ作業ファイルへ集めることは criteria が測る量を**単調に増やす**——判定条件そのものは変えないが、変化するとすれば **HTML 化する側が増える一方向**で、減る方向には動かない。
+**4d-3. 実装サマリー HTML 化判定**: 4d-1 で確定した作業ファイルを入力として要否を判定する。**HTML 化要否・生成の発火条件（既定は生成しない）・記録行の欄 id（`confirmation-view-record` / `decision-hesitation`）と値域・生成の委任先の正本は [[html-report-criteria]]（ここには写さない）**。**記録行の書き込み・生成・`pages push` は、生成しない回も含めて正本の定める担い手が行う**（担い手と順序は正本から引く）。この段では PR がまだ無いので、生成は `explainer-worker` が行ってパスを返し（ブリーフに skill `writing-html-explainer` の SKILL.md の絶対パス〔本 skill のディレクトリの隣〕を渡す）、記録行は段 5 で PR を作る作業セッションのメインが作成時の PR 本文に書く（正本の定める例外）。（軽微＝typo 修正級は PR 本文の Markdown 要約で足りる）。**書き込み経路**: 生成した回も生成しなかった回も、PR を作る作業セッションのメインが PR 本文の BLUF へ記録行を残す（行の有無を生成／非生成の分岐に依存させない。**書き落としを検知する機械段は無い**＝**fail-silent**）。生成した回は**確認ビューのリポジトリ内パス**（`.shirokuma/pages/<カテゴリ>/<スラッグ>/index.html`）を同じ BLUF に添付する。**URL は本文へ書かない**——`preview-url-guard` が `pages.baseUrl` 起点の URL を本文へ新たに書く回を拒否するので、書くと `pr push` が通らない。**倒れる向きの申告**: 記録行と直下の字下げ行を同じ作業ファイルへ集めることは criteria が測る量を**単調に増やす**——判定条件そのものは変えないが、変化するとすれば **HTML 化する側が増える一方向**で、減る方向には動かない。
 
 ## PR を伴わないサブの終端（コード差分ゼロ）
 
@@ -120,7 +115,7 @@ Bash で `shirokuma-flow rules inject --scope orchestrator --rules trust-boundar
 
 ## 委任先 worker
 
-`coding-worker`（実装）/ `finalize-worker`（品質ゲート）/ `issue-run-worker`（やり切り方式・人が指示した回だけ）/ `research-worker`（技術調査・必要時） / `commit-worker`（コミット）/ `pr-worker`（PR 作成）/ `explainer-worker`（確認ビュー・必要時）。
+作業セッションのメインが委任するのは `explainer-worker`（確認ビュー・必要時）だけ。実装・品質ゲート・commit・PR 作成は作業セッションのメインが reference と skill `committing-and-opening-pr` を手順書として自分で行う。大規模な技術調査が要る回は、作業セッションのメインが止まって依頼元へ返し、管理セッションが `research-worker` へ委任する。
 
 > **レビュー層 3 本（`security-review-worker` / `code-review-worker` / `asset-safety-review-worker`）は本フェーズの委任先ではない**——`review-flow` の R1 の委任先である。**PR 作成前に深いレビューを走らせない**（同じ差分を 2 回精読する形を避けるため、PR を唯一のレビュー面にする）。
 
@@ -132,16 +127,18 @@ Bash で `shirokuma-flow rules inject --scope orchestrator --rules trust-boundar
 
 ## リファレンスドキュメント
 
-補助知識・判定基準は本 SKILL.md と同階層の `reference/` 配下。委任ブリーフにパスを明示し、coding-worker が必要時に Read で読む（常時注入しない）。
+補助知識・判定基準は本 SKILL.md と同階層の `reference/` 配下。作業セッションのメインが段に入る直前に Read で読む（常時注入しない）。
 
 | ドキュメント | 内容 | 読むタイミング |
 |------------|------|--------------|
-| 規範 [[delegation-and-checks]] の「拡張スキルの併用判定」 | 委任判定規則（リポ依存×対象パターンの 2 段判定・拡張併読の実行機構） | 段 3 の委任ブリーフ作成時・worker の拡張併用自己判定時 |
+| 規範 [[delegation-and-checks]] の「拡張スキルの併用判定」 | 拡張併用の判定規則（リポ依存×対象パターンの 2 段判定・拡張併読の実行機構） | 段 3 の拡張併用の自己判定時 |
+| [reference/docs/coding.md](reference/docs/coding.md) | 実装の手順（実装の範囲・予定の着地・語彙・拡張併用・Nit 合流） | 段 3 に入る前・是正の巡の前 |
 | [reference/docs/quality-gate.md](reference/docs/quality-gate.md) | 段 4 の詳細手順（`gate` の呼び方の機械契約・コマンド行への差し込み前検査・4c / 4d の分岐と記録行） | **段 4 に入る前（毎回）** |
-| [reference/docs/issue-run.md](reference/docs/issue-run.md) | やり切り方式のメインの手順（担い手の選び方・作業セッションへの渡し方と受け取り方・結果行の照合・SendMessage の形・`review-flow` とのつなぎ・再開できない回） | やり切り方式の回の段 2 の前 |
-| [reference/docs/tdd.md](reference/docs/tdd.md) | TDD ワークフロー詳細（red→green→refactor の刻み方・テスト粒度・@testdoc） | 段 3 の実装委任時（毎回ブリーフに明示） |
+| [reference/docs/finalize.md](reference/docs/finalize.md) | 品質ゲートの各段（報告表・各段の手順・出力契約） | 4c に入る前 |
+| [reference/docs/issue-run.md](reference/docs/issue-run.md) | 作業セッションで課題を回す手順（使える条件・作業セッションへの渡し方と受け取り方・作業セッションの中で別の worker に残す段・2 本以上の課題・並列と merge の順） | 管理セッションで起動した回の渡す前 |
+| [reference/docs/tdd.md](reference/docs/tdd.md) | TDD ワークフロー詳細（red→green→refactor の刻み方・テスト粒度・@testdoc） | 段 3 の実装時 |
 | [reference/docs/recovery.md](reference/docs/recovery.md) | 中断回復手順（中断点別の状態検出チェックリスト・冪等性表） | チェーン中断からの再開時（orchestrator が読む） |
 
-> 不変則: **メインは方向の指示・委任・状態遷移・人への確認だけを行い、作業と GitHub への記録は worker が行う**（[[orchestration-discipline]] C16）（どの段を誰が実行するかは「誰が何を行うか」節）。skill 自体はツール制限が効かないため、これは運用規範であり、機構的強制は **worker(agent) 側の tools 制限**で担保する。状態遷移は `flow` verb のみ。判定は `shirokuma-flow next` に一元化。
+> 不変則: **管理セッションのメインは方向の指示・委任・状態遷移・人への確認だけを行い、課題の作業と GitHub への記録は作業セッションのメインが行う**（[[orchestration-discipline]] C16）（どの段を誰が実行するかは「誰が何を行うか」節）。skill 自体はツール制限が効かないため、これは運用規範であり、守らせる機械段は無い（fail-open）。状態遷移は `flow` verb のみ。判定は `shirokuma-flow next` に一元化。
 >
 > チェーン規律: 継続（C1）・ステップの把握（C2）・判定の構造化文字列（C3）・指摘の処理（C12）は rule `orchestration-discipline` が正本（ここには写さない）。

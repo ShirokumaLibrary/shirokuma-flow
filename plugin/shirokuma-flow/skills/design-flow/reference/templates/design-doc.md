@@ -1,6 +1,6 @@
 # 設計ドキュメント雛形
 
-design-worker が設計 Issue（IssueType=Design）の本文として埋める雛形。節構成はそのまま設計レビュー観点（[../criteria/design-review.md](../criteria/design-review.md)）と対になっている——Brief 品質 / 案比較の実績性 / 要件カバー / 実現可能性。
+設計の起案者（作業セッションのメイン）が設計 Issue（IssueType=Design）の本文として埋める雛形。節構成はそのまま設計レビュー観点（[../criteria/design-review.md](../criteria/design-review.md)）と対になっている——Brief 品質 / 案比較の実績性 / 要件カバー / 実現可能性。
 
 書き方の規律:
 

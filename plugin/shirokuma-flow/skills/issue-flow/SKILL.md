@@ -57,7 +57,7 @@ Bash で `shirokuma-flow rules inject --scope orchestrator --rules trust-boundar
 ## 状態遷移（打ち方）
 
 - **トリアージ提出**: `shirokuma-flow submit <n>`（Backlog → Review）。AI が課題本体の本文を書いた回は、上の提出前の analyze-issue を通してから打つ。
-- **トリアージ approve**: **既定（自律）は orchestrator が `shirokuma-flow approve <n>`（Review → ToDo）を打つ**。`IssueType=ADR` の候補 Issue を含む `approve` の既定・人が打つ条件・判別手順の正本は [[status-policy]]（詳しい手順は `requirements-flow`）。
+- **トリアージ approve**: **既定（自律）は orchestrator が `shirokuma-flow approve <n>`（Review → ToDo）を打つ**（打ち手は `next` の `runBy` に従う）。`IssueType=ADR` の候補 Issue を含む `approve` の既定・人が打つ条件・判別手順の正本は [[status-policy]]（詳しい手順は `requirements-flow`）。
 - **確認モードの回は人の `approve` を待って止まる**（止まるときは確認対象の所在と確認後に打つ verb を添える。逐語は `next --guided` の `nextActions[].runBy:"human"` が運ぶ）。
 
 ## 確認ビュー

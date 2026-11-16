@@ -1,13 +1,13 @@
 # 中断回復手順（implement-flow）
 
-implement-flow の途中（実装 → 品質ゲート → コミット → PR）でセッション切断・worker 失敗などにより中断したとき、orchestrator がどこから安全に再開するかの手順。チェーン規律そのものの正本は rule `orchestration-discipline`——本ファイルは**中断点別の状態検出チェックリストと冪等性表**を提供する。
+implement-flow の途中（実装 → 品質ゲート → コミット → PR）でセッション切断・段の失敗などにより中断したとき、作業セッションのメインがどこから安全に再開するかの手順。チェーン規律そのものの正本は rule `orchestration-discipline`——本ファイルは**中断点別の状態検出チェックリストと冪等性表**を提供する。
 
 ## 一般的な回復フロー
 
 1. **再開点は実状態から決める**: rule `orchestration-discipline` の C2 のとおり、自分の記録（手元の一覧）ではなく、項 2・3 の実状態から**最初の未完**の段を特定し、そこから再開する（完了を実状態で確かめた段は再実行しない）。**実状態から完了を確かめられない段（レビュー段を含む）は未完として再実行する**——レビュー段（3a / 3b / コードレビュー）の成果物は git / PR の実状態に現れないので、項 2・3 では完了を復元できない。完了を確かめないまま飛ばすと、**検査が当たる量が黙って減る**。**不明な段は再実行側へ倒す。**
 2. **Status を確認**: `shirokuma-flow status <n>`（Status / 許可遷移を取得）。**状態遷移（verb）は再実行しない**——既に `In progress` なら `begin` を打ち直さず、冪等確認のみ行う。
 3. **実状態を確認**: 下表の中断点別チェックリストで git / PR の実状態を特定する。
-4. **失敗した worker のみ再委任**: orchestrator が同じブリーフ（計画コンテキスト）で該当 worker に再委任する。ステップを飛ばさない——各 worker の出力は次の worker が使う。
+4. **失敗した段だけをやり直す**: 作業セッションのメインが、その段の手順書（`coding.md`・`finalize.md`・skill `committing-and-opening-pr`）を読み直して同じ段を回す。ステップを飛ばさない——各段の出力は次の段が使う。
 
 回復が繰り返し失敗する場合は、現在の状態を人に報告して停止する（自走で押し切らない）。
 
@@ -24,7 +24,7 @@ implement-flow の途中（実装 → 品質ゲート → コミット → PR）
 
 ## 中断点別の状態検出チェックリスト
 
-### coding-worker が失敗した場合
+### 実装の段で中断した場合
 
 | 確認項目 | コマンド |
 |---------|---------|
@@ -32,24 +32,24 @@ implement-flow の途中（実装 → 品質ゲート → コミット → PR）
 | 途中まで実装されているか | `git diff` で変更ファイルを確認 |
 | テストが失敗しているか | `pnpm test` 等プロジェクトのテストコマンド |
 
-**冪等性**: あり——再委任は安全。既存の変更は worker が必要に応じて上書きまたは継続する。
+**冪等性**: あり——やり直しは安全。既存の変更は必要に応じて上書きまたは継続する。
 
-**リカバリ操作**: orchestrator が `coding-worker` に同じ計画ブリーフで再委任する。再委任前に `shirokuma-flow status <n>` で Status を確認し、**状態遷移は再実行しない**（verb は orchestrator の責務・冪等確認のみ）。
+**リカバリ操作**: `coding.md` の手順で実装を続ける。続ける前に `shirokuma-flow status <n>` で Status を確認し、**状態遷移は再実行しない**（冪等確認のみ）。
 
-### finalize-worker（品質ゲート）が失敗した場合
+### 品質ゲートの段で中断した場合
 
 | 確認項目 | コマンド |
 |---------|---------|
 | 改善コミットが作られたか | `git log --oneline -3` |
 | lint が通るか | `shirokuma-flow lint areas all`（security 含む area 系・finalize ゲートと同系統） |
 
-**exit code の読み方**: `lint areas`（`all` 含む）は `0`=pass・`1`=error 検出・`2`=skip のみで fail（監査できなかった）を返す。**`2` は監査できなかったことを表す**——0 以外を一律 failure として扱う確認手順は、これも失敗として扱う。「lint が通るか」を exit code だけで判定する場合、`2` は「違反があった」ではなく「監査できなかった」を意味するので、再委任前に原因を先に確かめる: JSON 出力（`--format json`）の各領域が持つ `skipReasonId`（`audit-unavailable` / `audit-output-truncated` / `audit-error` / `audit-unparseable` / `audit-incomplete` のいずれか）を見る（ネットワーク・lockfile の有無は原因の一部にすぎない——`skipReasonId` の値ごとに原因が異なる）。
+**exit code の読み方**: `lint areas`（`all` 含む）は `0`=pass・`1`=error 検出・`2`=skip のみで fail（監査できなかった）を返す。**`2` は監査できなかったことを表す**——0 以外を一律 failure として扱う確認手順は、これも失敗として扱う。「lint が通るか」を exit code だけで判定する場合、`2` は「違反があった」ではなく「監査できなかった」を意味するので、やり直す前に原因を先に確かめる: JSON 出力（`--format json`）の各領域が持つ `skipReasonId`（`audit-unavailable` / `audit-output-truncated` / `audit-error` / `audit-unparseable` / `audit-incomplete` のいずれか）を見る（ネットワーク・lockfile の有無は原因の一部にすぎない——`skipReasonId` の値ごとに原因が異なる）。
 
 **冪等性**: あり——/simplify・セキュリティ・docs lint の再実行は無害。
 
-**リカバリ操作**: `finalize-worker` に再委任する。
+**リカバリ操作**: `finalize.md` の手順で、報告表の `pending` 行（残りの段）から通し直す（`orchestration-discipline` C6）。
 
-### commit-worker が失敗した場合
+### commit の段で中断した場合
 
 | 確認項目 | コマンド |
 |---------|---------|
@@ -57,20 +57,20 @@ implement-flow の途中（実装 → 品質ゲート → コミット → PR）
 | 途中のコミットが作成されたか | `git log --oneline -3` |
 | ブランチがプッシュされているか | `git log --oneline origin/{branch}..HEAD` |
 
-**冪等性**: あり——`commit-worker` は git status を確認して差分なしを検出するため、再委任しても重複コミットしない。
+**冪等性**: あり——commit の前に git status で差分なしを検出するので、やり直しても重複コミットしない。
 
-**リカバリ操作**: `commit-worker` に再委任する。
+**リカバリ操作**: skill `committing-and-opening-pr` の「コミット」節の手順でやり直す。
 
-### pr-worker が失敗した場合
+### PR 作成の段で中断した場合
 
 | 確認項目 | コマンド |
 |---------|---------|
 | PR がすでに作成されているか | `shirokuma-flow pr list --head {branch}` |
 | コミットがリモートにプッシュされているか | `git log --oneline origin/{branch}..HEAD` |
 
-**冪等性**: 条件付き——PR が既に存在する場合、`pr-worker` は検出してスキップする。存在しない場合は新規作成する。
+**冪等性**: 条件付き——PR が既に存在する場合は検出して作成をスキップする。存在しない場合は新規作成する。
 
-**リカバリ操作**: `pr-worker` に再委任する。
+**リカバリ操作**: skill `committing-and-opening-pr` の「PR 作成」節の手順でやり直す。
 
 ### レビュー以降で中断した場合
 
@@ -84,6 +84,6 @@ PR 作成後（PR は `Backlog`）の中断は implement-flow の回復対象外
 |------|------|
 | ブランチが既に存在する | `git checkout {branch}` で既存ブランチに切り替え（再作成しない） |
 | Status が既に In progress | `begin` を再実行しない（`status <n>` で確認のみ） |
-| コミット済み・プッシュ済み | `commit-worker` が差分なしを検出しスキップ |
-| PR が既に存在する | `pr-worker` が既存 PR を検出しスキップ |
+| コミット済み・プッシュ済み | commit の段が差分なしを検出しスキップ |
+| PR が既に存在する | PR 作成の段が既存 PR を検出しスキップ |
 | 品質ゲート適用済み | finalize の再実行は無害（冪等） |
