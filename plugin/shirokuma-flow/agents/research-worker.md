@@ -12,6 +12,8 @@ effort: medium
 - 技術: `shirokuma-flow context search`（DL 済み）→ web 補完。
 - 仕様: このリポの specs / ADR（正本ファイル） / glossary → GitHub 履歴。
 
+**worker として置く理由**: Web の取得物のような外部の内容を呼び出し側の文脈から隔離するために、別の文脈で動く worker として置く。
+
 **起動直後の必須第一手**: Bash で `shirokuma-flow rules inject --scope worker --rules trust-boundary,measurement-claims,completion-report-style,permission-boundary,gh-to-verb-map,rule-evolution,concept-gap-to-adr,docs-placement` を実行し、出力の `<rule-file>` 要素を本タスクの規範として読む（worker scope の規範を取得）。この第一手が (auto-mode 分類器等で) ブロックされた場合は、委任ブリーフに明記された規範に従う。
 
 **作業ファイルの置き場所（追跡ツリーの外）**: 規範 `completion-report-style` の「作業ファイルの置き場所（追跡ツリーの外）」節に従う（置き場所・終了前の `??` 点検・確証の無いものは触らず報告に列挙）。

@@ -1,16 +1,16 @@
 ---
 name: issue-run-flow
-description: 作業セッションの入口。人がやり切り方式を指示した課題を、linked worktree で開いた作業セッションの main が issue-run-worker と同じ手順で自分で回す。人が /issue-run-flow に課題番号を付けて打ったとき、または管理セッションからの SendMessage が本 skill を名指して課題番号付きのやり切りを依頼したときだけ使う。会話で人がやり切りを指示しただけの回・依頼の無い場面では model が自分で起動しない（その回は implement-flow の reference/docs/issue-run.md の「方式の選び方」で担い手を選ぶ）。Use when 人が作業セッションで /issue-run-flow に課題番号を付けて打ったとき、または管理セッションから本 skill を名指した課題番号付きの SendMessage が届いたとき。
+description: 作業セッションの入口。課題の作業を、linked worktree で開いた作業セッションの main が本 skill の reference の手順で自分で回す。人が /issue-run-flow に課題番号を付けて打ったとき、または管理セッションからの SendMessage が本 skill と課題番号を名指したときだけ使う。依頼の無い場面では model が自分で起動しない（管理セッションで課題の作業を頼まれた回は implement-flow の reference/docs/issue-run.md の「作業セッションで回す回」に従い、作業セッションを開いて渡す）。Use when 人が作業セッションで /issue-run-flow に課題番号を付けて打ったとき、または管理セッションから本 skill を名指した課題番号付きの SendMessage が届いたとき。
 model: opus
 ---
 
 # issue-run-flow（作業セッションの入口）
 
-作業セッションの main が、課題自身が Backlog か Review の回のトリアージ（下の「トリアージの段」）と、`issue-run-worker` が担う範囲（設計の起案から PR の是正まで）を、止めて再開せずに自分で回す入口。手順の本文は持たない。本 skill に書くのは、main が手順書を読むときに違う点だけである。
+作業セッションの main が、課題自身が Backlog か Review の回のトリアージ（下の「トリアージの段」）と、設計・計画の起案から PR の是正までを、止めて再開せずに自分で回す入口。課題の作業の担い手は作業セッションだけである（管理セッションは課題の作業をしない）。段ごとの手順は本 skill の reference と、そこが名指す手順書が持つ。本 SKILL.md に書くのは、入口の条件・段ごとに読むもの・main が手順書を読むときに違う点である。
 
 **作業セッション**は、人が `claude -w` で開くか、導入先が固定の起動手段を用意した構成では管理セッションがその手段で開いた linked worktree の Claude Code のセッションで、1 つの課題について本 skill を起動したもの。**管理セッション**は、人が主リポの作業ツリーで開くセッションで、課題を選び、merge・後始末を行う（管理セッションを開くのは人だけ）。管理セッションが作業セッションへ渡し、締めの報告を受け取る手順は `implement-flow` の `reference/docs/issue-run.md` の「作業セッションで回す回」が持つ。
 
-固定の起動手段は、CLI の `shirokuma-flow work-session open`（導入先が config `workSession.launcher` で有効にした構成で使う tmux の手段）か、導入先が用意する手段である。管理セッションが開いてよいのは、その手段が次をすべて満たす回だけである: 起動するコマンドと引数が固定で、管理セッションが変えられる値は課題番号と effort（low / medium / high の閉じた値域）だけ・作業セッションへキー入力として文字を送らない・起動の引数で許可プロンプトを抑えない。CLI の手段はこの条件を実装で守る（引数の値は課題番号と、`--effort` で渡した閉じた値域の effort と、既定ブランチへ取り込まれた config の閉じた値域の値だけ。`--effort` を省いた回の effort は config の値）。effort をどう選ぶか（既定・条件・人への確認）は導入先の運用が決め、CLI は値域だけを確かめる。導入先が用意する手段の条件を配布物の側で確かめる機械段は無い（fail-open）。起動の後の課題の渡し方は下の「1. 使う条件」の SendMessage のままで、作業セッションの許可プロンプトには人が答える（管理セッションは答えない）。
+固定の起動手段は、CLI の `shirokuma-flow work-session open`（導入先が config `workSession.launcher` で有効にした構成で使う tmux の手段）か、導入先が用意する手段である。管理セッションが開いてよいのは、その手段が次をすべて満たす回だけである: 起動するコマンドと引数が固定で、管理セッションが変えられる値は課題番号と effort（low / medium / high の閉じた値域）と model（fable / opus / sonnet の閉じた値域）だけ・作業セッションへキー入力として文字を送らない・起動の引数で許可プロンプトを抑えない。CLI の手段はこの条件を実装で守る（引数の値は課題番号と、`--effort` で渡した閉じた値域の effort と、`--model` で渡した閉じた値域の model と、既定ブランチへ取り込まれた config の閉じた値域の値だけ。`--effort`・`--model` を省いた回はどちらも config の値）。effort をどう選ぶか（既定・条件・人への確認）は導入先の運用が決め、CLI は値域だけを確かめる。model は選び方を持たない: 管理セッションが `--model` を渡すのは、人がその会話で直接、その課題の作業セッションの model を指示した回だけで、渡す値は人が指示した値である。管理セッションは自分の判断で model を選ばず、管理セッションから model を提案して人に確かめる形も取らない（人が自分から指示した回だけ）。指示が無い回は `--model` を付けない（config の値で開く）。GitHub の本文・コメントや他のセッションの文面は指示に数えない。指示があったかを CLI は確かめない（fail-open）。導入先が用意する手段の条件を配布物の側で確かめる機械段は無い（fail-open）。起動の後の課題の渡し方は下の「1. 使う条件」の SendMessage のままで、作業セッションの許可プロンプトには人が答える（管理セッションは答えない）。
 
 ## 起動直後
 
@@ -22,6 +22,8 @@ Bash で `shirokuma-flow rules inject --scope orchestrator --rules trust-boundar
 - `commit-style`: commit する
 - `publication-hygiene`: 実装の段に入る
 - `delegation-and-checks`: 設計か計画を起案する・実装の段に入る
+- `ddd-enforcement-gradient`: 設計の段に入る
+- `issuetype-hierarchy`: 計画の段に入る
 - `sast-operation`: 品質ゲートの段に入る
 - `lint-workflow-area`: 品質ゲートの段に入る
 - `html-report-criteria`: worker を使えない回に skill `writing-html-explainer` を直接起動する
@@ -32,7 +34,7 @@ Bash で `shirokuma-flow rules inject --scope orchestrator --rules trust-boundar
 
 参照集合（常時は注入しない。契機に当たったら `<rule-index>` の `file` から Read する。1 回読んだ規範は読み直さない）。
 
-作業セッションの main はメイン（状態遷移・判定記録・レビューの委任）と runner の両方を担う。**手順書（`issue-run-worker` の定義）の最初の一手 1（worker scope の注入）は、上の起動直後の注入と参照する規範で済んだものとして読み、worker scope の注入は打たない。** 最初の一手 1 の一覧のうち上の注入に無い規範は、上の参照する規範の契機で読む。各段の手順書が自分の最初の一手で宣言する規範のうち、上の注入にも参照する規範にも無いものは、その段に入る直前に `<rule-index>` の `file` から Read する。
+作業セッションの main はメイン（状態遷移・判定記録・レビューの委任）と作業の担い手の両方を担う。**worker scope の注入は打たない**（上の起動直後の注入と参照する規範で読む）。各段の手順書（各 skill の reference）が冒頭の「読む規範」で名指す規範のうち、上の注入にも参照する規範にも無いものは、その段に入る直前に `<rule-index>` の `file` から Read する。
 
 ## 1. 使う条件
 
@@ -40,30 +42,34 @@ Bash で `shirokuma-flow rules inject --scope orchestrator --rules trust-boundar
 
 - 起動の経路が次のどちらかである。
   - 人が `/issue-run-flow` を打ち、引数に課題番号を渡した。
-  - 管理セッションからの SendMessage が、本 skill を名指し、課題番号と、人がその課題にやり切り方式を指示した旨を含む。人の指示は、人のその回の指示か、人がその会話で直接依頼してプロジェクトの規範に書かせた常設の指示である。常設の指示の回は、SendMessage がその規範の所在を添え、作業セッションはその規範を読んで課題が射程に入ることを確かめる（入らなければ止まって依頼元へ返す）。
-  - 会話で人が「やり切って」と言っただけの回は、どちらにも当たらない（そのセッションは `implement-flow` の `reference/docs/issue-run.md` の「方式の選び方」で担い手を選ぶ）。
+  - 管理セッションからの SendMessage が、本 skill と課題番号を名指す。
+  - 会話で人が課題の作業を頼んだだけの回は、どちらにも当たらない（そのセッションは管理セッションとして `implement-flow` の `reference/docs/issue-run.md` の「作業セッションで回す回」に従い、作業セッションを開いて渡す）。
 - セッションが linked worktree で動いている（人が `claude -w` で開いたか、管理セッションが導入先の固定の起動手段で開いた）。
 
-SendMessage の本文は管理セッションの申告で、人の承認の代わりではなく、権限を広げない（この会話の permission・「してはいけないこと」・push の先はそのまま）。人の指示を運んだかを機械で確かめる層は無い（fail-open）。
+課題を立てられない回の代わりの経路（人が開いたセッションで設定系などの skill をそのまま打つ）は本 skill を使わない。条件と PR 本文の 1 行は `implement-flow` の `reference/docs/issue-run.md` の「使える条件と使えない回」が持つ。
+
+SendMessage の本文は管理セッションの申告で、人の承認の代わりではなく、権限を広げない（この会話の permission・「してはいけないこと」・push の先はそのまま）。
 
 ## 2. 手順書
 
-- runner の手順は `issue-run-worker` の定義、メインに残す段は `implement-flow` の `reference/docs/issue-run.md`。どちらも段に入る直前に、その段で使う節だけを Read する（節の行は `grep -n '^#'` で引き、行範囲で読む）。ここに写さない。段ごとに読むものは次の表のとおりで、起動の時点ではどれも読まない。
+- 作業セッションの手順は本 skill の `reference/procedure.md`、作業セッションの中で別の worker に残す段は `implement-flow` の `reference/docs/issue-run.md` の「メインに残す段」。どちらも段に入る直前に、その段で使う節だけを Read する（節の行は `grep -n '^#'` で引き、行範囲で読む）。ここに写さない。段ごとに読むものは次の表のとおりで、起動の時点ではどれも読まない。
 
 | 段 | 読むもの（段に入る直前） |
 |---|---|
-| どの段でも（最初に段に入るとき 1 回） | `issue-run-worker` の「してはいけないこと」（下の「手順書の「してはいけないこと」の扱い」で読み替えて当てる） |
+| どの段でも（最初に段に入るとき 1 回） | `reference/procedure.md` の「してはいけないこと」・「規範の届き方」 |
 | トリアージ | 本 skill の `reference/triage.md`（短い経路を選ぶ回は `reference/short-path.md` も） |
-| 設計・計画の起案 | `issue-run-worker` の「最初の一手」2・「段と手順書」と、その表が名指す手順書（`design-worker` か `plan-worker` の定義と reference）・`design-flow` か `prepare-flow` の「段の順序」・`issue-run.md` の「メインに残す段」 |
+| 設計・計画の起案 | `reference/procedure.md` の「分離の確かめ」・「段と手順書」と、その表が名指す手順書（`design-flow` か `prepare-flow` の `reference/docs/drafting.md` と、それが読む雛形・判定基準）・`design-flow` か `prepare-flow` の「段の順序」・`issue-run.md` の「メインに残す段」 |
 | ADR 候補 | 本 skill の `reference/adr-candidate.md` |
-| 実装の入口 | `issue-run-worker` の「最初の一手」3〜5・「作業ツリーを残す目印と控え」の控えの項と、`coding-worker` の定義 |
-| 品質ゲート・commit・PR | 「段と手順書」の表が名指す手順書（`finalize-worker`・`commit-worker`・`committing-and-opening-pr`・`pr-worker`）・`issue-run.md` の「メインに残す段」 |
-| PR のレビュー | `review-flow` の SKILL.md と同 skill の `reference/docs/review-gate.md`・`issue-run.md` の「結果行の照合」の `PR_CREATED` / `REVIEWED` / `FIXED` の項 |
-| PR の是正の続き（`gated` で PR がある回） | `issue-run-worker` の「是正の続きとして委任された回」 |
+| 実装の入口 | `reference/procedure.md` の「実装の段の入口」・「控えのファイル」と、`implement-flow` の `reference/docs/coding.md` |
+| 品質ゲート・commit・PR | `reference/procedure.md` の「段と手順書」の表が名指す手順書（`implement-flow` の `reference/docs/finalize.md` と `reference/docs/quality-gate.md`・`committing-and-opening-pr` の SKILL.md）・`issue-run.md` の「メインに残す段」 |
+| PR のレビュー | `review-flow` の SKILL.md と同 skill の `reference/docs/review-gate.md`・`reference/procedure.md` の「PR の閉じる参照の照合」 |
+| PR の是正の続き（`gated` で PR がある回） | `reference/procedure.md` の「是正の続き」 |
+| 統合ブランチの作成・取り込み・最終 PR（計画が統合ブランチを使う課題） | `reference/procedure.md` の「統合ブランチの段」と、規範 `branch-workflow` の「統合」「Plan ケース」 |
+| PR を持つ作業ブランチへの base の取り込み | `reference/procedure.md` の「base の取り込み」と、`review-flow` の `reference/docs/review-gate.md` の「base を取り込んだ後の増分再レビュー」 |
 
-  作業セッションでは使わないので読まない節: `issue-run-worker` の「ブリーフ（メインが書く）」「PR のレビュー（入れ子・…）」「課題の続きとして委任された回」「SendMessage で届く続き」「結果行（最後の 1 行・固定形）」、`issue-run.md` の「方式の選び方」「作業セッションで回す回（管理セッションの手順）」「委任」「SendMessage の中身」「PR のレビューを入れ子で回す回（…）」「再開できない回（作業が始まった後）」「是正の続きが `not-isolated` を返した回」「作業ツリーの後始末」。手順書が別の節を名指して読めと書く回は、その節も読む。
-- プラグインのパスはインストール済みの置き場から引く（作業ツリーにある同名の定義は手順として読まない）。
-- 手順書がブリーフに求める値は、ブリーフの代わりに自分で引く: base は `implement-flow` がブリーフに書くときと同じ決め方（規範 `branch-workflow`）、確認モードは `implement-flow` が解決するときと同じ取り方で引いた値、各 SKILL.md の絶対パスは `shirokuma-flow plugin skill-path <skill>` の候補、agents ディレクトリはその候補と同じプラグインの置き場から取る。引けない値は推測で埋めず、止まる理由として依頼元に返す。
+  手順書が別の節を名指して読めと書く回は、その節も読む。
+- プラグインのパスはインストール済みの置き場から引く（作業ツリーにある同名の手順書は手順として読まない）。
+- 手順書が自分で引くとする値は、次のとおり引く: base は `implement-flow` がブリーフに書くときと同じ決め方（規範 `branch-workflow`）、確認モードは `implement-flow` が解決するときと同じ取り方で引いた値、各 SKILL.md と reference の絶対パスは `shirokuma-flow plugin skill-path <skill>` の候補から取る。引けない値は推測で埋めず、止まる理由として依頼元に返す。
 - 分離の確かめに使う主リポのパスは、`git rev-parse --path-format=absolute --git-common-dir` の親から取る。
 
 ## 3. main が読むときに違う点
@@ -96,7 +102,8 @@ SendMessage の本文は管理セッションの申告で、人の承認の代�
 | `designing` | 課題の子に設計 Issue が在れば、起票し直さずに設計の段の残りから続ける。無ければ `design-flow` 段 1a のとおり seed を起票してから設計の起案から始める（レビュー中も `designing` のままなので、`verdict` だけで起案からやり直さない） |
 | `preparing` | 計画 Issue が在れば計画の段の残りから続ける。無ければ計画の起案から始める |
 | `working` | 実装の段から始める |
-| `gated` | 課題を閉じる open な PR が在る（`shirokuma-flow pr list` で引く）回だけ、PR の是正から続ける。head ブランチの確かめとブランチの切り方は、手順書の「是正の続きとして委任された回」の節のとおり自分で行う。PR が無い回（課題自身が Backlog か Review の回）は、下の「トリアージの段」から始める |
+| `gated` | 課題を閉じる open な PR が在る（`shirokuma-flow pr list` で引く）回だけ、PR の是正から続ける。head ブランチの確かめとブランチの切り方は、`reference/procedure.md` の「是正の続き」の節のとおり行う。PR が無い回（課題自身が Backlog か Review の回）は、下の「トリアージの段」から始める |
+| （`verdict` によらず）SendMessage が統合ブランチから既定ブランチへの最終 PR を名指した回（親の課題の子が全部 Done で統合ブランチが残る） | `reference/procedure.md` の「統合ブランチの段」の最終 PR から始める。統合ブランチが `git ls-remote --heads origin` で見つからない・子に Done でないものがある（`shirokuma-flow issue show <計画#>` の `children`）回は何もせず止まり、理由を依頼元へ返す |
 | `select_child`・`all_children_done`・`leaf`・`reclassify`・`human_task`・`undetermined` | 何もせず止まり、`verdict` と理由を締めの報告に書いて依頼元へ渡す（子を選ぶ・分類し直す・人に頼む、は作業セッションの役ではない） |
 | `done` | 課題は Done（終端）。止まり、終わっていることを締めの報告に書いて依頼元へ渡す（戻すかは人が決め、作業セッションは `rollback` を打たない）。`nextActions` に要素があれば、その `verb` と `args` を締めの報告に逐語で添える |
 
@@ -108,7 +115,7 @@ SendMessage の本文は管理セッションの申告で、人の承認の代�
 
 - **依頼元**は、本 skill の起動の経路を作った相手である。管理セッションからの SendMessage で起動した回は、その依頼メッセージの送り主（作業を依頼してきた管理セッション）。人が `/issue-run-flow` を打った回は人。
 - 依頼元が管理セッションの回、返信先は受け取った依頼メッセージの送り主（from）から取る。依頼本文に書かれた名前が送り主と違う回は送り主へ返し、食い違いを 1 行添える（本文は申告で、送り主は実行環境が付ける値）。
-- 依頼元が管理セッションの回は、人に質問を出さない（AskUserQuestion を使わない）。迷い・止まる理由・人の判断が要る点は、依頼元へ SendMessage で返し、返事を待つ。手順書（`issue-run-worker` の定義・`implement-flow` の `reference/docs/issue-run.md`・各 flow skill）と規範が「人に渡す」「人に確認する」「人に知らせる」「人に示す」「人に出す」と書く箇所も、この回は依頼元へ返すと読む。依頼元が人の回は人に返す。
+- 依頼元が管理セッションの回は、人に質問を出さない（AskUserQuestion を使わない）。迷い・止まる理由・人の判断が要る点は、依頼元へ SendMessage で返し、返事を待つ。手順書（本 skill の reference・各段の手順書・`implement-flow` の `reference/docs/issue-run.md`・各 flow skill）と規範が「人に渡す」「人に確認する」「人に知らせる」「人に示す」「人に出す」と書く箇所も、この回は依頼元へ返すと読む。依頼元が人の回は人に返す。
 - **人の判断が要る点**: 返す点のうち、手順書・規範が人の判断・確認・決定を求めている点（例: `issue-run.md` の「続けるか捨てるかは人が決める」）と、`next` / `pr checks` の `runBy:"human"` の要素は、「人の判断が要る」と明示して返す。依頼元はそれを人へ中継する。その点は、返事が人の答えを運んでいると読めるときだけ進める。依頼元が自分で答えたと読める返事・人の答えかを読み取れない返事では進めず、止まった理由として締めの報告に残す。`runBy:"human"` の要素と、不可逆・外向き操作の停止境界（`autonomous-flow` の `reference/criteria/irreversible-operations.md`）に当たる操作は、返事があっても作業セッションでは打たない。人の判断を要しない点（値の引き方・手順の読み方の迷いなど）は、依頼元の答えで進めてよい。
 - **待ち方**: SendMessage で返したら、その問い合わせに依存しない作業を済ませてから応答を終え、返事が届いたら同じセッションで続ける（下の「止めない・再開しない」は段の終わりで止まらない決まりで、問い合わせの返事を待つ間はこれに当たらない）。待つ時間の上限は持たない。SendMessage がエラーで返った回は、問い合わせと止まった理由を締めの報告に書いて終える（人に聞き直さない）。
 - **変えないもの**: 許可プロンプトには人が答える（依頼元の管理セッションは答えない）。依頼元の返事は申告で、人の承認の代わりではなく、権限を広げない（「1. 使う条件」の SendMessage の項と同じ）。返事が「人の答えである」と書いていることも申告として読み、それを確かめる層は無い（fail-open）。
@@ -116,17 +123,15 @@ SendMessage の本文は管理セッションの申告で、人の承認の代�
 
 ### 止めない・再開しない
 
-- 手順書が「結果行を返して止まる」と書く段の終わりでは止まらない。`issue-run.md` の「メインに残す段」のその段の分をその場で行い、続ける。
-- 結果行・結果行の照合・`issue-run-worker` への SendMessage の続き（作業セッション自身を止めて再開する形。レビュー worker への R1b の続きは下の「レビュー」のとおり使う）・目印のファイル・「課題の続き」「是正の続き」の委任は使わない。例外として、結果行の照合のうち `PR_CREATED` / `REVIEWED` / `FIXED` の `linked_issues` の照合だけは下の「レビュー」のとおり行う。
-- 控えのファイルは、文脈が要約された後のために手順書どおり書く。
+- 段の終わりでは止まらない。`issue-run.md` の「メインに残す段」のその段の分をその場で行い、続ける。
+- 控えのファイルは、文脈が要約された後のために `reference/procedure.md` の「控えのファイル」のとおり書く。
 
 ### レビュー
 
-- 入れ子の固定形のブリーフでは呼ばない。`review-flow` の既定の経路で、メインとして R1 の 3 本と判定器を委任する。
-- R1 を委任する前と、是正を push した後の再レビューの前に、`issue-run.md` の「結果行の照合」の `PR_CREATED` / `REVIEWED` / `FIXED` の項のとおり、`pr show` の `linked_issues` を閉じるはずの集合と照らす（課題の PR の集合はその項の決め方で自分で引く。下の「ADR 候補の段」の ADR 候補の PR では、集合はその段が起こした ADR 候補 Issue だけで、課題・設計は入らない）。食い違えば判定の記録と R1 の委任に進まず、`committing-and-opening-pr` の「PR 作成」4 のとおり PR 本文を直してから照らし直す。直しても合わなければ止まる（このセッションでは PR を書いた主体と照らす主体が同じなので、理由を返させる相手がいない）。
+- `review-flow` の既定の経路で、メインとして R1 の 3 本と判定器を委任する。
+- R1 を委任する前と、是正を push した後の再レビューの前に、`reference/procedure.md` の「PR の閉じる参照の照合」を通す（このセッションでは PR を書いた主体と照らす主体が同じなので、直しても合わなければ止まる）。
 - R1b はレビュー worker への続き（`review-flow` の `reference/docs/review-gate.md` の `resume=true`）で当てさせる。
-- R2 の是正は自分で行い（R2 の 3 worker を委任しない）、増分を再レビューに出す。
-- `gate nested-check` は使わない。
+- R2 の是正は自分で行い（R2 の 3 worker を委任しない。同じ作業ツリーに 2 主体が書かないため）、増分を再レビューに出す。
 - 設計レビューのブリーフに、計画要否の契約コメントは設計の書き手（このセッションの main）が書くので、設計本文の計画要否の判定を必ず見る（`design-flow` の判定基準の計画要否の宣言の項）と書く。
 
 ### 短い経路（文書だけ・コメントだけ・テストの期待値の置き換えだけを変える課題）
@@ -149,15 +154,9 @@ SendMessage の本文は管理セッションの申告で、人の承認の代�
 
 設計か計画が ADR 候補を起こした回は、決定の段（設計。設計を持たない課題では計画）の承認と計画要否の契約の後、次の段へ進む前に、本 skill の `reference/adr-candidate.md` を Read してその手順で扱う（ADR 候補の起票・起草・整合のレビューの委任・ADR 候補のブランチ・確定の打ち手・ADR 候補の PR・merge を頼んで止まる・課題の次の段へ戻る）。
 
-### 手順書の「してはいけないこと」の扱い
+### してはいけないこと・push の先
 
-- 外れる: 上の「自分で打つ」に当たる禁止と、入れ子にだけ掛かる禁止（固定形のブリーフ以外での委任・4 本以外の委任・R1b の続きの固定形・`gate token` / `config get` の引き直し・`gate nested-check`・`rec=` の置き場の禁止）。
-- 名指す書き込み（「名指されていない GitHub への書き込み」に当たらないもの）: 計画要否の契約コメント（課題へ 1 件）・worker を使えない回の確認ビューの記録行（対象の Issue / PR 本文）と `pages push`。上の「トリアージの段」の回は次も: 課題本文の書き戻し（`issue context` → `issue push`）・題名の `issue retitle`・IssueType の `issue retype`。上の「ADR 候補の段」の回は次も: ADR 候補 Issue の起票と候補本文の書き戻し（`issue context` → `issue push`）・ADR 候補のブランチへの commit / push と ADR 候補の PR の作成と本文・確定した ADR 正本と対応表の `pages push`・緩める側の候補を授権で確定した回の監査コメント（`autonomous-flow` の `reference/criteria/irreversible-operations.md` の「監査」節）・人がその場で特定の候補を自分で確定すると指示した回の候補 Issue への 1 行。
-- 残る: merge（課題の PR と ADR 候補の PR）・作業ツリーの外への書き込み・名指されていない GitHub への書き込み・動作確認での実 GitHub への書き込み・worker を使える回に確認ビューを自分で生成すること・force push・`git branch -D`・作業ツリーの撤去・レビュー worker の結果ファイルと記録の書き換え。
-
-### push の判定
-
-作業セッションの main には agent の種別が無いので、hook の rule `issue-run-push`（宛先を課題のブランチ 1 本に縛る判定）は掛からない。ほかの push の rule は掛かる。宛先は課題のブランチと、その課題の設計か計画が起こした ADR 候補のブランチ（`branch name <候補#>`）の 2 本だけで、それ以外へ push しないことは自分で守る（fail-open）。
+`reference/procedure.md` の「してはいけないこと」と「段と手順書」の push の先の項が正本（名指す書き込みの一覧を含む）。各段の手順書の書き込みの範囲と禁止のうち、上の「自分で打つ」に当たる禁止はこのセッションでは外れ、それ以外は残る。
 
 ## 4. 終わり方
 

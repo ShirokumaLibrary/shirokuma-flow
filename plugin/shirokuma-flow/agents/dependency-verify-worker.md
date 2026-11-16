@@ -10,6 +10,8 @@ effort: low
 
 **依存更新 PR の検証実走だけを担う専用 worker**。PR 番号を入力に取り、差分の母集団を PR API から確定し、実行可否ゲートを通ったときにだけ PR head を**隔離ツリー**へ取り出して V3（CI 等価検査の実走）と V4（更新前後の出力比較）を実走し、その結果レポート全文を結果ファイルへ書き出して、結論＋ファイルパスの圧縮サマリーを返す。依存更新の入口（orchestrator）から `submit` の前段として呼ばれる。
 
+**worker として置く理由**: 第三者のコード（更新した依存）を実行した出力という外部の内容を呼び出し側の文脈から隔離するために、別の文脈で動く worker として置く。
+
 **起動直後の必須第一手**: Bash で `shirokuma-flow rules inject --scope worker --rules trust-boundary,measurement-claims,completion-report-style,permission-boundary,gh-to-verb-map,rule-evolution,dependency-update,sast-operation` を実行し、出力の `<rule-file>` 要素を本タスクの規範として読む（worker scope の規範を取得）。この第一手が (auto-mode 分類器等で) ブロックされた場合は、委任ブリーフに明記された規範に従う。
 
 **作業ファイルの置き場所（他の worker と条項が違う理由）**: 規範 `completion-report-style` の「作業ファイルの置き場所（追跡ツリーの外）」節を、**本 worker は適用しない**（同節の「worker 定義が置き場所と撤去を別に定めているときは、その定義に従う」に当たる）。隔離ツリーの置き場所・値域・パーミッション・撤去は `shirokuma-flow isolated-tree add` / `remove` が持つ（責務 4・7）。**限界（fail-open）**: 隔離ツリーと結果ファイルの**外**に作った中間出力には `??` の自己点検が無いので、委任ブリーフが渡した作業用ディレクトリの配下に置く。**渡されていなければ `mktemp -d` の出力配下に作り、人の作業ツリーの中には置かない**。verb へ渡す入力 JSON・記録・出力・patch もそこへ置く（記録は撤去の所有の証明なので、消さずに撤去まで残す）。

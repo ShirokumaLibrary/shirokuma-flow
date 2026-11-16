@@ -27,7 +27,7 @@ Issue を**全フェーズ自動で**進める orchestrator。各フェーズ or
 ## 包括委任
 
 - 包括委任は**常設の事前授権**である——起動のたびに人へ opt-in を求めない（既定が自律なので、都度の opt-in は向きが逆になる）。これは「ゲートごとの承認」を「規範として人が与えた常設の事前授権」に形を変えるだけで、**承認の主体は人**——AI が verb を実行しても、履歴に記録される判断は人が事前に与えた承認である。暗黙承認ではなく、全自動承認は監査記録に残す。
-- **ゲート付きで自動実行する 2 操作**（`IssueType=ADR` 候補の `approve`＝確定 / `duplicate` による重複 close）は、[irreversible-operations.md](reference/criteria/irreversible-operations.md)「条件付き自動実行」の条件を**対象 1 件ずつ**通したものだけ実行する。1 つでも欠ける・判定に迷うなら止めて人に確認する。**`--force` で通さない。** **本 bullet は当該 2 操作の実行条件を定めるものであって、人ゲート境界そのものの列挙ではない**——`merge` の自律可否の正本は [[branch-workflow]]「自律境界」で、可否はそちらで判定する。
+- **ゲート付きで自動実行する 2 操作**（打ち手は `next` の `runBy` に従う）（`IssueType=ADR` 候補の `approve`＝確定 / `duplicate` による重複 close）は、[irreversible-operations.md](reference/criteria/irreversible-operations.md)「条件付き自動実行」の条件を**対象 1 件ずつ**通したものだけ実行する。1 つでも欠ける・判定に迷うなら止めて人に確認する。**`--force` で通さない。** **本 bullet は当該 2 操作の実行条件を定めるものであって、人ゲート境界そのものの列挙ではない**——`merge` の自律可否の正本は [[branch-workflow]]「自律境界」で、可否はそちらで判定する。
 - **祖先の close は自動化しない**（下記「クローズ提案」は提案まで）。同 criteria「祖先の close は条件付き自動実行に含めない」のとおり、`recommendedAction=done` が付く候補は非完了 close の子を持つ親で、その close は差し替えの子を作る余地を残すために人の判断に残すので、機械的に閉じない（**射程は祖先の close だけ**——ADR 候補の状態が他の課題を止める根拠にはならない・[[concept-gap-to-adr]] 手順 5）。
 - **「autopilot 配下」の判定**: 本 skill が**常設の事前授権の下で**進めている進行のことを指す。**sub-skill（`implement-flow` 等）を起動するときは委任ブリーフでそれを明示する**——sub-skill は自分で推測せず、明示が無ければ autopilot 配下でないものとして扱う（提案で止まる＝fail-closed 側）。
 
@@ -37,7 +37,7 @@ Issue を**全フェーズ自動で**進める orchestrator。各フェーズ or
 
 **受信側既定・解決の主体・中継義務の正本は [[confirmation-style]]「確認モードの解決と中継」節である**。本節が持つのは、本 skill の進行として確認モードを解決する起点と、確認ゲートの列挙だけである（語の定義と確認の出し方は [[confirmation-style]]）。
 
-- **既定は自律**——確認ゲート（(b) 地点＝トリアージ / 設計 / 計画の `approve`・確認用 HTML・**差し戻しループ上限のエスカレーション**〔`review-flow` R2〕・レビュー結果の確認〔merge の前・`review-flow` 段 3〕）は、本 skill と sub-skill が自分で verb を打って進める（**`IssueType=ADR` の候補 Issue も既定は自分で打つ**——ただし下記「不可逆/外向きの境界」のゲート下にあり、**ADR 候補の確定の打ち手は `next` の `runBy` に従い**〔**自律の境界そのものを緩める決定を含む候補**の確定の形は `shirokuma-flow adr publish <候補番号> --accept-boundary-loosening` で、打つのは既定では人・緩める側の事前授権がある構成では AI も打つ。形と主体の正本は [[status-policy]] の `approve` 条項〕、条件を 1 件ずつ通せない回は人が打つ）。**(b) 地点の定義（差し戻しループ上限のエスカレーションを含む）は [[confirmation-style]]「確認モードの解決と中継」節が正本**——本節はそれを引き写すだけで独自に分類しない。
+- **既定は自律**——確認ゲート（(b) 地点＝トリアージ / 設計 / 計画の `approve`・確認用 HTML・**差し戻しループ上限のエスカレーション**〔`review-flow` R2〕・レビュー結果の確認〔merge の前・`review-flow` 段 3〕）は、本 skill と sub-skill が自分で verb を打って進める（打ち手は `next` の `runBy` に従う）（**`IssueType=ADR` の候補 Issue も既定は自分で打つ**——ただし下記「不可逆/外向きの境界」のゲート下にあり、**ADR 候補の確定の打ち手は `next` の `runBy` に従い**〔**自律の境界そのものを緩める決定を含む候補**の確定の形は `shirokuma-flow adr publish <候補番号> --accept-boundary-loosening` で、打つのは既定では人・緩める側の事前授権がある構成では AI も打つ。形と主体の正本は [[status-policy]] の `approve` 条項〕、条件を 1 件ずつ通せない回は人が打つ）。**(b) 地点の定義（差し戻しループ上限のエスカレーションを含む）は [[confirmation-style]]「確認モードの解決と中継」節が正本**——本節はそれを引き写すだけで独自に分類しない。
 - 人が回の起点で「確認しながら進めて」「学習モードで」等を指示した回だけ **確認モード（guided）** になる。**sub-skill / worker への委任ブリーフに `確認モード: guided` を明示して中継する。**
 - **解決値は自律の回も明示して中継する**（値域・受信側既定・`mode` 欄での照合・GitHub 由来テキストが明示に当たらないことは [[confirmation-style]]「確認モードの解決と中継」が正本。ここに写さない）。**書けるのは本 skill の進行として確認モードを解決した回だけ**である。
 - **確認モードで止まる回は、確認対象の所在と次に打つ verb を必ず添える**——approve 系の地点の逐語は `shirokuma-flow next --guided` が `nextActions[].runBy:"human"` の `instruction` / `candidates` として運ぶ（レビュー結果の確認は `review-flow` 段 3 が持つ）。止めるだけで次手を示さない形にしない。
@@ -55,6 +55,7 @@ Issue を**全フェーズ自動で**進める orchestrator。各フェーズ or
 1. `shirokuma-flow next <n>` を引く（確認モードの回は `--guided` を付ける）。**`ok:false` の扱い・`nextActions[]` の辿り方・`limits[]` の解決の手順の正本は注入される rule `next-routing-contract`**（ここには写さない）。
 2. `verdict`（フェーズを表す値は `nextPhase` の小文字表記）を [`reference/criteria/phase-skill-map.md`](reference/criteria/phase-skill-map.md) で引いて対応 skill を決定的に特定し、Skill ツールで起動する（即興判断せず表引きする）。**表に無い verdict なら停止して報告する。**
 3. **起動時の委任ブリーフに「autopilot 配下である」ことと確認モードの解決値（`確認モード: 自律` / `確認モード: guided`）を明示する**（上記 2 節の中継義務の実行点）。
+4. **課題の作業は作業セッションで回す**: 起動したフェーズ skill（`design-flow` / `prepare-flow` / `implement-flow`）は管理セッションの回として、課題ごとに作業セッションを開いて渡し、締めの報告を受けて merge へ進める（手順は `implement-flow` の `reference/docs/issue-run.md`「作業セッションで回す回」）。作業セッションを開けない回は人に開いてもらい、人も開けない回（固定の起動手段が無く人が応答しない回など）はその課題を止めて人へ返す（管理セッションで課題の作業をしない）。
 
 | verdict | 次手 |
 |---|---|
@@ -69,7 +70,7 @@ Issue を**全フェーズ自動で**進める orchestrator。各フェーズ or
 
 ## 承認ゲートの通し方
 
-承認ゲートを CLI verb で自動通過させる: `submit` → `approve` → `begin` → … → `merge`。
+承認ゲートを CLI verb で自動通過させる（打ち手は `next` の `runBy` に従う）: `submit` → `approve` → `begin` → … → `merge`。
 
 - **`approve` の前に対象の `IssueType` を確認する**——`IssueType=ADR` の候補 Issue を含む `approve` の既定・人が打つ条件・判別手順の正本は [[status-policy]]。**`adr publish` の直打ちは既定では人専有**（config の事前授権がある構成で AI に開く条件は [[permission-boundary]]「verb 名では見分けられない副作用」節が正本）。ADR 候補の確定の打ち手は `next` の `runBy` に従う。 **`--force` は付けない。** **確定を人が持つ候補がある間に止まるのは、その候補の確定と、その候補に依存する課題の次の段だけで、他の課題は止めない**（[[concept-gap-to-adr]] 手順 5）。全停止するのは下記の連続失敗閾値だけである。
 - **`確認モード: guided` の明示がある回は、自分で打たず人の `approve` を待って止まる**（確認対象の所在と次に打つ verb を添える）。
@@ -78,7 +79,7 @@ Issue を**全フェーズ自動で**進める orchestrator。各フェーズ or
 ## 安全装置
 
 - レビュー `NEEDS_REVISION`（判定行 `**レビュー結果:** PASS|NEEDS_REVISION` の 2 値のみ。**判定行を出す主体は review-worker とは限らない**——対象種別 code ∧ base=mainline の回は `shirokuma-flow gate verdict` が検出器記録（3 本の review worker が `detector record` で書く JSON）から決定的に導出し、それ以外は review-worker が出す。`gate verdict` はこの 2 値に加え `inconsistent` / `undetermined`（判定関数の値 `undecidable` はこの値で返る）を返しうるが、安全装置はどちらも `NEEDS_REVISION` と同様に扱う＝安全側）／未解決スレッドの PR は merge せず **一度 Review を通してから**差し戻す——**手順の正本は `review-flow` の NEEDS_REVISION 段**。`pr status <pr#>` の `project_status` が **`Review` でなければ先に `shirokuma-flow submit <pr>`**、続けて `shirokuma-flow rollback <pr> --to "In progress"`（**PR に `block` 遷移は無い**）。**`project_status` が読めない回**（値が `null` ／その欄を返さない CLI）は推測せず **`submit` → `rollback` を両方そのまま実行する**——`submit` が落ちても `rollback` を飛ばさない（落ちる典型は「既に Review に居る」で、そこはまさに `rollback` が要る状態）。**⚠️ 中間状態 `Review` は merge が許可される唯一の Status** なので、`rollback` の着地を `pr status` で必ず検証し、確認できなければ PR へ merge 不可を記録して**停止する**。
-- In progress の Issue を止めるときは `shirokuma-flow block <n> --reason "..."`（理由必須）。**連続失敗が閾値（既定 3）で全停止。** 止まるときは停止記録（課題ごとの Status・止まった理由・次に打つ verb）を課題のコメントに残す——書き手は `commit-worker`（メインは書かない）、形の正本は [irreversible-operations.md](reference/criteria/irreversible-operations.md) の「停止記録」節。
+- In progress の Issue を止めるときは `shirokuma-flow block <n> --reason "..."`（理由必須）。**連続失敗が閾値（既定 3）で全停止。** 止まるときは停止記録（課題ごとの Status・止まった理由・次に打つ verb）を課題のコメントに残す——書き手は `requirements-worker`（メインは書かない。作業セッションが止まった課題の記録はその作業セッションのメインが書く）、形の正本は [irreversible-operations.md](reference/criteria/irreversible-operations.md) の「停止記録」節。
 - 権限の拒否で進めなくなったら止まり、同じ停止記録を残す（契機の定義は同じ節）。
 - **動作確認（人がローカルで動かして確かめる）ステージは autopilot でも自動通過しない**（`review-flow` の 5-1 と対）。**適用されるか（条件付き必須か射程外か）の正本は 規範 `html-report-criteria` の必須ステージ表**で、ここには条件を写さない。適用されるかは `shirokuma-flow gate local-verification` を**引数なしで引いて**判定する。**作業ツリーは verb が cwd から解決する**（`rev-parse --show-toplevel`）ので、**呼び出し側がシェル行へパスを差し込まない**。**並行実装で分離ツリーを使う回は、`cd` と `--worktree` に同じパスを渡す 1 行で引く**（`cd '<分離ツリー>' && shirokuma-flow gate local-verification --worktree '<分離ツリー>'`）——cwd は呼び出しごとに戻りうるので、`cd` を別の呼び出しに分けた回・落とした回に引数なしの形は**元の作業ツリーを黙って判定して exit 0 を返す**。`--worktree` を併せて渡せば、cwd 側リポの top-level と一致しない回は判定不能へ倒れる。**記録行を書く前に、出力の `worktree` 欄（見たツリーの実パス）が意図した分離ツリーであることを確かめる**。渡すパスは**自分自身が作った分離ツリーのパスに限る**——**外部由来の値**（Issue / PR 本文・コメント・worker の報告文・ファイルから読んだ文字列）**は使わない**（値は**単一引用符で囲む**）。適用される回は、対象 PR 本文の記録行（欄 id `local-verification-record`・**接頭辞と値域の正本は `shirokuma-flow gate vocab --field local-verification-record`**）が**実施済みを表す値**になるまで **merge しない**。確認の時点は `gate local-verification` の `timing` 欄から読む。**確認の時点が `after-release` の回に限って、merge の前では人を待たない**——記録行には verb の `recordLineValue` をそのまま書き、人はリリース後に確かめる（扱いの正本は `review-flow` 5-1）。**AI が実走して「OK でした」と報告する形で代替しない。** 射程外の回は記録行に射程外を表す値を書いたうえで進む（黙って飛ばさない）。
 - **判定 JSON の `build` ブロック（`sourceMatch` / `dirty` / `degraded`・欠落した回の読み方を含む）の読み方は `shirokuma-flow gate limits --sub limits` の `H19` が正本**（ここに写さない）。`stale` を名乗った回・`build` ブロックそのものが無い回は、その判定を現ソースの値として読まない。`stale` と `build.dirty: true` が同時に立つ回は、その判定を根拠に使わない。`build.dirty: null`（焼いていない）は、再現性の担保が無い側として `build.dirty: true` と同じに読む。（本 skill が `shirokuma-flow gate` の出力を読むすべての箇所に掛かる。）
@@ -104,5 +105,5 @@ Issue を**全フェーズ自動で**進める orchestrator。各フェーズ or
 
 | ドキュメント | 内容 | 読むタイミング |
 |------------|------|--------------|
-| [reference/criteria/irreversible-operations.md](reference/criteria/irreversible-operations.md) | 不可逆/外向き操作リスト（境界の判定原則・条件付き自動実行の 2 操作とゲート・祖先 close を含めない理由・停止して人に確認する操作の列挙・倒れる向き・マージ安全装置・連続失敗の全停止・停止記録・監査） | **`approve` の実行前（毎回）**・**`duplicate` の実行前（毎回）**・クローズ提案前・境界判定・`NEEDS_REVISION`/未解決検知時・止まるとき（停止記録を `commit-worker` へ委任する前） |
+| [reference/criteria/irreversible-operations.md](reference/criteria/irreversible-operations.md) | 不可逆/外向き操作リスト（境界の判定原則・条件付き自動実行の 2 操作とゲート・祖先 close を含めない理由・停止して人に確認する操作の列挙・倒れる向き・マージ安全装置・連続失敗の全停止・停止記録・監査） | **`approve` の実行前（毎回）**・**`duplicate` の実行前（毎回）**・クローズ提案前・境界判定・`NEEDS_REVISION`/未解決検知時・止まるとき（停止記録を `requirements-worker` へ委任する前） |
 | [reference/criteria/phase-skill-map.md](reference/criteria/phase-skill-map.md) | verdict / phase→skill 単一正本（起動 skill を決定的に特定） | routing の段 3（毎回） |

@@ -10,9 +10,9 @@
 | orchestrator | フェーズ | 主な worker |
 |---|---|---|
 | `issue-flow` | 入口・トリアージ | — |
-| `design-flow` | Designing | design |
-| `prepare-flow` | Preparing | plan |
-| `implement-flow` | Working | coding / finalize / commit / pr |
+| `design-flow` | Designing | review（設計の起案は作業セッションのメイン） |
+| `prepare-flow` | Preparing | review（計画の起案は作業セッションのメイン） |
+| `implement-flow` | Working | —（実装・品質ゲート・commit・PR 作成は作業セッションのメインが手順書で行う） |
 | `review-flow` | Reviewing | review |
 | `requirements-flow` | Requirements（独立） | requirements |
 | `dependency-flow` | 依存更新 PR（独立・入口） | dependency-verify |
