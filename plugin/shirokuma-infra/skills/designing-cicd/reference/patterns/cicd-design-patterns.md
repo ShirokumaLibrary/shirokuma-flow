@@ -9,7 +9,7 @@ CI/CD パイプライン設計の決定フレームワーク詳細。パイプ�
 | ワークフロー | トリガー | 目的 |
 |-----------|---------|------|
 | CI（テスト） | PR、push | lint → test → build の品質チェック |
-| CD（デプロイ） | main/develop マージ | 環境別デプロイ |
+| CD（デプロイ） | `{MAIN_BRANCH}` / `{DEV_BRANCH}` へのマージ | 環境別デプロイ |
 | 手動実行 | workflow_dispatch | ホットフィックス、ロールバック |
 | スケジュール | cron | 定期的なセキュリティスキャン等 |
 
@@ -27,9 +27,11 @@ CI/CD パイプライン設計の決定フレームワーク詳細。パイプ�
 
 | 環境 | トリガー | 承認フロー |
 |-----|---------|----------|
-| dev | develop ブランチマージ | 不要（自動） |
-| staging | develop マージ or 手動 | 任意 |
-| prod | main ブランチマージ | 必須（manual approval） |
+| dev | `{DEV_BRANCH}` へのマージ | 不要（自動） |
+| staging | `{MAIN_BRANCH}` へのマージ or 手動 | 任意 |
+| prod | `{MAIN_BRANCH}` へのマージ | 必須（manual approval） |
+
+> `{MAIN_BRANCH}` はそのリポジトリの mainline ブランチ名、`{DEV_BRANCH}` は dev 環境へ流す開発ブランチ名で、ブランチ名は決め打ちしない（coding-cicd の雛形 `cd-deploy.yml.template` のヘッダと同じ置き方）。両者は必ず異なる名前にする。開発ブランチを持たない構成では dev の行を消す。
 
 ## デプロイ戦略選択
 
@@ -97,7 +99,7 @@ IAM ロール信頼ポリシーに `token.actions.githubusercontent.com` を追�
 | ファイル名 | トリガー | 役割 |
 |-----------|---------|------|
 | `ci.yml` | PR, push | CI（lint/test/build） |
-| `cd.yml` | main マージ | CD（環境別デプロイ） |
+| `cd.yml` | `{MAIN_BRANCH}` / `{DEV_BRANCH}` へのマージ | CD（環境別デプロイ） |
 
 ### CI ジョブ設計
 | ジョブ名 | 並列グループ | 成功条件 |

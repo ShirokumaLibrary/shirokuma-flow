@@ -86,7 +86,8 @@ MAIN_BRANCH="$(gh repo view --json defaultBranchRef -q .defaultBranchRef.name)"
 
 # 本番に出ている mainline の先端を起点にする（今いるブランチの HEAD ではない）
 git fetch origin
-git switch -c "rollback/{説明}" "origin/$MAIN_BRANCH"
+# --no-track: upstream を mainline に付けない（宛先を書かない push が mainline へ向かわないように）
+git switch --no-track -c "rollback/{説明}" "origin/$MAIN_BRANCH"
 
 # revert コミットを作り、rollback ブランチ経由で mainline へ PR を出す
 git revert --no-commit HEAD
@@ -100,7 +101,7 @@ gh pr create --base "$MAIN_BRANCH" --head "rollback/{説明}" --fill
 >
 > ⚠️ ブランチ名を決め打ちしないこと。mainline を `main` から移行済みでも**旧 `main` ブランチが残っている**リポジトリでは `git push origin main` が**成功してしまい**、revert が誰も見ていないブランチに積まれて CD がトリガーされない——ロールバックが静かに空振りする。緊急時ほどこの沈黙は高くつく。保護が無く緊急で直接 push する場合も、決め打ちではなく `git push origin "HEAD:$MAIN_BRANCH"` と実測値を使う。
 >
-> ⚠️ **二次防御層（hook の block 判定）は照合の前段で引用符の内側を不透明な 1 トークンへ置換する**ので、**pattern が literal で必要とする値——mainline 直接 push を止める rule なら mainline 名そのもの——を引用符で括ると、deny が allow へ反転する**。**「括らない」の射程はその値だけで、引数一般を裸にするという意味ではない**——上のブロックが `"$MAIN_BRANCH"` / `"rollback/{説明}"` を括っているのは、変数展開と空白を含みうる値を裸にすると語分割・グロブで壊れるからで、**そちらの引用は外さない**（外してもこの層の判定は強くならない: `gh pr create` を捕まえる rule は pattern が verb 名だけを要求するので、引数の引用有無によらずマッチする）。射程と倒れる向きの正本は shirokuma-flow プラグインの `autonomous-flow` skill の `reference/criteria/irreversible-operations.md`。実際の判定は `shirokuma-flow hooks evaluate` に当該コマンド形を渡して確かめられる。
+> ⚠️ **二次防御層（hook の block 判定）が引用符で括った引数をどう照合するかの正本は `gate limits --sub asset-delay` の E11** で、ここには写さない（照合しない形と倒れる向きも同項が持つ）。上のブロックが `"$MAIN_BRANCH"` / `"rollback/{説明}"` を括っているのは、変数展開と空白を含みうる値を裸にすると語分割・グロブで壊れるからで、**その引用は外さない**。不可逆・外向き操作の停止境界の正本は shirokuma-flow プラグインの `autonomous-flow` skill の `reference/criteria/irreversible-operations.md`。実際の判定は `shirokuma-flow hooks evaluate` に当該コマンド形を渡して確かめられる。
 
 > ⚠️ **PR 経由は「直接 push 禁止」は回避できるが、保護のすべてを回避できるわけではない**。required reviewers や required status checks が設定されていれば、この PR も approve と CI 完走を待たないと merge できない——緊急ロールバックで実際に詰まるのはここ。**平時のうちに**緊急時の扱い（admin merge を許可するか・誰が承認できるか・production Environments の承認者は誰か）を決めておくこと。手順として回らないことに障害中に気づくのが最悪。
 

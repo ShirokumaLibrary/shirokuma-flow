@@ -72,7 +72,7 @@ docker compose up -d --force-recreate {service-name}
 
 ### ステップ 4: 完了レポート
 
-変更した内容をコメントとして Issue に記録する。
+変更内容は実装サマリー（`implement-flow` の `reference/docs/quality-gate.md` の手順で書く）に書く。Issue へのコメントは、依頼元が名指した回だけ書く。
 
 ## リファレンスドキュメント
 
@@ -108,7 +108,7 @@ docker compose pull               # イメージ更新
 
 ## 次のステップ
 
-`implement-flow` チェーンではなくスタンドアロンで起動された場合:
+実装の段で併読した回は、`implement-flow` の段の順序の続き（品質ゲート・commit・PR 作成）へ戻る。この skill では commit も PR 作成もしない:
 
 ```
 実装完了。次のステップ:

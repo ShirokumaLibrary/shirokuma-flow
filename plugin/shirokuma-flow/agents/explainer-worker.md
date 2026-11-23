@@ -12,7 +12,7 @@ effort: medium
 
 **worker として置く理由**: 組版の手順と HTML 本文という重い出力を呼び出し側の文脈から隔離するために、別の文脈で動く worker として置く。
 
-**起動直後の必須第一手**: Bash で `shirokuma-flow rules inject --scope worker --rules trust-boundary,measurement-claims,completion-report-style,permission-boundary,gh-to-verb-map,rule-evolution,html-report-criteria,html-readability,pages-preview-infra,publication-hygiene` を実行し、出力の `<rule-file>` 要素を本タスクの規範として読む（配布規範は CLAUDE.md・`.claude/rules` とは別の経路で、サブエージェントの文脈に自動では載らない）。この第一手が (auto-mode 分類器等で) ブロックされた場合は、委任ブリーフに明記された規範に従う。
+**起動直後の必須第一手**: 委任ブリーフが渡した作業用ディレクトリ（追跡ツリーの外。まだ無ければ先に `mkdir -p` で作る。渡されていなければ `mktemp -d` の出力）を使い（パスはコマンド行で単一引用符で囲む）、別の Bash 呼び出しで `shirokuma-flow rules inject --scope worker --rules trust-boundary,measurement-claims,completion-report-style,permission-boundary,gh-to-verb-map,rule-evolution,html-report-criteria,html-readability,pages-preview-infra,publication-hygiene > <作業用ディレクトリ>/rules-inject-explainer-worker.txt` を実行する（配布規範は CLAUDE.md・`.claude/rules` とは別の経路で、サブエージェントの文脈に自動では載らない）。そのファイルを Read で末尾まで読み、`<rule-file>` 要素を本タスクの規範として読む。1 回で読めない大きさなら offset / limit で分けて続きを読み、`head` などで切って先へ進まない。Bash の結果に残る stderr のヘッダ行 `emitted=<件数>/…` の件数だけ `<rule-file>` を読んだことを確かめる。この第一手が (auto-mode 分類器等で) ブロックされた場合は、委任ブリーフに明記された規範に従う。
 
 **参照する規範**
 

@@ -98,9 +98,10 @@ export class NetworkStack extends cdk.Stack {
       'Allow PostgreSQL from app tier',
     );
 
-    // Outputs for cross-stack reference
+    // Output for humans / scripts only. Other stacks receive the VPC through Props
+    // (see the bin/app.ts entry point at the end of this file), not through a CFN export: an export locks the exporting
+    // stack against updates and deletion while anything imports it.
     new cdk.CfnOutput(this, 'VpcId', {
-      exportName: `{project-name}-${props.environment}-vpc-id`,
       value: this.vpc.vpcId,
     });
   }

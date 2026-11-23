@@ -25,7 +25,8 @@
 # カスタマイズ箇所（すべて置換必須）:
 #   - {PACKAGE_MANAGER}: npm / pnpm / yarn
 #   - {LOCK_FILE}: package-lock.json / pnpm-lock.yaml / yarn.lock
-#   - {NODE_VERSION}: 20 / 22 等
+#   - {NODE_VERSION}: LTS 系列（例: 24）。`.nvmrc` / `.node-version` があればその値。
+#       cdk-nextjs をデプロイ先にする構成は v24（Dockerfile の node:24-alpine と揃える）
 #   - {MAIN_BRANCH}: このリポジトリの mainline ブランチ名（main / master / develop 等）。
 #       確認: gh repo view --json defaultBranchRef -q .defaultBranchRef.name
 #       on.push.branches と deploy-staging / deploy-prod の if 条件
@@ -51,6 +52,12 @@
 #          行わず、deploy-dev の if から push 側の条件式だけを削って
 #          workflow_dispatch 側を残す（options の 'dev' もそのまま残す）。
 #   - deploy ステップ: ECS / Lambda / S3 等プロジェクトのデプロイ方式に変更
+#
+# 配置の前に直す箇所（プレースホルダではない）:
+#   - 下の `uses:` はタグ参照（@v4 等）。配置の前に、それぞれをコミット SHA で
+#     ピン留めし、版をコメントで添える（coding-cicd の reference
+#     `github-actions-patterns.md`「サードパーティ Action のピン留め」）。SHA は各
+#     action のリリースで確かめ、例から写さない。
 #
 # 未置換のまま配置したときに何が起きるか（プレースホルダごとに違う。
 # 「未置換＝いつも沈黙」ではない）:

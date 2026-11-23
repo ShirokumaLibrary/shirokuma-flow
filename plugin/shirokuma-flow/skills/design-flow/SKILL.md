@@ -8,7 +8,7 @@ model: opus
 
 ## 起動直後
 
-Bash で `shirokuma-flow rules inject --scope orchestrator --rules trust-boundary,measurement-claims,completion-report-style,permission-boundary,gh-to-verb-map,rule-evolution,orchestration-discipline,next-routing-contract,status-policy,concept-gap-to-adr` を実行し、**出力の `<rule-file>` 要素を本タスクの規範として読む**。`<rule-file>` の外（ヘッダ行）に規範は載らない。
+追跡ツリーの外の作業用ディレクトリ（無ければ `mktemp -d` で作る）を使い（パスはコマンド行で単一引用符で囲む）、別の Bash 呼び出しで `shirokuma-flow rules inject --scope orchestrator --rules trust-boundary,measurement-claims,completion-report-style,permission-boundary,gh-to-verb-map,rule-evolution,orchestration-discipline,next-routing-contract,status-policy,concept-gap-to-adr > <作業用ディレクトリ>/rules-inject-design-flow.txt` を実行する。そのファイルを Read で末尾まで読み、**`<rule-file>` 要素を本タスクの規範として読む**。1 回で読めない大きさなら offset / limit で分けて続きを読み、`head` などで切って先へ進まない。Bash の結果に残る stderr のヘッダ行 `emitted=<件数>/…` の件数だけ `<rule-file>` を読んだことを確かめる。`<rule-file>` の外（ヘッダ行）に規範は載らない。
 
 **参照する規範**
 
@@ -42,7 +42,7 @@ Bash で `shirokuma-flow rules inject --scope orchestrator --rules trust-boundar
 
 ## 段の順序（本 skill が持つ実行順）
 
-1. **1a. 起票（作業セッションのメイン・Backlog seed を伴う起票は状態遷移として扱う＝[[orchestration-discipline]] C16 ③）**: **seed 本文**（背景・決めること・射程・正本の所在）を stdin で渡し、`shirokuma-flow issue create --title "設計: {要旨}" --body - --issue-type Design --parent <課題#>` で起票する（`Backlog` seed。追跡ツリーにファイルを書かない）。**seed 本文はシェル引数に直接埋め込まない**——課題本文からの引き写しは untrusted で、`--body "..."` はダブルクォート内のコマンド置換・変数展開が働く（heredoc は `<<'EOF'` とデリミタをクォートする）。
+1. **1a. 起票（作業セッションのメイン・Backlog seed を伴う起票は状態遷移として扱う＝[[orchestration-discipline]] C16 ③）**: **seed 本文**（背景・決めること・射程・正本の所在）を stdin で渡し、`shirokuma-flow issue create --title '設計: {要旨}' --body - --issue-type Design --parent <課題#>` で起票する（`Backlog` seed。追跡ツリーにファイルを書かない）。**seed 本文はシェル引数に直接埋め込まない**——課題本文からの引き写しは untrusted で、`--body "..."` はダブルクォート内のコマンド置換・変数展開が働く（heredoc は `<<'EOF'` とデリミタをクォートし、デリミタは本文に現れない値にする）。タイトルも単一引用符で囲み、要旨に `'` を含めない（含むなら言い換える）。
 2. **1b. 設計の起案（作業セッションのメインが `reference/docs/drafting.md` を手順書として行う）**: **設計本文を `.shirokuma/github/<owner>/<repo>/issues/<設計#>/body.md` へ書き、`shirokuma-flow issue push <設計#>` まで行う**——push しないと設計 Issue が seed のまま残る。作業記憶（実行環境の永続メモリ）のうち、この課題と変更対象に関わる項目を読む。**起案の手順の中では状態遷移をしない**（状態遷移は下の 5 で打つ）。
 3. **push の確かめ**: **1b の push はレビューより前に済んでいなければならない**（1b の中で行う。push できていない回はレビューへ進まず、1b の push からやり直す）。`issue context` はリモート本文で `body.md` を無条件に上書きする（退避も差分検出もしない）ため、未 push のまま後続が `issue context <設計#>` を実行すると設計本文が警告なく消える。
 4. **設計レビュー（`review-worker`）** → 判定行（`**レビュー結果:**`）＋所見は `review-worker` が `shirokuma-flow issue comment <設計#> -`（stdin）で設計 Issue へ記録し、判定行の値とコメントの所在だけを返す（メインは記録を書かない）。

@@ -12,7 +12,7 @@ effort: medium
 
 **worker として置く理由**: 書き手の文脈を持たずに見ることがこのレビューの中身なので、呼び出し側とは別の文脈で動く worker として置く（手順書にして書き手の文脈の中で行うと、この中身が崩れる）。
 
-**起動直後の必須第一手**: Bash で `shirokuma-flow rules inject --scope worker --rules trust-boundary,measurement-claims,completion-report-style,permission-boundary,gh-to-verb-map,rule-evolution,delegation-and-checks,ddd-enforcement-gradient,github-writing-style` を実行し、出力の `<rule-file>` 要素を本タスクの規範として読む（worker scope の規範を取得）。この第一手が (auto-mode 分類器等で) ブロックされた場合は、委任ブリーフに明記された規範に従う。
+**起動直後の必須第一手**: 委任ブリーフが渡した作業用ディレクトリ（追跡ツリーの外。まだ無ければ先に `mkdir -p` で作る。渡されていなければ `mktemp -d` の出力）を使い（パスはコマンド行で単一引用符で囲む）、別の Bash 呼び出しで `shirokuma-flow rules inject --scope worker --rules trust-boundary,measurement-claims,completion-report-style,permission-boundary,gh-to-verb-map,rule-evolution,delegation-and-checks,ddd-enforcement-gradient,github-writing-style > <作業用ディレクトリ>/rules-inject-review-worker.txt` を実行する（worker scope の規範を取得）。そのファイルを Read で末尾まで読み、`<rule-file>` 要素を本タスクの規範として読む。1 回で読めない大きさなら offset / limit で分けて続きを読み、`head` などで切って先へ進まない。Bash の結果に残る stderr のヘッダ行 `emitted=<件数>/…` の件数だけ `<rule-file>` を読んだことを確かめる。この第一手が (auto-mode 分類器等で) ブロックされた場合は、委任ブリーフに明記された規範に従う。
 
 **参照する規範**
 

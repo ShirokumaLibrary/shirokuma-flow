@@ -8,7 +8,7 @@ model: opus
 
 ## 起動直後
 
-Bash で `shirokuma-flow rules inject --scope orchestrator --rules trust-boundary,measurement-claims,completion-report-style,permission-boundary,gh-to-verb-map,rule-evolution,orchestration-discipline,next-routing-contract,status-policy,branch-workflow,commit-style,github-writing-style,publication-hygiene` を実行し、**出力の `<rule-file>` 要素を本タスクの規範として読む**。`<rule-file>` の外（ヘッダ行）に規範は載らない。
+追跡ツリーの外の作業用ディレクトリ（無ければ `mktemp -d` で作る）を使い（パスはコマンド行で単一引用符で囲む）、別の Bash 呼び出しで `shirokuma-flow rules inject --scope orchestrator --rules trust-boundary,measurement-claims,completion-report-style,permission-boundary,gh-to-verb-map,rule-evolution,orchestration-discipline,next-routing-contract,status-policy,branch-workflow,commit-style,github-writing-style,publication-hygiene > <作業用ディレクトリ>/rules-inject-implement-flow.txt` を実行する。そのファイルを Read で末尾まで読み、**`<rule-file>` 要素を本タスクの規範として読む**。1 回で読めない大きさなら offset / limit で分けて続きを読み、`head` などで切って先へ進まない。Bash の結果に残る stderr のヘッダ行 `emitted=<件数>/…` の件数だけ `<rule-file>` を読んだことを確かめる。`<rule-file>` の外（ヘッダ行）に規範は載らない。
 
 **参照する規範**
 
@@ -75,7 +75,7 @@ Bash で `shirokuma-flow rules inject --scope orchestrator --rules trust-boundar
      - **撤去は submodule 側の worktree を、親の分離ツリーより先に** `git -C "<submodule の絶対パス>" worktree remove --force -- "<分離ツリーの絶対パス>/<submodule パス>"` で外す（逆順にすると submodule 側の登録が孤立する）。`worktree remove --force` の対象は、この手順で自分が作った分離ツリー側の worktree に限る（人の作業ツリーの worktree を対象にしない）。
      - **展開した pages に出た変更**（`adr land` / `adr render --write` など）は、そのツリーで作業する担い手が、その分離ツリー（cwd を分離ツリーの根）で `shirokuma-flow pages push` を打って記録する（管理セッションのメインは打たない）。人の作業ツリーの pages の checkout は動かさない（運用ブランチは人の作業ツリー側が checkout 済みで、`pages push` はその回だけ HEAD を早送りして運用ブランチへ push する。止まった回は返り値の guide に従う）。
      - **作業セッションの作業ツリー**（linked worktree）は上の形を使わない——共有の checkout を `-C` や `cd` で対象にした git は、実行環境の作業ツリーの分離の検査が読み取りでも拒む。その作業ツリーでは作業セッションのメインが `shirokuma-flow pages expand`（人の作業ツリーの module リポを取得元にしたローカル clone。ネットワークに出ない）で展開する。手順と展開できない回の扱いは skill `issue-run-flow` の `reference/procedure.md` の「実装の段の入口」、展開した clone の `pages push` の扱いは規範 `pages-preview-infra` が持つ。
-4. **品質ゲート（機械段のみ）**: 4c（finalize）→ 4d（実装サマリーの確定と HTML 化判定）の順で通す。**レビュー層 3 本と差し戻し判定は `review-flow` が持つ**——**深いレビューの置き場は PR 作成後**で、本フェーズの終端は「finalize 緑＋PR 作成」である。**手順・分岐・記録行の正本は [reference/docs/quality-gate.md](reference/docs/quality-gate.md) で、段 4 に入る前に必ず Read する**（4c の各段は `reference/docs/finalize.md` の手順で作業セッションのメインが通す）。ここには条件・値域・分岐を写さない。段 4 に入る前に本 SKILL.md が断定しておくのは次の 4 点だけである。
+4. **品質ゲート（機械段のみ）**: 4c（finalize）→ 4d（実装サマリーの確定と HTML 化判定）の順で通す。**レビュー層 3 本と差し戻し判定は `review-flow` が持つ**——**深いレビューの置き場は PR 作成後**で、本フェーズの終端は「finalize 緑＋PR 作成」である。**手順・分岐・記録行の正本は [reference/docs/quality-gate.md](reference/docs/quality-gate.md) で、段 4 に入る前に必ず Read する**（4c の各段は `reference/docs/finalize.md` の手順で作業セッションのメインが通す）。ここには条件・値域・分岐を写さない。段 4 に入る前に本 SKILL.md が断定しておくのは次の点だけである。
    - **機械判定は読み取り専用 verb `shirokuma-flow gate <サブコマンド>` が行い、本 skill は呼び出しと結果による分岐（routing）だけを定める。** 欄名・値域は `shirokuma-flow gate vocab`、検査の限界は `shirokuma-flow gate limits --sub <サブコマンド>` が正本で、**逐語を配布物へ写さない**。
    - **判定 JSON の `build` ブロック（`sourceMatch` / `dirty` / `degraded`・欠落した回の読み方を含む）の読み方は `shirokuma-flow gate limits --sub limits` の `H19` が正本**（ここに写さない）。`stale` を名乗った回・`build` ブロックそのものが無い回は、その判定を現ソースの値として読まない。`stale` と `build.dirty: true` が同時に立つ回は、その判定を根拠に使わない。`build.dirty: null`（焼いていない）は、再現性の担保が無い側として `build.dirty: true` と同じに読む。
    - **判定不能を pass に読まない**。`complete` が無い回・`ok: false` の回・verb を解決できない回は **`判定不能` であって「指摘 0 件」ではない**（exit code は 0 / 2 / 1 の 3 値で、**非 0 を一律「検査が何か言った」と読まない**）。判定不能の回は、その段の pass を前提にする分岐へ進まない（**fail-closed**）。
@@ -91,7 +91,7 @@ Bash で `shirokuma-flow rules inject --scope orchestrator --rules trust-boundar
 
 **段 5 の commit と PR の作成は、作業セッションのメインが skill `committing-and-opening-pr` の SKILL.md（本 skill のディレクトリの隣）を手順書として読んで行う**（[[orchestration-discipline]] C16）。PR 本文には、閉じる課題・実行の証跡の値（品質ゲートの報告表の所在・終了コード・検査対象 head sha）・4d-3 の記録行の値・実装サマリーの「予定の着地」行（あった回だけ。そのまま写す）を書く。サブ Issue は親の `epic/{親番号}-{slug}` をターゲット（[[branch-workflow]]）。4d で HTML 化した回は PR 本文の最上部（BLUF）へ**確認ビューのリポジトリ内パス**を添付する（**URL は書かない**）。**コード差分を持たないサブはこの段から段 7 までに乗らない**（下記「PR を伴わないサブの終端」）。
 
-- **`Closes` の書き方**: **計画スキップ経路の課題**（`next` が `plan_skipped_not_needed` を返し、normal 直下に承認済みの設計子だけが在る回）は PR 本文の `Closes` に **normal と設計子の両方**を素の行で並べる——計画が無いので cascade の起点が無く、並べないと設計子が誰にも閉じられない（書き忘れて normal だけが Done になった回は `reconcile` が `plan-skip-design-not-done` として報告する。`--fix` では直さない）。計画が実在する通常経路ではサブ自身だけを `Closes` する。
+- **`Closes` の書き方**: **計画スキップ経路の課題**（`next` が `plan_skipped_not_needed` を返し、normal 直下に承認済みの設計子だけが在る回）は PR 本文の `Closes` に **normal と設計子の両方**を素の行で並べる——計画が無いので cascade の起点が無く、並べないと設計子が誰にも閉じられない（書き忘れて normal だけが Done になった回は `reconcile` が `plan-skip-design-not-done` として報告する。`--fix` では直さない）。cancel・duplicate で閉じた設計子（`shirokuma-flow issue show <子#>` の `state_reason` が `NOT_PLANNED`・`DUPLICATE`）は並べない——Status は `Done` でも承認済みの設計子に数えず、`Closes` に入れると merge が close 理由を `COMPLETED` に上書きしうる。計画が実在する通常経路ではサブ自身だけを `Closes` する。
 - **配布物を変更した PR は反映遅延を PR 本文へ 1 行で明示する（要否は 4d-1 の記録行が決める）**: **判定をここで取り直さない**（同じ判定を 2 箇所で持つと食い違う）。**記録行の母集団は `plugin/**` に固定されている**ので、プラグインのソースを別の置き場に持つ導入先では記録行が「変更なし」に倒れ、この 1 行は出ない（fail-open）。値が `plugin/**` の変更ありを表すものの回に、次の 1 行を PR 本文へ逐語で書く:
 
   ```

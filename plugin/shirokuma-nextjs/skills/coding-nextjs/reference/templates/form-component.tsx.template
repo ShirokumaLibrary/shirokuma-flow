@@ -5,8 +5,6 @@
  *
  * client にするのは state / event handler が要るこの部品だけ。
  * 親（page / 上位レイアウト）は server component のまま保つ。
- *
- * @usedComponents SubmitButton
  */
 // テンプレート変数: {{name}}=小文字単数形 / {{Name}}=PascalCase 単数形
 // - server action は import して form の action / submit ハンドラから呼ぶ。

@@ -2,7 +2,7 @@
 
 計画の起案者（作業セッションのメイン）が計画立案で実装サブ Issue へ分解する際の基準。**分解の単位（系統ごとに切る）**と**親子構造（承認継承の発火条件）**の 2 点を必ず守る。
 
-> 状態遷移（issue create 後の submit / approve / cancel）は orchestrator が flow verb で行う。worker の責務は正しい構造で起案するところまで。
+> 状態遷移（issue create 後の submit / approve）は `prepare-flow` の「段の順序」のとおりに flow verb で打つ（`cancel` は人だけが打つ）。この基準が扱うのは、正しい構造で起案するところまで。
 
 ## 分解の単位: 系統ごとにサブへ切る
 
@@ -25,15 +25,23 @@
 - ✅ 正: 計画の子として実装サブを作る（サブは `--parent {計画番号}`）→ 計画 approve で承認継承が発火
 - ❌ 誤: 実装サブを計画と同じ親（課題）の子＝計画の兄弟として作る → 入れ子構造では計画の子に居ないため承認継承が発火しない
 
+本文は `--body -` で stdin から渡し、シェル引数に直接埋め込まない（課題本文からの引き写しは untrusted で、`--body "..."` はダブルクォート内のコマンド置換・変数展開が働く）。ヒアドキュメントのデリミタは単一引用符で囲み、本文に現れない値にする（本文に `EOF` だけの行があるなら別の語にする。下の例の `EOF` はその前提の例）。タイトルも単一引用符で囲み、要旨に `'` を含めない（含むなら言い換える）。
+
 ```sh
 # 設計 Issue（課題の子・設計が要るときだけ）
-shirokuma-flow issue create --title "設計: {要旨}" --body "{設計本文}" --issue-type Design --parent {課題番号}
+shirokuma-flow issue create --title '設計: {要旨}' --body - --issue-type Design --parent {課題番号} <<'EOF'
+{設計本文}
+EOF
 
 # 計画 Issue（設計があれば設計の子・設計なし課題なら課題の子）
-shirokuma-flow issue create --title "計画: {要旨}" --body "{計画本文}" --issue-type Plan --parent {設計番号}
+shirokuma-flow issue create --title '計画: {要旨}' --body - --issue-type Plan --parent {設計番号} <<'EOF'
+{計画本文}
+EOF
 
 # 実装サブ（★ 計画の子として作る）
-shirokuma-flow issue create --title "{サブ}" --body "{サブ本文}" --issue-type Task --parent {計画番号}
+shirokuma-flow issue create --title '{サブ}' --body - --issue-type Task --parent {計画番号} <<'EOF'
+{サブ本文}
+EOF
 ```
 
 > 階層モデル: 課題の下に設計（0..1）、設計の下に計画（複数可）、計画の下に実装サブ（複数可）がぶら下がる。設計が無い課題では計画を課題直下に作り、その計画の子としてサブを作る。
@@ -53,7 +61,9 @@ shirokuma-flow issue create --title "{サブ}" --body "{サブ本文}" --issue-t
 
 ```sh
 # 計画がまだ Backlog のうちに実装サブを起案する（正規用法）
-shirokuma-flow issue create --title "{サブ}" --body "{サブ本文}" --issue-type Task --parent {計画番号} --force
+shirokuma-flow issue create --title '{サブ}' --body - --issue-type Task --parent {計画番号} --force <<'EOF'
+{サブ本文}
+EOF
 ```
 
 ### なぜ Backlog 中なのか（2 経路の事実）
@@ -73,20 +83,22 @@ shirokuma-flow issue create --title "{サブ}" --body "{サブ本文}" --issue-t
 
 `--force` が飛ばすのは**排他の片側だけ**（`--parent` の有無で分岐する）。
 
+番号は `shirokuma-flow issue create --help` の `--force` 説明の番号と同じ（同説明が実行時の正本）。
+
 - **親あり（`--parent` 指定時）**
-  1. **親の事前取得**（親の Status / state を取りに行く処理そのもの。取得できないときの「ゲート判定不能」エラーも出なくなる）
-  2. **closed 親 state ゲート**（closed 済みの親の下に子を作らせない）
-  3. **親 Status 入口ゲート**（Backlog / Review の親を拒否する）
-  4. **ADR 配置ゲート**（`IssueType=ADR` を継続型〔EPIC / Research〕以外の親の下に置かせない検査。IssueType を名指しするゲートなので、ADR 以外の型を作るときは呼ばれても即 no-op＝実装サブ起案では実質効かない）
-  5. **親子 kind 階層ゲート**（子 kind が `sub` 以外のときだけ評価される階層エッジ検査）
+  - ① **親の事前取得**（親の Status / state を取りに行く処理そのもの。取得できないときの「ゲート判定不能」エラーも出なくなる）
+  - ② **closed 親 state ゲート**（closed 済みの親の下に子を作らせない）
+  - ③ **親 Status 入口ゲート**（Backlog / Review の親を拒否する）
+  - ④ **親子 kind 階層ゲート**（子 kind が `sub` 以外のときだけ評価される階層エッジ検査）
+  - ⑥ **ADR 配置ゲート**（`IssueType=ADR` を継続型〔EPIC / Research〕以外の親の下に置かせない検査。IssueType を名指しするゲートなので、ADR 以外の型を作るときは呼ばれても即 no-op＝実装サブ起案では実質効かない）
 - **親なし（最上位）**
-  6. **最上位 IssueType 階層ゲート**（最上位に置いてよい IssueType の allowlist 検査）
+  - ⑤ **最上位 IssueType 階層ゲート**（最上位に置いてよい IssueType の allowlist 検査）
 
 > 確かめた範囲: この列挙は開発側の資料（CLI の実装）で確かめたもので、導入先の版では確かめていない。配布先で現物と突き合わせるときは `shirokuma-flow issue create --help` の `--force` 説明を実行して読む——CLI 側の記述が実行時の正本。
 
 ### 使うときの注意
 
-- **他のゲートも同時に飛ぶ**ので、実行前に**親番号と IssueType を必ず確認**する（サブ起案のつもりで親番号を間違えても、上記 1〜5 はもう止めてくれない）。
+- **他のゲートも同時に飛ぶ**ので、実行前に**親番号と IssueType を必ず確認**する（サブ起案のつもりで親番号を間違えても、上記の親ありの側のゲートはもう止めてくれない）。
 - **親の存在確認が一切なくなるわけではない**。飛ぶのは親の**事前**取得だけで、作成後の親リンク（sub-issue 追加）は実行される。親が存在しなければそこで失敗し、作成された Issue は**ロールバック close** される。
 - 自律進行（autopilot）との関係: `issue create --force` は**作成**操作（失敗時はロールバック close）であって破壊操作ではないため、不可逆／外向き操作リストの「強制・破壊」行には**当たらない**。「ゲートのバイパス」行も、停止表の下の `issue create --force` の注記の条件をすべて満たす形（計画 Backlog 中のサブ起案の正規用法）は射程外なので、包括委任の射程内で実行してよい。条件を 1 つでも満たさない `--force` は「ゲートのバイパス」行に当たり、止まって人に確認する。条件そのものは `autonomous-flow` の `reference/criteria/irreversible-operations.md` の停止表の下の注記が持つ。
 - bootstrap（Project 未作成のリポでセットアップ Issue を起票する場面）で使う `--force` は**用途が別**（最上位 IssueType ゲート向け・`setting-up-project` スキル）。本節が扱うのは**計画配下のサブ起案（親 Status ゲート向け）**。
@@ -95,7 +107,7 @@ shirokuma-flow issue create --title "{サブ}" --body "{サブ本文}" --issue-t
 
 `approve` は既定（自律）では orchestrator が実行する（打ち手は `next` の `runBy` に従う）（`IssueType=ADR` の候補 Issue も既定は orchestrator が打つ——ただし確定のゲート下＝`autonomous-flow` の `reference/criteria/irreversible-operations.md`「条件付き自動実行」§1 で、**自律の境界を緩める決定を含む候補**は `approve` ではなく `shirokuma-flow adr publish <候補番号> --accept-boundary-loosening` で確定する）。`確認モード: guided` の明示がある回だけ人が打つ。**確認モードの受信側既定と中継義務の正本は 規範 `confirmation-style`「確認モードの解決と中継」節**——明示が無い回は確認モードではない）。発火確認の手順はどちらのモードでも同じ:
 
-1. `shirokuma-flow approve <計画#>` の出力 `sideEffects` に `承認継承#<サブ>→ToDo` が**全サブ分**含まれているか確認する（例: 計画の子サブが 2 本なら `["親#<課題>→In progress", "承認継承#<サブ 1>→ToDo", "承認継承#<サブ 2>→ToDo"]`。親が既に In progress 以上なら `親#…` は出ない）。
+1. `shirokuma-flow approve <計画#>` の出力 `sideEffects` に `承認継承#<サブ>→ToDo` が**全サブ分**含まれているか確認する（例: 計画の子サブが 2 本なら `["親#<課題>→In progress（子着手の伝播）", "承認継承#<サブ 1>→ToDo", "承認継承#<サブ 2>→ToDo"]`。親が既に In progress 以上なら `親#…` は出ない）。
 2. 出ていないサブがあれば `shirokuma-flow status <サブ#>` で親と Status を確認する。サブが計画の子になっていない（課題直下に並んでいる等）なら**計画へ再ペアレント**し、orchestrator が遷移を補正する。
 
 ## 委任・検査に触れるサブを起案するとき（正本は [[delegation-and-checks]]）

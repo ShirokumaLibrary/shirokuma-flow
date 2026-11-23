@@ -56,7 +56,7 @@ valkey:
 | ファイル | 更新内容 |
 |---------|---------|
 | `compose.yaml` | サービス名・イメージ・ボリューム名 |
-| `.env` / `.env.example` | 環境変数キー名（`REDIS_URL` → `VALKEY_URL` など） |
+| `.env` / `.env.example` | 環境変数キー名（エンジン名を含む `REDIS_URL` などは、エンジン名を含まない `CACHE_URL` へ寄せる。designing-aws の `env-mapping.md` の `CACHE_` 接頭辞） |
 | `depends_on` を持つ他サービス | 依存サービス名の更新 |
 | アプリ設定ファイル | 接続文字列（ホスト名がサービス名の場合） |
 | `scripts/*.sh` | サービス名を指定する起動スクリプト |

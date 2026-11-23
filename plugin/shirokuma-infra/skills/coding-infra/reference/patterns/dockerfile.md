@@ -67,6 +67,26 @@ ENV HOSTNAME="0.0.0.0"
 CMD ["node", "server.js"]
 ```
 
+## ローカル開発用の dev ステージ
+
+ローカル compose の `app` サービス（coding-infra の雛形 `docker-compose.dev.yml.template` の `target: dev`）が名指すステージ。上の Dockerfile の `deps` の後に足す。本番イメージ（`runner`）には使わない。
+
+```dockerfile
+# ---- Dev（ローカル compose 用）----
+FROM base AS dev
+WORKDIR /app
+
+COPY --from=deps /app/node_modules ./node_modules
+COPY . .
+
+ENV NEXT_TELEMETRY_DISABLED=1
+EXPOSE 3000
+CMD ["pnpm", "dev", "--hostname", "0.0.0.0"]
+```
+
+- compose はソースを `.:/app` でバインドマウントし、`/app/node_modules` を匿名ボリュームにする。匿名ボリュームは初回にイメージの `/app/node_modules` で埋まるので、ホストの `node_modules` で上書きされない。
+- cdk-nextjs をデプロイ先にする構成は本番の Dockerfile を書かない（下の節）が、ローカル compose を使うなら `base`・`deps`・`dev` の 3 ステージだけの Dockerfile を置く。
+
 ## ビルド出力の契約分岐（standalone / cdk-nextjs adapterPath）
 
 Next.js アプリの Dockerfile は、本番デプロイ先の選択でビルド出力の契約が二分する。cdk-nextjs をデプロイ先に選んだ場合と、それ以外（**汎用コンテナ経路**＝cdk-nextjs をデプロイ先にしない構成）とで扱いを分ける。**判定軸はフレームワーク名ではなく「cdk-nextjs をデプロイ先にするか」**で、語の定義と帰結の正本は designing-aws の `reference/patterns/nextjs-deploy.md`「2 つのコンテナ経路」節。
@@ -74,7 +94,7 @@ Next.js アプリの Dockerfile は、本番デプロイ先の選択でビルド
 | デプロイ先 | next.config | 本番 Dockerfile | 本ファイルの適用 |
 |-----------|------------|----------------|----------------|
 | **汎用コンテナ経路**（cdk-nextjs 外・ECS Fargate + ALB 等） | `output: "standalone"` | 本ファイルの standalone マルチステージ Dockerfile を使う | **適用** |
-| cdk-nextjs（`NextjsGlobalFunctions` ほか 4 構成） | `adapterPath: import.meta.resolve("cdk-nextjs/adapter")`・`output: "standalone"` は使わない | **cdk-nextjs が自前生成**（手書き不要） | 非適用 |
+| cdk-nextjs（`NextjsGlobalFunctions` を含む 4 構成） | `adapterPath: import.meta.resolve("cdk-nextjs/adapter")`・`output: "standalone"` は使わない | **cdk-nextjs が自前生成**（手書き不要） | 非適用 |
 
 - **cdk-nextjs 経路では本ファイルの standalone Dockerfile を書かない**。cdk-nextjs は Next.js を black box 扱いし、公開 adapter API 経由でビルドして自前で Dockerfile を生成する。`output: "standalone"` と `adapterPath` は同時両立しないため、cdk-nextjs を選ぶなら standalone 設定を外す。
 - **汎用コンテナ経路**: 非 Next.js アプリ・cdk-nextjs を選ばない Next.js アプリでは、本ファイルの standalone マルチステージ Dockerfile を使う。
@@ -201,7 +221,7 @@ docker-compose*
 .dockerignore
 ```
 
-> **infra 除外の背景（手書き AppService 経路向け）**: `infra`・`cdk.out`・`cdk.context.json` の除外は、手書き `AppService`（ECS + ALB の Docker build）でリポ root を build context にする経路のためのもの。build context に infra の CDK コードや `cdk.context.json`（account ID 等の機微情報）が混入するのを防ぐ。cdk-nextjs 既定経路は `buildDirectory`（Next.js プロジェクト root のみをビルド）を使うため infra はそもそも混入せず、この除外は不要。なお除外はビルド成果物の分離であり、リポ分割（infra の submodule 化）とは直交する — 同一 build context に入れば submodule でも混入するため、`.dockerignore` での除外が本質。
+> **infra 除外の背景（手書き AppService 経路向け）**: `infra`・`cdk.out`・`cdk.context.json` の除外は、手書き `AppService`（ECS + ALB の Docker build）でリポ root を build context にする経路のためのもの。build context に infra の CDK コードや `cdk.context.json`（account ID 等の機微情報）が混入するのを防ぐ。cdk-nextjs 既定経路は construct に渡す Next.js プロジェクトの場所（coding-cdk の `cdk-nextjs-construct.md` の `relativePathToWorkspace`。実名はピン版の型定義で照合する）の配下だけをビルドするため infra はそもそも混入せず、この除外は不要。なお除外はビルド成果物の分離であり、リポ分割（infra の submodule 化）とは直交する — 同一 build context に入れば submodule でも混入するため、`.dockerignore` での除外が本質。
 
 ## イメージサイズ最適化テクニック
 

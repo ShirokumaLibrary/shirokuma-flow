@@ -1,6 +1,6 @@
 # Next.js テストパターン
 
-Next.js 固有のテスト技法。TDD の刻み方・@testdoc の規律はコア implement-flow の `reference/docs/tdd.md`（委任ブリーフで渡されるパス）が正本で、ここには **Next.js だから必要になるモック・セレクタの型**だけを置く。
+Next.js 固有のテスト技法。TDD の刻み方・@testdoc の規律はコア implement-flow の `reference/docs/tdd.md` が正本で、ここには **Next.js だから必要になるモック・セレクタの型**だけを置く。
 
 雛形: [../templates/server-action.test.ts.template](../templates/server-action.test.ts.template)・[../templates/component.test.tsx.template](../templates/component.test.tsx.template)
 
@@ -72,7 +72,7 @@ const queueResult = (...r: unknown[]) => queryResults.push(...r)
 - **force click 禁止**: `click({ force: true })` は実 UI の問題を隠す。重なり等はビューポート調整か UI 修正で対処。
 - **テスト分離**: `beforeEach` で cookie・サーバ側状態をクリアする。共有状態を変えるテスト群は serial 実行にする。
 - ローディング状態の検証は、対象リクエストを Promise でブロックして見える化する（`page.route` で続行を遅延 → ローディング表示をアサート → 解放）。
-- 視覚確認が要る画面は `@screenshot` アノテーションを付け、`shirokuma-flow nextjs screenshots` の撮影計画に載せる（撮影はレビュー側・reviewing-nextjs が行う）。
+- 視覚確認が要る画面は `@screenshot` アノテーションを付け、`shirokuma-flow nextjs screenshots` の撮影計画に載せる（撮影の手順は reviewing-nextjs が持ち、撮るのは MCP を使えるセッション〔作業セッションのメインか人〕）。
 
 ## 完了前の検証コマンド
 

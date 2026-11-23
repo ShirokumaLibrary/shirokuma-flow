@@ -12,11 +12,11 @@ disable-model-invocation: true
 1. **server component 既定**: `"use client"` は state/effect/event/ブラウザ API が要る最小範囲だけ。client は葉に寄せる。
 2. **server action**: `"use server"`。**認証 → 入力検証（zod 等）→ 処理 → revalidate/redirect** の順。client 入力を信頼しない。
 3. **データフェッチ**: server component で直接（`fetch`/DB）。client へは props か server action 経由。
-4. **アノテーション付与**: `page.tsx` に `@screen <Name>`・`@route`、コンポーネントに `@usedComponents`・server action に `@usedActions`。`shirokuma-flow nextjs feature-map` が拾えるようにする。
+4. **アノテーション付与**: `page.tsx` に `@screen <Name>` と `@usedActions <action>, …`（その画面が呼ぶ server action。子の client component が呼ぶものも page に書く）。`shirokuma-flow nextjs feature-map` は page ファイルだけを読み、`@screen`・`@usedActions` と page の import（components）を拾う。route はファイルの位置から導くので `@route` は要らない。`@usedComponents` は読まない（書くなら人が読むだけの注釈）。
 5. **命名/構造**: route group で整理、barrel export、app 間 import を避ける。
 
 ## 完了時
-[reference/criteria/checklist.md](reference/criteria/checklist.md) で自己検査し、finalize（/simplify＋security＋lint）を通す。`shirokuma-flow nextjs feature-map`/`screenshots` で構造・撮影計画を確認。
+[reference/criteria/checklist.md](reference/criteria/checklist.md) で自己検査する。品質ゲート・commit・PR 作成はこのスキルでは行わず、`implement-flow` の段 4・段 5 の手順（作業セッションのメインが行う）に戻る。`shirokuma-flow nextjs feature-map`/`screenshots` で構造・撮影計画を確認。
 
 > **`nextjs` verb はコア CLI に固定で入っていない**——拡張 `@shirokuma-library/nextjs` が **CLI を起動した cwd の `package.json`** の (dev)dependencies に在るときだけ discovery で生える。`shirokuma-flow describe` の subcommands に `nextjs` が出るかで判定し、無い環境の扱い（拡張を足す／プロジェクト自身の lint と手動 grep へ落とす）は checklist.md §4 の「前提」に従う。
 
@@ -26,7 +26,7 @@ disable-model-invocation: true
 
 | ドキュメント | 内容 | 読むタイミング |
 |------------|------|--------------|
-| [reference/templates/page.tsx.template](reference/templates/page.tsx.template) | page 雛形（@screen/@route/@screenshot・async params） | page 新規作成時 |
+| [reference/templates/page.tsx.template](reference/templates/page.tsx.template) | page 雛形（@screen/@usedActions/@screenshot・async params） | page 新規作成時 |
 | [reference/templates/server-action.ts.template](reference/templates/server-action.ts.template) | server action 雛形（認証→検証→処理→revalidate・ActionResult） | action 新規作成時 |
 | [reference/templates/form-component.tsx.template](reference/templates/form-component.tsx.template) | client フォーム雛形（境界の葉・isPending/エラー表示） | client component 作成時 |
 | [reference/templates/server-action.test.ts.template](reference/templates/server-action.test.ts.template) | action テスト雛形（@testdoc・redirect throw モック） | テスト作成時（実装より先） |

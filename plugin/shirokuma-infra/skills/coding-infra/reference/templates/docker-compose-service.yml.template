@@ -3,13 +3,13 @@
 #
 # 置換変数:
 #   {project}     - プロジェクト名 (例: myapp)
-#   {service}     - サービス名 (例: postgres, valkey, mailpit)
+#   {service}     - サービス名 (例: db, valkey, mailpit)
 #   {image}       - Docker イメージ名 (例: postgres)
 #   {version}     - イメージバージョン (例: 18-alpine ※ {data-path} と対で選ぶ・下記)
-#   {PORT}        - ポート環境変数名 (例: POSTGRES_PORT)
+#   {PORT}        - ポート環境変数名 (例: DB_PORT・VALKEY_PORT)
 #   {host-port}   - ホスト側デフォルトポート (例: 5432)
 #   {container-port} - コンテナ内ポート (例: 5432)
-#   {volume-name} - ボリューム名 (例: postgres-data)
+#   {volume-name} - ボリューム名 (例: db-data)
 #   {data-path}   - コンテナ内データパス。先頭の / を含む絶対パスで書く
 #                   (postgres 18 は /var/lib/postgresql。17 は /var/lib/postgresql/data。
 #                    使う版の PGDATA は docker image inspect <image> --format '{{.Config.Env}}' で確かめられる)

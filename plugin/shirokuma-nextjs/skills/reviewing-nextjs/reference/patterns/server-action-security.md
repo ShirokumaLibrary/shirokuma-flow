@@ -51,9 +51,9 @@ catch (error) { return { success: false, error: (error as Error).message } }
 
 ## 6. "use server" の露出範囲過多
 
-**検出**: `"use server"` ファイルに action 以外の export（ユーティリティ・定数・スキーマ）がある。export はすべて HTTP 経由で呼び出し可能になる。
+**検出**: `"use server"` ファイルに action 以外の値の export（ユーティリティ関数・定数・スキーマ）がある。値の export はすべて HTTP 経由で呼び出し可能になる。型だけの export（`export type` / `export interface`）はコンパイルで消えるので対象外（coding-nextjs の `criteria/checklist.md` 規約 2・雛形 `server-action.ts.template` と同じ線）。
 
-**修正方針**: ヘルパー・型・スキーマは `"use server"` の無い別ファイル（`*-types.ts` 等）へ移すか非 export にする。
+**修正方針**: ヘルパー・定数・スキーマは `"use server"` の無い別ファイル（`*-types.ts` 等）へ移すか非 export にする。
 
 ## 7. オープンリダイレクト
 

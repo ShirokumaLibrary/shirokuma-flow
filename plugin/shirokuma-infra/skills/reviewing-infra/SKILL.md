@@ -12,7 +12,7 @@ Dockerfile、compose（base と断片。`compose.yaml`・`docker-compose*.yml` �
 
 ## スコープ
 
-- **カテゴリ:** 調査系ワーカー
+- **読み手:** review-flow のレビューの担い手（review-worker）が、SKILL.md と reference を Read で文書として読んで観点に合算する（Skill では起動しない）。
 - **スコープ:** インフラファイルの読み取り（Read / Grep / Glob / Bash 読み取り専用）、レビューレポートの生成。コードの修正は行わない。
 - **スコープ外:** コードの修正（`coding-infra` に委任）、Docker イメージのビルド・実行
 
@@ -48,11 +48,11 @@ Dockerfile、compose（base と断片。`compose.yaml`・`docker-compose*.yml` �
 
 | チェック項目 | 問題 | 修正方針 |
 |------------|------|---------|
-| エンドポイント切り替え | コードに `http://localhost:4566` をハードコード | 環境変数 `LOCALSTACK_ENDPOINT` で切り替え |
+| エンドポイント切り替え | コードに `http://localhost:4566` をハードコード | 環境変数 `AWS_ENDPOINT_URL` で切り替え（本番では設定しない） |
 | サービス有効化 | `SERVICES` 環境変数が未設定 | 使用するサービスのみ列挙（起動高速化） |
 | データ永続化 | LocalStack データが毎回消える | `PERSISTENCE=1` または named volume を設定 |
 | `localstack/localstack` イメージ | Pro 機能不要なのに Pro イメージを使用 | `localstack/localstack:4`（メジャー固定）で十分か確認 |
-| プロファイル分離 | LocalStack と本番 AWS 設定が混在 | `AWS_PROFILE` または `AWS_DEFAULT_REGION` で分離 |
+| プロファイル分離 | LocalStack と本番 AWS 設定が混在 | `AWS_PROFILE` か、環境ごとの `.env`（`AWS_ENDPOINT_URL` の有無・`AWS_REGION` と aws CLI 向けの `AWS_DEFAULT_REGION`）で分離 |
 
 ### セキュリティ
 
@@ -92,7 +92,7 @@ find . -name ".env*" -not -name "*.example" | head -10
 
 ### 3. レポート生成
 
-**レポート先頭の判定行は機械分岐の契約**——委任元（orchestrator）がこの文字列を走査して差し戻しを分岐するため、一字一句この形式で必ず出力する。
+**判定行契約・レポート雛形・深刻度定義はコア review-flow 側（`reference/templates/report.md`）が正本**で、本 skill は観点を足すだけ。下の形は本 skill の観点の所見をまとめる例で、判定行の形と値域はコア側に合わせる。
 
 ```markdown
 **レビュー結果:** PASS | NEEDS_REVISION
@@ -117,17 +117,10 @@ find . -name ".env*" -not -name "*.example" | head -10
 
 ### 4. レポート保存
 
-PR コンテキストがある場合（PR も issue として top-level コメントできる。`<body>` は**本文そのもの**なので、ファイルは `-` で stdin から流す）:
-```bash
-shirokuma-flow issue comment {PR#} - < /tmp/shirokuma-flow/review-infra.md
-```
+レポートの置き場と GitHub への記録は、レビューの担い手の手順（review-worker の回は委任ブリーフ）が決める。この skill は書き込み先を決めない。
 
-PR コンテキストがない場合（レビュー対象の Issue へ記録する）:
-```bash
-shirokuma-flow issue comment {Issue#} - < /tmp/shirokuma-flow/review-infra.md
-```
-
-Issue も PR も無い場合は、**レポートをファイルのまま残し、完了報告にパスと判定行を含める**。CLI は Discussion へ書き込む verb を持たないので、レポートを Discussion へは投稿しない。
+- **GitHub へのコメントは、委任ブリーフが頼んだ回だけ**書く。PR へのコメントには判定行をフェンスの外に書かない（判定記録の読み手が記録と読み、形式外として merge を人ゲートへ倒す）。merge の可否を決める判定記録は、レビューの担い手ではなくメインが CLI で書く。
+- 書き込み先を頼まれていない回は、判定行と指摘を完了報告（返事）に含める。CLI は Discussion へ書き込む verb を持たないので、レポートを Discussion へは投稿しない。
 
 ## レビュー結果の判定
 

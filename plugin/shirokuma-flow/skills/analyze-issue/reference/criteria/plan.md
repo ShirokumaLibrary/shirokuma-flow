@@ -21,7 +21,7 @@ analyze-issue が**計画 Issue の起案品質を分析する**際の判定基�
 
 ## 指摘の分類
 
-NEEDS_REVISION 時は、問題点を `[計画]`（計画本文の修正が必要）と `[Issue記述]`（親 Issue 本文の訂正が必要）に分類して記載する。**自分では直さない**——修正は orchestrator が別 worker に委任する。
+NEEDS_REVISION 時は、問題点を `[計画]`（計画本文の修正が必要）と `[Issue記述]`（親 Issue 本文の訂正が必要）に分類して記載する。**自分では直さない**——修正は計画本文・Issue 本文の書き手〔作業セッションのメインか `requirements-worker`〕が行う。
 
 ## 判定（PASS / NEEDS_REVISION の決め方）
 

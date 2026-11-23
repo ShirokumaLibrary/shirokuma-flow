@@ -25,6 +25,7 @@
 | `null` | `*_select_child` | skill 起動しない・次に着手する子を選んで `next <子番号>` |
 | `null` | `*_all_children_done` | skill 起動しない・継続型（epic/research）の全子完了。次課題追加 or 人の判断で `shirokuma-flow done <n>`（COMPLETED close・正常終了）／取りやめは `cancel`（NOT_PLANNED） |
 | `null` | `issue_done`（verdict `done`） | skill 起動しない・課題（kind normal / design / plan）自身が Done（終端）。子の状態や設計要否・計画要否の契約によらず段を返さない。終わっていることを報告する（戻すかは人が決める）。`nextActions` に要素があれば規範 `next-routing-contract` 手順 3 のとおり辿る |
+| `null` | `human_task`（verdict `human_task`） | skill 起動しない・対象は人への依頼。`nextActions` の 1 件に従う（`runBy:"human"` は人に出す。`issue human-task-close` は依頼の操作の効果か用済みの理由を確かめてから打つ） |
 | `null` | `undetermined` | skill 起動しない・`shirokuma-flow status <n>` で状態確認して判断 |
 
 ## 表2: `next` 非経由の skill 起動トリガー
@@ -56,7 +57,7 @@
 | 実装 | 作業セッション | `implement-flow`「段の順序」3・`implement-flow` の `reference/docs/coding.md` |
 | 品質ゲート | 作業セッション | `implement-flow`「段の順序」4・`implement-flow` の `reference/docs/finalize.md` |
 | commit / PR 作成 | 作業セッション | `committing-and-opening-pr` |
-| PR のレビュー（R1） | `security-review-worker`・`code-review-worker`・`asset-safety-review-worker` | `review-flow`「段の順序」 |
+| PR のレビュー（R1） | `security-review-worker`・`code-review-worker`・`asset-safety-review-worker`（判定器が要る回は `review-worker`） | `review-flow`「段の順序」 |
 | R2 の是正 | 作業セッション | `review-flow` の `reference/docs/review-gate.md`「R1b / R2」 |
 | 判定記録・記録行・状態遷移 | 作業セッション（作業セッションの外の課題選び・merge の後の遷移は管理セッション） | 規範 `orchestration-discipline` C16 ③ |
 | 確認ビューの生成 | `explainer-worker` | 規範 `html-report-criteria` |

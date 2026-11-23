@@ -12,7 +12,7 @@ AWS リソース構成のコードレビューを行う。IAM 最小権限、セ
 
 ## スコープ
 
-- **カテゴリ:** 調査系ワーカー
+- **読み手:** review-flow のレビューの担い手（review-worker）が、SKILL.md と reference を Read で文書として読んで観点に合算する（Skill では起動しない）。
 - **スコープ:** CDK コード / IaC ファイルの読み取り（Read / Grep / Glob / Bash 読み取り専用）、レビューレポートの生成。コードの修正・AWS リソースのプロビジョニングは行わない。
 - **スコープ外:** CDK コードの修正（`coding-cdk` に委任）、実際の AWS リソース変更
 
@@ -119,7 +119,7 @@ CDK コードを読み込み、レビュー観点テーブルを適用する。
 
 ### 3. レポート生成
 
-**レポート先頭の判定行は機械分岐の契約**——委任元（orchestrator）がこの文字列を走査して差し戻しを分岐するため、一字一句この形式で必ず出力する。
+**判定行契約・レポート雛形・深刻度定義はコア review-flow 側（`reference/templates/report.md`）が正本**で、本 skill は観点を足すだけ。下の形は本 skill の観点の所見をまとめる例で、判定行の形と値域はコア側に合わせる。
 
 ```markdown
 **レビュー結果:** PASS | NEEDS_REVISION
@@ -144,17 +144,10 @@ CDK コードを読み込み、レビュー観点テーブルを適用する。
 
 ### 4. レポート保存
 
-PR コンテキストがある場合（PR も issue として top-level コメントできる。`<body>` は**本文そのもの**なので、ファイルは `-` で stdin から流す）:
-```bash
-shirokuma-flow issue comment {PR#} - < /tmp/shirokuma-flow/review-aws.md
-```
+レポートの置き場と GitHub への記録は、レビューの担い手の手順（review-worker の回は委任ブリーフ）が決める。この skill は書き込み先を決めない。
 
-PR コンテキストがない場合（レビュー対象の Issue へ記録する）:
-```bash
-shirokuma-flow issue comment {Issue#} - < /tmp/shirokuma-flow/review-aws.md
-```
-
-Issue も PR も無い場合は、**レポートをファイルのまま残し、完了報告にパスと判定行を含める**。CLI は Discussion へ書き込む verb を持たないので、レポートを Discussion へは投稿しない。
+- **GitHub へのコメントは、委任ブリーフが頼んだ回だけ**書く。PR へのコメントには判定行をフェンスの外に書かない（判定記録の読み手が記録と読み、形式外として merge を人ゲートへ倒す）。merge の可否を決める判定記録は、レビューの担い手ではなくメインが CLI で書く。
+- 書き込み先を頼まれていない回は、判定行と指摘を完了報告（返事）に含める。CLI は Discussion へ書き込む verb を持たないので、レポートを Discussion へは投稿しない。
 
 ## レビュー結果の判定
 

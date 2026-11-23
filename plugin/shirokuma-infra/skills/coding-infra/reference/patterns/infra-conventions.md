@@ -12,7 +12,7 @@
 
 | 例 | 説明 |
 |----|------|
-| `myapp-postgres` | PostgreSQL データベース |
+| `myapp-db` | PostgreSQL データベース（サービス名 `db`。雛形 `docker-compose.dev.yml.template` と同じ） |
 | `myapp-valkey` | Valkey（Redis 互換）キャッシュ |
 | `myapp-mailpit` | ローカルメールサーバー |
 
@@ -26,7 +26,7 @@
 
 | 例 | 説明 |
 |----|------|
-| `myapp-postgres-data` | PostgreSQL データ |
+| `myapp-db-data` | PostgreSQL データ |
 | `myapp-valkey-data` | Valkey 永続データ |
 
 ### ネットワーク名
@@ -45,8 +45,8 @@
 
 | 例 | 説明 |
 |----|------|
-| `POSTGRES_PORT` | PostgreSQL ホスト公開ポート |
-| `POSTGRES_USER` | PostgreSQL ユーザー名 |
+| `DB_PORT` | PostgreSQL（サービス `db`）ホスト公開ポート |
+| `DB_PASSWORD` | PostgreSQL（サービス `db`）のローカル用パスワード |
 | `VALKEY_PORT` | Valkey ホスト公開ポート |
 | `MAILPIT_SMTP_PORT` | Mailpit SMTP ポート |
 | `MAILPIT_HTTP_PORT` | Mailpit Web UI ポート |
@@ -59,13 +59,13 @@
 
 | サービス | デフォルトポート | 環境変数 |
 |---------|--------------|---------|
-| PostgreSQL | 5432 | `POSTGRES_PORT` |
+| PostgreSQL | 5432 | `DB_PORT` |
 | Valkey / Redis | 6379 | `VALKEY_PORT` |
 | Mailpit SMTP | 1025 | `MAILPIT_SMTP_PORT` |
 | Mailpit Web UI | 8025 | `MAILPIT_HTTP_PORT` |
 | LocalStack | 4566 | `LOCALSTACK_PORT` |
 
-複数プロジェクトを同時に起動する場合は `.env` でポートをずらす（例: `POSTGRES_PORT=5433`）。
+複数プロジェクトを同時に起動する場合は `.env` でポートをずらす（例: `DB_PORT=5433`）。
 
 ## サービス選定基準
 
@@ -143,10 +143,10 @@ infra skill 群（coding-infra・setting-up-infra とその reference・雛形�
 
 | サービス | test コマンド |
 |---------|-------------|
-| PostgreSQL | `["CMD-SHELL", "pg_isready -h 127.0.0.1 -U ${POSTGRES_USER:-postgres}"]`（`-h 127.0.0.1` を外さない・下記） |
+| PostgreSQL | `["CMD-SHELL", "pg_isready -h 127.0.0.1 -U {db-user} -d {db-name}"]`（`-h 127.0.0.1` を外さない・下記） |
 | Valkey | `["CMD", "valkey-cli", "ping"]` |
 | MySQL | `["CMD", "mysqladmin", "ping", "-h", "localhost"]` |
-| Mailpit | `["CMD", "wget", "--spider", "-q", "http://localhost:8025"]` |
+| Mailpit | `["CMD", "wget", "-q", "-O-", "http://localhost:8025/readyz"]` |
 | LocalStack | `["CMD", "curl", "-f", "http://localhost:4566/_localstack/health"]` |
 
 ヘルスチェックがあることで `depends_on: condition: service_healthy` が利用可能になる。
@@ -163,11 +163,9 @@ infra skill 群（coding-infra・setting-up-infra とその reference・雛形�
 ## .env.example テンプレート
 
 ```dotenv
-# PostgreSQL
-POSTGRES_USER=postgres
-POSTGRES_PASSWORD=postgres
-POSTGRES_DB=app
-POSTGRES_PORT=5432
+# PostgreSQL（サービス db。DB 名とユーザー名は compose の {db-name} / {db-user} で決める）
+DB_PORT=5432
+DB_PASSWORD=localdev
 
 # Valkey
 VALKEY_PORT=6379
@@ -178,7 +176,7 @@ MAILPIT_HTTP_PORT=8025
 
 # LocalStack
 LOCALSTACK_PORT=4566
-LOCALSTACK_SERVICES=s3,sqs,sns
+LOCALSTACK_SERVICES=s3,sqs,sns,secretsmanager,ses
 AWS_ACCESS_KEY_ID=test
 AWS_SECRET_ACCESS_KEY=test
 AWS_DEFAULT_REGION=us-east-1

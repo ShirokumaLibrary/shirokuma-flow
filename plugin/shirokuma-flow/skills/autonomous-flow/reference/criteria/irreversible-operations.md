@@ -183,7 +183,7 @@
 | 履歴改変 | 共有ブランチの履歴書き換え（rebase 後 force push 等） | 不可逆。他者の作業を破壊しうる |
 | マージ | レビュー **`NEEDS_REVISION`** / 未解決スレッドのある PR の **merge** | 外向き・不可逆。下記「マージの安全装置」参照 |
 | 公開・外部送信 | 外部サービスへの公開・通知・本番デプロイ・秘匿情報の外部送信 | 外向き。取り消せない |
-| 決定の確定 | **`IssueType=ADR` の候補 Issue の `approve`**（副作用に候補 Issue 本文の確定＝以後の計画・設計・実装を縛る決定記録〔ADR 正本ファイル〕への昇格を持つ） | 不可逆（確定した決定を戻すには置き換えの ADR か人の訂正が要る）。**ただし上記 §1 のゲートを通した候補に限り自動実行してよい**（通らなければ本行のとおり停止・下の注記参照） |
+| 決定の確定 | **`IssueType=ADR` の候補 Issue の `approve`**（副作用に候補 Issue 本文の確定＝以後の計画・設計・実装を縛る決定記録〔ADR 正本ファイル〕への昇格を持つ） | 不可逆（確定した決定を戻すには置き換えの ADR か人の訂正が要る）。**ただし上記 §1 のゲートを通した候補に限り自動実行してよい**（打ち手は `next` の `runBy` に従う。通らなければ本行のとおり停止・下の注記参照） |
 | **祖先の close** | `closure-suggest` の候補を機械的に `done` / `close` すること | `recommendedAction=done` が付くのは非完了 close の子を持つ親だけで、その据え置きは人へ残した判断。上記「祖先の close は条件付き自動実行に含めない」参照 |
 | 一括破壊 | 複数 Issue/ブランチ/ファイルの一括削除 | 広域破壊。範囲が想定を超えうる |
 | 認証・権限 | トークン・権限・リポジトリ設定の変更 | 外向き・不可逆。影響が広い |
@@ -212,7 +212,7 @@
 
 ## マージの安全装置
 
-- **判定値は `PASS` / `NEEDS_REVISION` の 2 値のみ**（判定行 `**レビュー結果:** PASS|NEEDS_REVISION`。**判定行を出す主体は review-worker とは限らない**——対象種別 code ∧ base=mainline の回は `shirokuma-flow gate verdict` が結果ファイルから決定的に導出し、それ以外は review-worker が出す。`gate verdict` はこの 2 値に加え `inconsistent` / `undetermined` を返しうるが、安全装置はどちらも `NEEDS_REVISION` と同様に扱う＝安全側）。安全装置はこの実出力値で判定する（`FAIL` 等の他の語は出力されないので条件に使わない）。
+- **判定値は `PASS` / `NEEDS_REVISION` の 2 値のみ**（判定行 `**レビュー結果:** PASS|NEEDS_REVISION`。**判定行を出す主体は review-worker とは限らない**——対象種別 code ∧ base=mainline の回は `shirokuma-flow gate verdict` が検出器記録（3 本の review worker が `detector record` で書いたもの）から決定的に導出し、それ以外は review-worker が出す。`gate verdict` はこの 2 値に加え `inconsistent` / `undetermined` を返しうるが、安全装置はどちらも `NEEDS_REVISION` と同様に扱う＝安全側）。安全装置はこの実出力値で判定する（`FAIL` 等の他の語は出力されないので条件に使わない）。
 - レビュー **`NEEDS_REVISION`** または未解決スレッドのある PR は **merge しない**。**一度 Review を通してから**差し戻す——`shirokuma-flow pr status <pr#>` の `project_status` が `Review` でなければ先に `shirokuma-flow submit <pr>`、続けて `shirokuma-flow rollback <pr> --to "In progress"`（**PR に `block` 遷移は無い**）。
   - **Why**: PR が Review へ行く経路は `submit` の 1 本しかないので、**初回レビューで NEEDS_REVISION になった PR は Review に居ない**。`rollback` は Review からの遷移なので単体では実行できず、差し戻しがボードに出ないまま元の Status に留まる（「レビュー未実施」と「レビュー済み・NEEDS_REVISION」が Status 上で区別できなくなる）。**したがって `Review` に居ることは AI レビュー PASS を意味しない**——NEEDS_REVISION の回も同じ verb で一度通る。
   - `project_status` が読めなければ（値が `null`／その欄を返さない CLI を含む）推測せず**両方そのまま実行する**。**`submit` が落ちても `rollback` を飛ばさない**——落ちる典型は「既に `Review` に居る」で、そこはまさに `rollback` が要る状態である。`submit` の失敗は書き込みを伴わないのでそのまま次へ進んでよい。

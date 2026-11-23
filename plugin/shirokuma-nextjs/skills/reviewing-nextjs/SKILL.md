@@ -1,6 +1,6 @@
 ---
 name: reviewing-nextjs
-description: Next.js（App Router）のレビュー支援。server/client 境界・server action の安全性・アノテーション整合をレビューする（review-flow の review-worker から委任・framework コンパニオン）。Use when Next.js のコードをレビューするとき、server action の安全性を確認するとき。
+description: Next.js（App Router）のレビュー支援。server/client 境界・server action の安全性・アノテーション整合をレビューする（review-flow のレビューの担い手が併読する・framework コンパニオン）。Use when Next.js のコードをレビューするとき、server action の安全性を確認するとき。
 model: opus
 disable-model-invocation: true
 ---
@@ -13,22 +13,22 @@ disable-model-invocation: true
 1. **server/client 境界**: 不要な `"use client"`（server で済む処理を client に出していないか）・client 境界からの秘密/サーバ専用 import の漏れ。
 2. **server action の安全性**: 認証チェック・入力検証（zod 等）・CSRF/権限・client 入力の信頼。`"use server"` の露出範囲。
 3. **データフェッチの場所**: server component で取るべきものを client で取っていないか・N+1・revalidate 漏れ。
-4. **アノテーション整合**: `@screen`/`@usedComponents`/`@usedActions` が実装と一致するか。`shirokuma-flow nextjs feature-map` の出力と突き合わせる。
+4. **アノテーション整合**: page の `@screen`/`@usedActions` が実装と一致するか（`@usedActions` はその画面と子の client component が呼ぶ server action）。`shirokuma-flow nextjs feature-map` の出力と突き合わせる（feature-map は page ファイルだけを読み、`@screen`・`@usedActions` と page の import を拾う。`@usedComponents`・`@route` は読まない）。
 5. **構造**: route group/動的セグメントの誤り・app 間 import。
 
 ## 進め方
-review-flow の review-worker から呼ばれ、ハード/ソフト観点で判定。lint（structure/docs）と補完。
+review-flow のレビューの担い手（review-worker）が SKILL.md と reference を Read で文書として読み（Skill では起動しない）、ハード/ソフト観点に合算して判定する。lint（structure/docs）と補完。
 
 > **CLI 拡張（`shirokuma-flow nextjs lint` / `feature-map`）が無い環境のフォールバック**: 機械検査は手動 grep で代替する（例: `@screen` が PascalCase か・アノテーションと実装の対応を目視）。代替で確認した旨を**レビュー報告に明記**する（機械検査を回したと読まれないようにするため）。**`nextjs` verb はコア CLI に固定で入っておらず**、拡張 `@shirokuma-library/nextjs` が **CLI を起動した cwd の `package.json`** の (dev)dependencies に在るときだけ discovery で生える——**在るかは `shirokuma-flow describe` の subcommands に `nextjs` が出るかで判定する**（`--help` の不在や勘で決めない）。
 
 ## スクリーンショット撮影（Playwright MCP・任意）
-UI の視覚確認が要るときは、`shirokuma-flow nextjs screenshots` で**撮影計画 manifest**（route・viewport・auth・waitFor）を得て、**Playwright MCP の browser ツールで各 route を撮る**（Playwright は bundle しない）。
+UI の視覚確認が要るときは、`shirokuma-flow nextjs screenshots` で**撮影計画 manifest**（route・viewport・auth・waitFor）を得て、**Playwright MCP の browser ツールで各 route を撮る**（Playwright は bundle しない）。**撮るのは MCP を使えるセッション（作業セッションのメインか人）**で、review-worker は MCP の browser ツールを持たないので撮らない（撮った画像が渡されれば所見の根拠として読む）。
 
 1. `nextjs screenshots` で manifest 生成（`@screenshot` アノテーション由来）。
 2. 稼働中の Next.js アプリに対し、各エントリで: `browser_resize`（viewport があれば）→ `browser_navigate <route>` →（waitFor があれば）`browser_wait_for` → `browser_take_screenshot`。`auth: required` は認証セッションを用意してから撮る。
 3. 撮った画像をレビュー所見の根拠にする（必要なら確認ビュー HTML に貼る）。
 
-- **headless CI では MCP セッションが無く撮れない** → 撮影は MCP が使えるセッションで行う。
+- **headless CI と review-worker では MCP の browser ツールが無く撮れない** → 撮影は MCP が使えるセッション（作業セッションのメインか人）で行う。
 - セットアップは opt-in: 導入先の `.mcp.json` に `@playwright/mcp` を MCP サーバーとして足し、ブラウザを導入する。設定の書式と導入コマンドは `@playwright/mcp` の README に従う。
 
 ## リファレンスドキュメント

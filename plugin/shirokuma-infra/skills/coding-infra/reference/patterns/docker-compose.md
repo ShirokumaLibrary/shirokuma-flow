@@ -54,25 +54,25 @@ networks:
 ### データベース（PostgreSQL）
 
 ```yaml
-postgres:
+db:                           # サービス名は雛形 docker-compose.dev.yml.template と同じ db（アプリは db:5432 へつなぐ）
   image: postgres:18-alpine   # バージョンピンとマウント先は連動する（18 は /var/lib/postgresql・17 は /var/lib/postgresql/data。使う版は docker image inspect <image> --format '{{.Config.Env}}' の PGDATA で確かめる）
-  container_name: {project}-postgres
+  container_name: {project}-db
   restart: unless-stopped
   environment:
-    - POSTGRES_USER=${POSTGRES_USER:-postgres}
-    - POSTGRES_PASSWORD=${POSTGRES_PASSWORD:-postgres}
-    - POSTGRES_DB=${POSTGRES_DB:-app}
+    - POSTGRES_DB={db-name}
+    - POSTGRES_USER={db-user}
+    - POSTGRES_PASSWORD=${DB_PASSWORD:-localdev}
   ports:
-    - "${POSTGRES_PORT:-5432}:5432"
+    - "127.0.0.1:${DB_PORT:-5432}:5432"
   volumes:
     # ⚠ 既に旧マウント先（PGDATA が /var/lib/postgresql/data の版。17 で実測）で稼働している volume をそのまま 18 の新マウント先へ当て替えても起動しない
     #   （上流ガードが「there appears to be PostgreSQL data in: /var/lib/postgresql」で Exited (1)）。
     #   データは消えないし空のクラスタも作られない——倒れる向きは fail-closed。
     #   移行は旧イメージで起動して pg_dump で吸い出し、新構成へ restore する。
-    - postgres-data:/var/lib/postgresql   # 18 の単一マウント先。/data へ挿すと新規ボリュームでも起動しない（docker-library/postgres#1259）
+    - db-data:/var/lib/postgresql   # 18 の単一マウント先。/data へ挿すと新規ボリュームでも起動しない（docker-library/postgres#1259）
   healthcheck:
     # -h 127.0.0.1 を外さない（初期化中の一時サーバに成功して healthy が早まるのを防ぐ。infra-conventions.md「ヘルスチェック要件」）
-    test: ["CMD-SHELL", "pg_isready -h 127.0.0.1 -U ${POSTGRES_USER:-postgres}"]
+    test: ["CMD-SHELL", "pg_isready -h 127.0.0.1 -U {db-user} -d {db-name}"]
     interval: 10s
     timeout: 5s
     retries: 5
@@ -102,7 +102,7 @@ valkey:
 
 ```yaml
 mailpit:
-  image: axllent/mailpit:v1.21-alpine
+  image: axllent/mailpit:v1.21   # 雛形 compose.mailpit.yml.template と同じ版
   container_name: {project}-mailpit
   restart: unless-stopped
   ports:
@@ -111,7 +111,7 @@ mailpit:
   environment:
     - MP_MAX_MESSAGES=500
   healthcheck:
-    test: ["CMD", "wget", "--spider", "-q", "http://localhost:8025"]
+    test: ["CMD", "wget", "-q", "-O-", "http://localhost:8025/readyz"]
     interval: 10s
     timeout: 5s
     retries: 5
@@ -124,7 +124,7 @@ mailpit:
 ```yaml
 app:
   depends_on:
-    postgres:
+    db:
       condition: service_healthy
     valkey:
       condition: service_healthy
@@ -203,7 +203,7 @@ base（db＋app の最小 compose）に、AWS エミュレーション等を**�
 - **base 側**: `networks.{project}-network.name: {project}-network` を宣言。合成後もこの宣言が残るため compose が name で自動作成し、合成 `up` がそのまま通る。
 - **`external: true` は使わない**: 断片側で `networks: {project}-network: external: true` を宣言すると、マージで base の宣言を上書きし、ネットワークが**事前作成必須**になる（事前 `docker network create` を忘れると `up` が `network ... declared as external, but could not be found` で失敗する）。宣言を省く方式なら事前作成が不要。
 
-### `include:`（将来オプション）
+### `include:`（代替の方式）
 
 compose-spec の `include:` で base 側に断片を取り込む方式もある。base ファイルを編集して取り込み先を列挙する必要があり「使う断片だけ選ぶ」が起動コマンドでなくファイル編集になるため、一次方式は `-f`。base 改変を許容できるプロジェクトには `include:` も有効。
 
@@ -220,7 +220,7 @@ compose-spec の `include:` で base 側に断片を取り込む方式もある�
 
 | パターン | 例 |
 |---------|-----|
-| `{project}-{service}-data` | `myapp-postgres-data` |
+| `{project}-{service}-data` | `myapp-db-data` |
 | `{project}-{service}-config` | `myapp-valkey-config` |
 
 プロジェクト名プレフィックスにより、異なるプロジェクト間でのボリューム競合を防ぐ。

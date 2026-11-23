@@ -1,6 +1,6 @@
 {
   "name": "shirokuma-flow",
-  "version": "0.27.0",
+  "version": "0.28.0",
   "owner": {
     "name": "ShirokumaLibrary"
   },
@@ -14,7 +14,7 @@
     {
       "name": "shirokuma-nextjs",
       "source": "./plugin/shirokuma-nextjs",
-      "description": "Next.js（App Router）支援 — designing/coding/reviewing-nextjs スキル。コア shirokuma-flow の opt-in 拡張。CLI 拡張 @shirokuma-library/nextjs と対。"
+      "description": "Next.js（App Router）支援 — setting-up/designing/coding/reviewing-nextjs スキル。コア shirokuma-flow の opt-in 拡張。CLI 拡張 @shirokuma-library/nextjs と対。"
     },
     {
       "name": "shirokuma-infra",
