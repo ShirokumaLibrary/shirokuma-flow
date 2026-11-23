@@ -65,4 +65,4 @@ model: opus
 | [reference/diagnosis.md](reference/diagnosis.md) | 各観点の機械的判定手順と判定基準（Semgrep バイナリ存否・ESLint security 設定/devDeps 存否・ルール解決状態） | 手順 1 の診断で迷ったとき |
 | [reference/templates/install-tasks.md](reference/templates/install-tasks.md) | 不足観点ごとの導入手順モジュール（各節冒頭に「不足だった場合のみ含める」マーカー） | 手順 3 で不足節だけ組むとき |
 
-> 状態遷移は `flow` verb のみ（このスキルではしない）。本スキルは導入の編成と動作確認のみを担い、Issue 起票や状態変更はしない。
+> 状態遷移は `flow` verb のみ。本スキルの手順そのものは導入の編成と動作確認を担い、課題の起票（`issue create`）と状態遷移は、上の作業セッションで回す段取りのとおり管理セッションのメインが打つ。

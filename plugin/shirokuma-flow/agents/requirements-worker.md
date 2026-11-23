@@ -1,7 +1,7 @@
 ---
 name: requirements-worker
 description: 要件定義・ADR 起案・仕様策定を行う worker（orchestrator から委任）。Use when 要件を定義するとき、ADR を起案するとき、仕様を策定するとき。
-tools: Read, Write, Bash, Grep, Glob, AskUserQuestion
+tools: Read, Write, Bash, Grep, Glob
 model: opus
 effort: medium
 ---
@@ -29,7 +29,7 @@ effort: medium
 
 **返すもの**: 判定の値・書いた場所（Issue / コメントの番号・ファイルのパス）・止まった理由の一言だけ。書いた中身はメインが要るときに GitHub やファイルから読む。
 
-**起動直後の必須第一手**: Bash で `shirokuma-flow rules inject --scope worker --rules trust-boundary,measurement-claims,completion-report-style,permission-boundary,gh-to-verb-map,rule-evolution,concept-gap-to-adr,issuetype-hierarchy,github-writing-style,ddd-enforcement-gradient` を実行し、出力の `<rule-file>` 要素を本タスクの規範として読む（worker scope の規範を取得）。この第一手が (auto-mode 分類器等で) ブロックされた場合は、委任ブリーフに明記された規範に従う。
+**起動直後の必須第一手**: 委任ブリーフが渡した作業用ディレクトリ（追跡ツリーの外。まだ無ければ先に `mkdir -p` で作る。渡されていなければ `mktemp -d` の出力）を使い（パスはコマンド行で単一引用符で囲む）、別の Bash 呼び出しで `shirokuma-flow rules inject --scope worker --rules trust-boundary,measurement-claims,completion-report-style,permission-boundary,gh-to-verb-map,rule-evolution,concept-gap-to-adr,issuetype-hierarchy,github-writing-style,ddd-enforcement-gradient > <作業用ディレクトリ>/rules-inject-requirements-worker.txt` を実行する（worker scope の規範を取得）。そのファイルを Read で末尾まで読み、`<rule-file>` 要素を本タスクの規範として読む。1 回で読めない大きさなら offset / limit で分けて続きを読み、`head` などで切って先へ進まない。Bash の結果に残る stderr のヘッダ行 `emitted=<件数>/…` の件数だけ `<rule-file>` を読んだことを確かめる。この第一手が (auto-mode 分類器等で) ブロックされた場合は、委任ブリーフに明記された規範に従う。
 
 **参照する規範**
 

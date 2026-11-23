@@ -1,5 +1,7 @@
 # GitHub Actions パターン集
 
+> 本ファイルと同じ skill の雛形の例は、読みやすさのため `uses:` をタグ参照（`@v4` 等）で書いている。配置する workflow では、下の「サードパーティ Action のピン留め」のとおりコミット SHA でピン留めする。
+
 ## OIDC 認証設定
 
 IAM アクセスキー（長期クレデンシャル）を使わず、GitHub Actions の OIDC トークンで一時クレデンシャルを取得する。
@@ -82,7 +84,7 @@ steps:
 - name: Setup Node.js
   uses: actions/setup-node@v4
   with:
-    node-version: '20'
+    node-version: '24'                     # LTS 系列。.nvmrc / .node-version があればその値
     cache: 'pnpm'                          # npm / pnpm / yarn を指定
     cache-dependency-path: pnpm-lock.yaml  # ロックファイルのパスを指定
 
@@ -224,11 +226,11 @@ jobs:
     strategy:
       fail-fast: false   # 一つが失敗しても他を継続
       matrix:
-        node-version: ['18', '20', '22']
+        node-version: ['22', '24']   # サポート中の LTS 系列から選ぶ
         os: [ubuntu-latest, windows-latest]
         exclude:
           - os: windows-latest
-            node-version: '18'   # 特定組み合わせを除外
+            node-version: '22'   # 特定組み合わせを除外
 
     runs-on: ${{ matrix.os }}
     steps:

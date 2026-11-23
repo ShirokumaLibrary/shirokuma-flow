@@ -13,7 +13,7 @@
 | モノリシック移行 | App Runner | 最小運用負荷、コンテナイメージから直接 |
 | ML 推論 | SageMaker Inference | GPU、モデル管理統合 |
 
-> **Next.js アプリの本番デプロイは特化既定を持つ**: 本表は**汎用コンテナ経路**（cdk-nextjs をデプロイ先にしない構成。ライブラリ非依存の汎用パターン）向け。**Next.js アプリは `nextjs-deploy.md`（同一 patterns ディレクトリ）の cdk-nextjs 既定**（`NextjsGlobalFunctions` ほか 4 構成の選定マトリクス）を出発点にする。汎用パターンは**汎用コンテナ経路**（cdk-nextjs を使わない構成。非 Next.js アプリと、cdk-nextjs を使わないと決めた **Next.js アプリの両方を含む**）で引き続き有効（層として重ねる）。**cdk-nextjs のコンテナフレーバー（`Nextjs*Containers`）はここに当たらない**——それは cdk-nextjs の中の選択肢なので `nextjs-deploy.md` の選定マトリクスで選ぶ。語の定義と帰結（互換契約の適用可否が反転する）は `nextjs-deploy.md` の「2 つのコンテナ経路（語の定義）」節。
+> **Next.js アプリの本番デプロイは特化既定を持つ**: 本表は**汎用コンテナ経路**（cdk-nextjs をデプロイ先にしない構成。ライブラリ非依存の汎用パターン）向け。**Next.js アプリは `nextjs-deploy.md`（同一 patterns ディレクトリ）の cdk-nextjs 既定**（`NextjsGlobalFunctions` を含む 4 構成の選定マトリクス）を出発点にする。汎用パターンは**汎用コンテナ経路**（cdk-nextjs を使わない構成。非 Next.js アプリと、cdk-nextjs を使わないと決めた **Next.js アプリの両方を含む**）で引き続き有効（層として重ねる）。**cdk-nextjs のコンテナフレーバー（`Nextjs*Containers`）はここに当たらない**——それは cdk-nextjs の中の選択肢なので `nextjs-deploy.md` の選定マトリクスで選ぶ。語の定義と帰結（互換契約の適用可否が反転する）は `nextjs-deploy.md` の「2 つのコンテナ経路（語の定義）」節。
 
 ### ECS Fargate 設定パターン
 
@@ -248,7 +248,7 @@ const service = new ecs.FargateService(this, 'Service', {
 | `StatefulStack` | RDS、ElastiCache、S3 | 低 |
 | `AppStack` | ECS、ALB、Lambda、IAM ロール | 高 |
 
-> スタック間の参照は `stack.exportValue()` / `Fn.importValue()` を使用する。CloudFormation クロススタック参照は削除時に依存関係でブロックされることに注意。
+> スタック間の参照は、同じ CDK アプリの中なら Props で受け渡し、ライフサイクルを分けたいスタックの間は SSM Parameter Store / Secrets Manager の名前解決で行う（上の「RDB 構築方式マトリクス（運用モード × エンジン）」節の既定と同じ）。CFN export（`stack.exportValue()` / `Fn.importValue()` / `CfnOutput.exportName`）は、参照されている間 export 元のスタックの更新・削除がブロックされるので既定にしない。
 
 > **アカウント境界での分離は別レイヤ**: スタック分割（本表）はアプリ内の blast radius 境界。本番・検証を **アカウント境界**で分ける段階移行（Phase 0/1/2・OU 構成・移行トリガー）は [account-isolation.md](account-isolation.md)（同一 patterns ディレクトリ）を参照。
 

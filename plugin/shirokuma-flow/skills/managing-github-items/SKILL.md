@@ -20,7 +20,7 @@ model: opus
 **誰が打つか**（規範 `orchestration-discipline` C16）: 状態機械の verb（起票の `issue create`〔`Backlog` を seed する〕・階層ゲートを通る `issue reparent`・必須フィールドの設定）はメインが打つ——手順 1・2 と、手順 5 で割った sub-issue の起票と再ペアレント。手順 5 の割るかの判断もメイン（方向の指示）。**本文の書き換えは `requirements-worker` へ委任する**（同 worker の定義の「管理セッションに残る書き込み」①）——手順 3（計画本文のサブ参照を実番号で書く）と手順 4（親本文へ Integration ブランチ節を書く）。ブリーフには対象の番号・確定した実番号の対応・ブランチ名を渡し、worker は書いた Issue の番号と止まった回の理由の一言だけを返す。
 
 1. **EPIC 親を用意**: 親 Issue を `IssueType = EPIC` で作成（または既存課題を昇格）。必須フィールド（Status / Priority / IssueType）を設定。`Backlog` で開始。
-2. **再ペアレント（sub-issue 化）**: 束ねる既存 Issue を親の子にする。**第一手段は `shirokuma-flow issue reparent <子> --parent <epic>`**（child-kind 階層ゲートを経由し、生 API で直接変更しない）。各子ごとに実行する。frontmatter に `parent: {epic-number}` を手書きして再登録する／GitHub の sub-issue 関係を UI で設定する、は **verb が使えない例外時のフォールバック**に留める（生 API 直変更・手書き drift を避けるため）。
+2. **再ペアレント（sub-issue 化）**: 束ねる既存 Issue を親の子にする。**第一手段は `shirokuma-flow issue reparent <子> --parent <epic>`**（child-kind 階層ゲートを経由し、生 API で直接変更しない）。各子ごとに実行する。GitHub の sub-issue 関係を UI で設定する、は **verb が使えない例外時のフォールバック**に留める（生 API での直変更を避けるため）。
 3. **計画 Issue の参照は実番号で手書き**: 計画本文でサブ Issue を参照する箇所は、再ペアレント後に確定した**実 Issue 番号**で書く（プレースホルダを残さない）。
 4. **Integration ブランチを明記**: 親本文に `### Integration ブランチ` 節を置き `epic/{親番号}-{slug}` を記す（`branch-workflow`: サブ Issue の PR は親の `epic/{親番号}-{slug}` をターゲット）。
 5. **2 本以上の PR に分ける子は分割**: 1 つの子を 2 本以上の PR に分ける必要があるなら、着手前に複数の sub-issue に割る（1 サブ = 1 PR）。分ける必要の正本は規範 `branch-workflow`「Plan ケース」で、大きさだけでは割らない。判定の補助は [sizing.md](reference/criteria/sizing.md)。
@@ -29,7 +29,7 @@ model: opus
 
 ## 検証（C4）
 
-GitHub への書き込み後は実体を検証する。`shirokuma-flow issue context {epic}` を再取得して `subIssuesSummary` と各子の `parentIssue` を grep で確認（ローカルキャッシュ body.md は古いことがあるので再取得後に確認）。
+GitHub への書き込み後は実体を検証する。`shirokuma-flow issue show {epic}` の `children` に、束ねた子の番号がすべて含まれることを確かめ、各子について `shirokuma-flow issue show <子>` の `parent` が `{epic}` であることを確かめる。突き合わせる相手は束ねた子の番号の集合で、`children` が空の回や束ねた子が欠けた回は検証失敗として扱う（`issue show` は GitHub から読み直す読み取りで、ローカルキャッシュを読まない）。
 
 ## 信頼境界
 

@@ -8,7 +8,7 @@ model: opus
 
 ## 起動直後
 
-Bash で `shirokuma-flow rules inject --scope orchestrator --rules trust-boundary,measurement-claims,completion-report-style,permission-boundary,gh-to-verb-map,rule-evolution,orchestration-discipline,next-routing-contract,status-policy,branch-workflow,confirmation-style,commit-style,github-writing-style,publication-hygiene` を実行し、**出力の `<rule-file>` 要素を本タスクの規範として読む**。`<rule-file>` の外（ヘッダ行）に規範は載らない。
+追跡ツリーの外の作業用ディレクトリ（無ければ `mktemp -d` で作る）を使い（パスはコマンド行で単一引用符で囲む）、別の Bash 呼び出しで `shirokuma-flow rules inject --scope orchestrator --rules trust-boundary,measurement-claims,completion-report-style,permission-boundary,gh-to-verb-map,rule-evolution,orchestration-discipline,next-routing-contract,status-policy,branch-workflow,confirmation-style,commit-style,github-writing-style,publication-hygiene > <作業用ディレクトリ>/rules-inject-review-flow.txt` を実行する。そのファイルを Read で末尾まで読み、**`<rule-file>` 要素を本タスクの規範として読む**。1 回で読めない大きさなら offset / limit で分けて続きを読み、`head` などで切って先へ進まない。Bash の結果に残る stderr のヘッダ行 `emitted=<件数>/…` の件数だけ `<rule-file>` を読んだことを確かめる。`<rule-file>` の外（ヘッダ行）に規範は載らない。
 
 **参照する規範**
 
@@ -42,7 +42,7 @@ PR をレビューして merge 可否まで運ぶ orchestrator。**深いレビ�
 
 ### R1 / R1b / R2
 
-**手順・分岐・記録行・値域の正本は [reference/docs/review-gate.md](reference/docs/review-gate.md) で、R1 に入る前に必ず Read する。** ここには条件・値域・分岐を写さない。本 SKILL.md が断定しておくのは次の 4 点だけである。
+**手順・分岐・記録行・値域の正本は [reference/docs/review-gate.md](reference/docs/review-gate.md) で、R1 に入る前に必ず Read する。** ここには条件・値域・分岐を写さない。本 SKILL.md が断定しておくのは次の点だけである。
 
 - **対象は PR**。`<base>` / `<issue#>`（linked issues）は `shirokuma-flow pr show <pr#>` から、**`<head sha>` は checkout 済みの head ブランチに対する `git rev-parse HEAD`** から取り、以後取り直さない（`pr show` の `head` はブランチ名で、`head_oid` はリモートの PR head の完全 sha を返すが、R1 の母集団は checkout 済みの作業ツリーなのでローカルから取る——未 push のコミットがある回は両者が食い違う。`pr checks` は `head_sha` を返さない）。
 - **R1 は `security-review-worker` / `code-review-worker` を並走で委任し、条件を満たす回だけ `asset-safety-review-worker` を 3 本目に加える**。**3 本とも読み取りのみ**で、並走中に作業ツリーへ書き込まない（1 本が編集すると他 2 本の母集団が動く）。委任後は `gate artifacts` で結果ファイルの実在と欄を検査する。**判定値は 3 本とも `detector record` で役割ごとの検出器記録へ書かれ**（記録ファイルの絶対パスもブリーフで渡す）、本段 1 の `gate verdict` がそれを読む。記録ファイルの置き場（`.shirokuma/tmp/`）が ignore されているかは導入先リポの設定に依る（[reference/docs/review-gate.md](reference/docs/review-gate.md)）。
@@ -52,7 +52,7 @@ PR をレビューして merge 可否まで運ぶ orchestrator。**深いレビ�
 
 ### 段 1 以降（判定器と記録）
 
-1. **判定行を導出する**: **R1 の後に** `shirokuma-flow gate verdict --head <head sha> --file code=<code-review 記録ファイル絶対パス> [--file security=<security-review 記録ファイル絶対パス>] [--file asset=<asset-safety-review 記録ファイル絶対パス>] [--asset-expected]` を引く（読み取り専用・決定的）。渡すのは 3 本の review worker が `detector record` で書いた**検出器記録**（標準命名は `.shirokuma/tmp/{code,security,asset-safety}-review-<issue#>.detector.json`）であって、結果ファイル（Markdown）ではない。**`--head` は必須**（「対象は PR」bullet が取る `<head sha>` をそのまま渡す）——記録は (役割, head, 欄) 単位で upsert されており、`gate verdict` は `--head` と完全一致する entry だけを読む。**R1b ②③・R2 の入口・3b 第 2 軸の routing・本段の分岐は、この 1 回の出力の `fields[]` で決める**（orchestrator が結果ファイルの Markdown から判定値を読み取る手順は無い）。**判定行を機械導出に使うのは対象種別が code ∧ base が mainline の回だけ**で、**それ以外の回（plan / design / docs / research・sub PR＝base が `epic/*`）は `review-worker` を委任し、`gate verdict` の JSON（`fields[]`）もブリーフへ渡す**（判定器を残す。Creator-Checker 分離は「検出 3 本が別主体」であることで保たれるので、判定器を機械化しても段数は変わらない）。
+1. **判定行を導出する**: **R1 の後に** `shirokuma-flow gate verdict --head <head sha> --file code=<code-review 記録ファイル絶対パス> [--file security=<security-review 記録ファイル絶対パス>] [--file asset=<asset-safety-review 記録ファイル絶対パス>] [--asset-expected]` を引く（読み取り専用・決定的）。渡すのは 3 本の review worker が `detector record` で書いた**検出器記録**（標準命名は `.shirokuma/tmp/{code,security,asset-safety}-review-<issue#>.detector.json`）であって、結果ファイル（Markdown）ではない。**`--head` は必須**（「対象は PR」bullet が取る `<head sha>` をそのまま渡す）——記録は (役割, head, 欄) 単位で upsert されており、`gate verdict` は `--head` と完全一致する entry だけを読む。**R1b の起動・R2 の入口・3b 第 2 軸の routing・本段の分岐は、この 1 回の出力の `fields[]` で決める**（orchestrator が結果ファイルの Markdown から判定値を読み取る手順は無い）。**判定行を機械導出に使うのは対象種別が code ∧ base が mainline の回だけ**で、**それ以外の回（plan / design / docs / research・sub PR＝base が `epic/*`）は `review-worker` を委任し、`gate verdict` の JSON（`fields[]`）もブリーフへ渡す**（判定器を残す。Creator-Checker 分離は「検出 3 本が別主体」であることで保たれるので、判定器を機械化しても段数は変わらない）。
    - **判定表の正本は `shirokuma-flow gate verdict`**（ここに写さない）。要旨: code の修正推奨が「あり」なら `NEEDS_REVISION`、「なし」なら `PASS`。security の Critical/High 指摘が有りで修正推奨が「なし」の回は `inconsistent`——**人ゲートへ回す**（機械が自動で判定を選ばない）。記録が無い・形式外・値域外の役割と、worker が判定を完了できなかった値は判定不能として扱い、code の回と、修正推奨が「なし」の回の security / asset（委任した回）は `undetermined` に倒れる（fail-closed）。
    - **`undetermined` のとき**: `nextActions[]` に従う（記録の無い役割の 1 回だけの再委任・上限が尽きた回と再委任後もなお判定不能の回の停止は verb が返す）。**Markdown の結果ファイルを読み直す別の判定器へは回さない**（4 本目の LLM パスでは検出器の判定を作れない）。
    - **3b の非該当明記**: **3b を委任しなかった回**（第 1 段の `gate token` が `ok` 以外）は、`gate verdict` は `undetermined` にせず `fields[]` へ「結果ファイルが無い」を表す値を必ず載せる（欄ごと落とさない・warn 相当を維持）。**3b を委任した回**（`gate token` が `ok`）は `--asset-expected` を付ける。この回に asset の記録が渡されない・読めない・head の entry が無いなら、`fields[]` の値は委任したが結果なしを表す値になり、修正推奨が「なし」の回は `undetermined` に倒れて上の再委任の枝に入る（worker の拒否・中断で記録の無い返り値を、pass・非該当へ丸めない）。**倒れる向き**（判定値だけ書いた拒否は捕まらない・`--asset-expected` の付け忘れは非該当に倒れる）は `shirokuma-flow gate limits --sub verdict` の N8 が返す。

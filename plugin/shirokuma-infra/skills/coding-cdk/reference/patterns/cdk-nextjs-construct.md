@@ -74,15 +74,15 @@ export class WebStack extends cdk.Stack {
       healthCheckPath: "/api/health",
     });
 
+    // 人とスクリプトが読む出力（CFN export にはしない。他スタックへ渡すなら SSM に書く）。
     new cdk.CfnOutput(this, "SiteUrl", {
-      exportName: `${id}-site-url`,
       value: this.site.distribution.distributionDomainName,
     });
   }
 }
 ```
 
-- **`relativePathToWorkspace`**: Next.js プロジェクトのルートを指す。cdk-nextjs が自前で Dockerfile を生成してビルドするため、アプリ側に Dockerfile を用意する必要はない（前提「Docker 必須」はビルド環境に Docker が要るという意味）。
+- **`relativePathToWorkspace`**: Next.js プロジェクトのルートを指す（cdk-nextjs は v0.x なので、実名はピン版の型定義で照合する）。cdk-nextjs が自前で Dockerfile を生成してビルドするため、アプリ側に Dockerfile を用意する必要はない（前提「Docker 必須」はビルド環境に Docker が要るという意味）。
 - **キャッシュ層は自動**: ISR / data cache / full route cache 用の S3 と、tag revalidation メタデータ用の DynamoDB は construct が自動作成する。DynamoDB はキャッシュ本体ではなくタグ単位の失効管理のみを持つ軽量テーブル。
 - **VPC/NAT 不要**: Lambda はデフォルトで VPC 外に置かれ、NAT Gateway が発生しない。同一 VPC の RDS 等へ到達する場合の VPC アタッチ判断は designing-aws 側の `nextjs-deploy.md`（Lambda VPC アタッチ + NAT のトレードオフ節）を参照。
 
@@ -192,7 +192,7 @@ npx cdk diff
 ```
 
 - `cdk synth` が Docker を要求して失敗する場合は Docker デーモンの起動を確認する。
-- 実 AWS への `cdk deploy` 検証は個別プロジェクト側の責務であり、本 worker の射程外。CLI 実走で外部（実 AWS / 実 GitHub）へ書き込む検証は行わない。
+- 実 AWS への `cdk deploy` 検証は個別プロジェクト側の責務であり、この skill の読み手の射程外。CLI 実走で外部（実 AWS / 実 GitHub）へ書き込む検証は行わない。
 
 ## 参照
 

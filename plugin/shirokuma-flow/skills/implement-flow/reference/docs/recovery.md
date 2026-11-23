@@ -40,12 +40,12 @@ implement-flow の途中（実装 → 品質ゲート → コミット → PR）
 
 | 確認項目 | コマンド |
 |---------|---------|
-| 改善コミットが作られたか | `git log --oneline -3` |
+| 品質ゲートのコミット（`finalize.md` §4）が作られたか | `git log --oneline -3` |
 | lint が通るか | `shirokuma-flow lint areas all`（security 含む area 系・finalize ゲートと同系統） |
 
-**exit code の読み方**: `lint areas`（`all` 含む）は `0`=pass・`1`=error 検出・`2`=skip のみで fail（監査できなかった）を返す。**`2` は監査できなかったことを表す**——0 以外を一律 failure として扱う確認手順は、これも失敗として扱う。「lint が通るか」を exit code だけで判定する場合、`2` は「違反があった」ではなく「監査できなかった」を意味するので、やり直す前に原因を先に確かめる: JSON 出力（`--format json`）の各領域が持つ `skipReasonId`（`audit-unavailable` / `audit-output-truncated` / `audit-error` / `audit-unparseable` / `audit-incomplete` のいずれか）を見る（ネットワーク・lockfile の有無は原因の一部にすぎない——`skipReasonId` の値ごとに原因が異なる）。
+**exit code の読み方**: `lint areas`（`all` 含む）は `0`=pass・`1`=error 検出・`2`=skip のみで fail（監査できなかった）を返す。**`2` は監査できなかったことを表す**——0 以外を一律 failure として扱う確認手順は、これも失敗として扱う。「lint が通るか」を exit code だけで判定する場合、`2` は「違反があった」ではなく「監査できなかった」を意味するので、やり直す前に原因を先に確かめる: JSON 出力（`--format json`）の各領域が持つ `skipReasonId`（値の集合は領域ごとに異なる）を見る（ネットワーク・lockfile の有無は原因の一部にすぎない——`skipReasonId` の値ごとに原因が異なる）。
 
-**冪等性**: あり——/simplify・セキュリティ・docs lint の再実行は無害。
+**冪等性**: あり——セキュリティ・docs lint・構造監査・CI 等価検査の再実行は無害。
 
 **リカバリ操作**: `finalize.md` の手順で、報告表の `pending` 行（残りの段）から通し直す（`orchestration-discipline` C6）。
 

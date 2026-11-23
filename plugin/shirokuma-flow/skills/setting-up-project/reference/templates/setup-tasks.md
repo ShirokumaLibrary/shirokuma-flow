@@ -47,10 +47,10 @@ kind 導出は GitHub の **IssueType** を主経路にする。`https://github.
    | `ToDo` | **新規追加**（D 大文字・色は GREEN＝既定 Todo の色を引き継ぐ） | 承認済み・着手可 | GREEN |
    | `In progress` | 既定の `In Progress` を**改名**（p 小文字・色は既定のまま） | 作業中 | YELLOW |
    | `Blocked` | 新規追加 | 依存待ち・停止中 | RED |
-   | `Review` | 新規追加 | 人の判断待ち（approve / merge の人ゲート） | ORANGE |
+   | `Review` | 新規追加 | 承認・取り込みの判断待ち（Issue の `approve`〔既定は AI。人が確認しながら進めるよう指示した回は人〕/ PR の `merge`〔既定は人ゲート〕）。人への依頼（`HumanTask`）では、人が AI に確かめて閉じさせる合図 | ORANGE |
    | `Done` | 既定のまま（色も既定の PURPLE のまま） | 完了 | PURPLE |
 
-   > 色の基準＝**注意グラデーション**: 赤に近いほど人の注意が必要——RED（停止・要解消）＞ ORANGE（人の判断待ち）＞ YELLOW（進行中・見守り）。BLUE は未着手（トリアージ候補として埋もれない色）、GREEN は着手可、PURPLE は確定。できるだけ GitHub 既定の色を使う。
+   > 色の基準＝**注意グラデーション**: 赤に近いほど人の注意が必要——RED（停止・要解消）＞ ORANGE（承認・取り込みの判断待ち）＞ YELLOW（進行中・見守り）。BLUE は未着手（トリアージ候補として埋もれない色）、GREEN は着手可、PURPLE は確定。できるだけ GitHub 既定の色を使う。
 
    > ⚠️ `Todo` は「削除して Backlog を追加」ではなく**改名**してください。組み込みワークフロー "Item added to project" が最初の option を追跡しており、改名なら自動追加された item が `Backlog` で入る整合が保てます（削除→新設だと壊れます）。
 3. プロジェクト番号（URL の `/projects/<N>` の `N`）を控える。
@@ -217,7 +217,7 @@ ls -d *-pages pages 2>/dev/null   # 何も出なければよい（出たら誤�
 
 ---
 
-## 節 H: Claude Code の共有設定を置く（プラグイン・hooks・config と配布物の置き場の直接編集の `deny`）
+## 節 H: Claude Code の共有設定を置く（プラグイン・hooks・config の直接編集の `deny`）
 
 <!-- INCLUDE-IF: 編成モードで起票する回に、追跡された .claude/settings.json に下の設定例の項目が揃っていない（project doctor はこの節の項目を見ない・不足ゼロ判定に数えない）-->
 
@@ -228,7 +228,6 @@ ls -d *-pages pages 2>/dev/null   # 何も出なければよい（出たら誤�
 - プラグインの有効化を共有設定に置かないと、clone した人ごとにプラグインを手で入れることになる。入れ忘れると skill も agent も無い状態で作業が始まり、その症状は設定の欠落だとは読まれにくい。
 - `shirokuma-hooks` を入れないと、節 G の permission で覆えない破壊的 push（語順を変えたフラグ形・refspec 形・宛先を書かない形）が未ゲートのまま残る。
 - 設定ファイル（`config.yaml`）の値は `changing-config` スキルの経路（`shirokuma-flow config set` / `config unset`）で変える前提で、`deny` は AI の編集ツールによるうっかりした書き換えを止める。
-- 配布物の置き場（`.shirokuma/dist/`）は CLI が書く置き場で、直接書き換えても次の更新で消えるので、`deny` で AI の編集ツールによる書き換えを止める。
 
 ### 置換する値（起票前に AI が埋める）
 
@@ -250,7 +249,7 @@ ls -d *-pages pages 2>/dev/null   # 何も出なければよい（出たら誤�
     "shirokuma-hooks@{marketplace}": true
   },
   "permissions": {
-    "deny": ["<設定ファイルの Edit を止める規則（項目 3）>", "<配布物の置き場の Edit を止める規則（項目 3）>"]
+    "deny": ["<設定ファイルの Edit を止める規則（項目 3）>"]
   }
 }
 ```
@@ -262,11 +261,12 @@ ls -d *-pages pages 2>/dev/null   # 何も出なければよい（出たら誤�
 ### 項目ごとの扱い
 
 1. **`extraKnownMarketplaces` / `enabledPlugins`**: 配信 repo のマーケットプレースと、`shirokuma-flow` プラグインを有効にする。拡張プラグイン（`shirokuma-nextjs`・`shirokuma-infra`）は使うリポだけ `enabledPlugins` に足す。配信 repo が private なら、取得は各人の git の認証で行われる（権限の無い人の手元では入らない）。
-2. **`shirokuma-hooks`**（任意・入れるかはこのリポが決める）: 破壊的な git / GitHub 操作を Bash の実行前に止める PreToolUse hook。止める対象はそれだけではなく、`gh` の直接の呼び出し（`shirokuma-flow` の verb へ誘導する）と、python / node / perl などの inline スクリプト（`-c`・heredoc・パイプで本文を渡す形）も止める——ファイルにしたスクリプトの実行やテストは止めない。inline スクリプトを日常の作業に使うリポでは、入れると作業の形が変わる。判定は `shirokuma-flow` CLI が行うので、**CLI が PATH に無い環境では止めずに通す**（fail-open・その旨を stderr に出す）。止められた操作は、本当に要るかを確かめてから人が打つ。入れない場合は、節 G の「permission が覆えるもの・覆えないもの」の 3 形が未ゲートのまま残る。**このプラグインは PreToolUse のほかに 2 つの hook も入れる**（入れるかを決める材料）:
+2. **`shirokuma-hooks`**（任意・入れるかはこのリポが決める）: 破壊的な git / GitHub 操作を Bash の実行前に止める PreToolUse hook。止める対象はそれだけではなく、`gh` の直接の呼び出し（`shirokuma-flow` の verb へ誘導する）と、python / node / perl などの inline スクリプト（`-c`・heredoc・パイプで本文を渡す形）も止める——ファイルにしたスクリプトの実行やテストは止めない。inline スクリプトを日常の作業に使うリポでは、入れると作業の形が変わる。判定は `shirokuma-flow` CLI が行うので、**CLI が PATH に無い環境では止めずに通す**（fail-open・その旨を stderr に出す）。止められた操作は、本当に要るかを確かめてから人が打つ。入れない場合は、節 G の「permission が覆えるもの・覆えないもの」の 3 形が未ゲートのまま残る。**このプラグインは Bash の PreToolUse のほかに 3 つの hook も入れる**（入れるかを決める材料）:
+   - **Agent / Task の PreToolUse hook**: worker（サブエージェント）へ渡すブリーフに Claude のセッション URL や `Claude-Session` trailer が入っていれば、起動を止める。flow の設定ファイル（`config.yaml`）の `hooks.allow` ではこの hook を外せない（Claude Code の設定 `disableAllHooks` は、この hook を含むすべての hook を止める）。SendMessage など、ほかのエージェント間の経路は見ない。
    - **Stop hook**: 作業のチェーン（タスク一覧）に未完了の段が残っているとき、メインのセッションが止まろうとするのを止めて続きへ進ませる。同じ未完了のままの止めは 3 回までで、その後は止まるのを許す。
    - **SubagentStop hook**: サブエージェントが終わったとき、未完了の段が残っていればメインへ続きを促す。
-   - どちらも PreToolUse と同じく CLI が PATH に無い・CLI が失敗した回は止めずに通す（fail-open）。自動で次の段へ進む動きを望まないリポは、このプラグインを入れない判断になる（PreToolUse だけを選んで入れる手段は無い）。
-3. **設定ファイル（`config.yaml`）と配布物の置き場（`.shirokuma/dist/` 配下）の直接編集を `deny`**: `deny` に置く 2 つの規則の逐語・書き方・置いた後の確かめ方・止まらないもの（`config set` / `config unset`・`update` / `rules install`・人のエディタ・自分でファイルを開くスクリプト）の正本は `changing-config` スキルの `reference/permission-deny.md`。AI のセットアップ手順は `config set` で書くので、この `deny` を置いても止まらない。dist の規則を置く理由と限界も同じ正本にある。
+   - どれも Bash の PreToolUse と同じく CLI が PATH に無い・CLI が失敗した回は止めずに通す（fail-open）。自動で次の段へ進む動きを望まないリポは、このプラグインを入れない判断になる（このプラグインの 4 つの hook はまとめて入り、Bash の PreToolUse だけを選んで入れる手段は無い）。
+3. **設定ファイル（`config.yaml`）の直接編集を `deny`**: `deny` に置く規則の逐語・書き方・置いた後の確かめ方・止まらないもの（`config set` / `config unset`・人のエディタ・自分でファイルを開くスクリプト）の正本は `changing-config` スキルの `reference/permission-deny.md`。AI のセットアップ手順は `config set` で書くので、この `deny` を置いても止まらない。配布物の規範は CLI に同梱されプロジェクトの中に写しが無いので、配布物の規範のための `deny` は置かない（理由は同じ正本）。
 4. **入れないもの**:
    - **`language`**（応答の言語）: 共有設定に置くと clone した全員の応答言語が変わる。各人の選択なので、置くなら各人の `~/.claude/settings.json` か `.claude/settings.local.json` にする。
    - **`$schema`**: エディタの補完と検証のための任意の項目で、設定の効き目は変わらない（入れるなら公式ドキュメントの settings の頁に載っている URL を使う）。
@@ -278,7 +278,7 @@ ls -d *-pages pages 2>/dev/null   # 何も出なければよい（出たら誤�
 3. `.claude/settings.json` をコミットする。
 4. 新しいセッションで確かめる: ①プラグインが有効になっている（`/implement-flow` などの skill が出る）②`shirokuma-hooks` を入れたなら、`/hooks` に Bash の PreToolUse hook が載っている（表示は Claude Code の版で変わりうる。hook が効いているかを破壊的な操作の試し打ちで確かめない——効いていなければそのまま実行される）③`deny` は `changing-config` スキルの `reference/permission-deny.md` の確かめ方。壊れた JSON は静かに無視されうるので、ここを飛ばさない。あわせて、この Issue を close した後に AI が `shirokuma-flow project doctor` の `permission` が `ok` のままであることを確かめる（同じファイルを書き換えたので、節 G の設定が壊れていないかを見る）。
 
-完了条件: `[ ] .claude/settings.json にプラグインの有効化（extraKnownMarketplaces / enabledPlugins）を書き足した` / `[ ] shirokuma-hooks を有効にした（or 入れない判断と理由をコメントした）` / `[ ] 設定ファイル（config.yaml）の Edit を deny に置いた` / `[ ] 配布物の置き場（.shirokuma/dist/）の Edit を deny に置いた` / `[ ] 新しいセッションで作業 4 の確かめを通した`
+完了条件: `[ ] .claude/settings.json にプラグインの有効化（extraKnownMarketplaces / enabledPlugins）を書き足した` / `[ ] shirokuma-hooks を有効にした（or 入れない判断と理由をコメントした）` / `[ ] 設定ファイル（config.yaml）の Edit を deny に置いた` / `[ ] 新しいセッションで作業 4 の確かめを通した`
 
 ---
 

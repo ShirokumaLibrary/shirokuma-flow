@@ -9,12 +9,14 @@
 | プレフィックス | 対象サービス | 例 |
 |-------------|-----------|---|
 | `DATABASE_` | RDS / PostgreSQL / MySQL | `DATABASE_URL`, `DATABASE_HOST` |
-| `CACHE_` | ElastiCache / Redis / Valkey | `CACHE_URL`, `CACHE_HOST` |
-| `MAIL_` | SES / Mailhog / Mailpit | `MAIL_HOST`, `MAIL_FROM` |
+| `CACHE_` | ElastiCache / Valkey（Redis 互換） | `CACHE_URL`, `CACHE_HOST` |
+| `MAIL_` | SES / Mailpit | `MAIL_HOST`, `MAIL_FROM` |
 | `STORAGE_` | S3 / MinIO / LocalStack S3 | `STORAGE_BUCKET`, `STORAGE_ENDPOINT` |
 | `QUEUE_` | SQS / LocalStack SQS | `QUEUE_URL`, `QUEUE_REGION` |
 | `AWS_` | AWS SDK 共通設定 | `AWS_REGION`, `AWS_ENDPOINT_URL` |
 | `NEXT_PUBLIC_` | ブラウザ公開変数（Next.js） | `NEXT_PUBLIC_APP_URL` |
+
+> キャッシュの接続先はエンジン名を含まない `CACHE_URL` に揃える（`REDIS_URL`・`VALKEY_URL` は使わない）。エンジンを Redis から Valkey へ替えてもキー名が変わらず、本番の ElastiCache にもそのまま写せる。
 
 ## サービス別変数マッピングテーブル
 
@@ -27,7 +29,7 @@
 | `DATABASE_PORT` | `5432` | `5432` |
 | `DATABASE_SSL` | `false` | `true` |
 
-### キャッシュ（Redis / ElastiCache Valkey）
+### キャッシュ（Valkey / ElastiCache Valkey）
 
 | 変数名 | ローカル値（.env.local） | 本番値（.env.production） |
 |--------|----------------------|------------------------|
@@ -45,7 +47,7 @@
 | `STORAGE_REGION` | `us-east-1` | `{region}` |
 | `STORAGE_FORCE_PATH_STYLE` | `true` | `false` |
 
-### メール（Mailhog / SES）
+### メール（Mailpit / SES）
 
 | 変数名 | ローカル値（.env.local） | 本番値（.env.production） |
 |--------|----------------------|------------------------|
@@ -62,7 +64,10 @@
 | `AWS_ENDPOINT_URL` | `http://localhost:4566` | `（設定しない — SDK がデフォルト使用）` |
 | `AWS_ACCESS_KEY_ID` | `test` | `（設定しない — IAM Task Role を使用）` |
 | `AWS_SECRET_ACCESS_KEY` | `test` | `（設定しない — IAM Task Role を使用）` |
+| `AWS_REGION` | `us-east-1` | `{region}` |
 | `AWS_DEFAULT_REGION` | `us-east-1` | `{region}` |
+
+> アプリの AWS SDK for JavaScript v3 は `AWS_REGION` を読み、`AWS_DEFAULT_REGION` は読まない。`AWS_DEFAULT_REGION` は aws CLI 向けで、両方を同じ値で置く（coding-infra の `localstack.md` の `.env` と同じ）。
 
 > `AWS_ENDPOINT_URL` を本番で未設定にすることで、SDK は自動的に本番エンドポイントを使用する。エンドポイント切り替えの SDK 実装パターンは [local-to-prod-mapping.md](local-to-prod-mapping.md) を参照。
 
@@ -106,6 +111,7 @@ AWS_ENDPOINT_URL=http://localhost:4566
 AWS_ACCESS_KEY_ID=test
 AWS_SECRET_ACCESS_KEY=test
 AWS_DEFAULT_REGION=us-east-1
+AWS_REGION=us-east-1
 ```
 
 ### Next.js の変数区分
@@ -168,7 +174,7 @@ taskDefinition.addContainer("AppContainer", {
 // lib/config.ts — SSM から設定を取得（起動時に1回のみ）
 import { SSMClient, GetParameterCommand } from "@aws-sdk/client-ssm";
 
-const ssmClient = new SSMClient({ region: process.env.AWS_DEFAULT_REGION });
+const ssmClient = new SSMClient({ region: process.env.AWS_REGION });
 
 export async function getConfig() {
   if (process.env.NODE_ENV === "development") {

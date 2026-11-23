@@ -13,7 +13,7 @@ AWS SDK を使ったアプリケーションコードの実装、または AWS �
 
 ## スコープ
 
-- **カテゴリ:** 変更系ワーカー
+- **読み手:** 実装の段で作業セッションのメインが、SKILL.md と reference を Read で文書として読んで実装する（Skill では起動しない。併用するかの判定は規範 `delegation-and-checks` の「拡張スキルの併用判定」）。
 - **スコープ:** AWS SDK（v3）を使ったアプリケーションコードの実装（Write / Edit）、AWS CLI コマンドによるサービス設定ガイダンス（Bash）、環境別設定の管理。
 - **スコープ外:** CDK コンストラクトの実装（`coding-cdk` に委任）、AWS リソース設計（`designing-aws` に委任）、docker-compose 設定（`coding-infra` に委任）
 
@@ -68,7 +68,7 @@ AWS SDK を使ったアプリケーションコードの実装、または AWS �
 
 ### ステップ 6: 完了レポート
 
-変更内容をコメントとして Issue に記録する。状態遷移は orchestrator が flow verb で行う。
+変更内容は実装サマリー（`implement-flow` の `reference/docs/quality-gate.md` の手順で書く）に書く。Issue へのコメントは、依頼元が名指した回だけ書く。状態遷移は `implement-flow` の段の順序で行う（この skill では打たない）。
 
 ## リファレンスドキュメント
 

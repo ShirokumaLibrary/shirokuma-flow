@@ -73,8 +73,8 @@ Next.js（App Router）の route 階層・レイアウト境界・ミドルウ�
 ## アノテーション方針（feature-map 連携）
 
 - 各 `page.tsx` に `@screen <Name>` を付け、画面を識別子化する。
-- コンポーネントに `@usedComponents` を付け、画面↔部品の依存を辿れるようにする。
-- これにより `shirokuma-flow nextjs feature-map` で画面↔部品マップを可視化できる。route 階層の設計時にアノテーション粒度（どの単位を 1 画面とみなすか）も併せて決める。
+- 同じ `page.tsx` に、その画面（子の client component を含む）が呼ぶ server action を `@usedActions` で並べる。画面↔部品の依存は page の import から辿られる（`@usedComponents` は feature-map が読まない）。
+- これにより `shirokuma-flow nextjs feature-map` で画面↔部品・画面↔action のマップを可視化できる（feature-map は page ファイルだけを読む）。route 階層の設計時にアノテーション粒度（どの単位を 1 画面とみなすか）も併せて決める。
 
 ## 認可を経路の一覧で一元管理する構成では route handler を選ぶ
 

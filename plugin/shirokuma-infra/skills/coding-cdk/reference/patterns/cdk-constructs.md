@@ -178,7 +178,8 @@ class AppService extends Construct {}
 // リソース ID: PascalCase（CloudFormation 論理 ID）
 new s3.Bucket(this, 'DataBucket', { ... });
 
-// CDK 出力: kebab-case が推奨（export name）
+// CDK 出力の export name: kebab-case が推奨（export を使う場合だけ。
+// スタック間参照の既定は Props か SSM / Secrets Manager の名前解決で、export は参照中の更新・削除をロックする）
 new cdk.CfnOutput(this, 'VpcId', {
   exportName: `${id}-vpc-id`,
   value: this.vpc.vpcId,

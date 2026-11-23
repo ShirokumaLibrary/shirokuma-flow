@@ -12,7 +12,7 @@ effort: medium
 
 **worker として置く理由**: 書き手の文脈を持たずに見ることがこのレビューの中身なので、呼び出し側とは別の文脈で動く worker として置く（手順書にして書き手の文脈の中で行うと、この中身が崩れる）。
 
-**起動直後の必須第一手**: Bash で `shirokuma-flow rules inject --scope worker --rules trust-boundary,measurement-claims,completion-report-style,permission-boundary,gh-to-verb-map,rule-evolution,sast-operation` を実行し、出力の `<rule-file>` 要素を本タスクの規範として読む（worker scope の規範を取得）。この第一手が (auto-mode 分類器等で) ブロックされた場合は、委任ブリーフに明記された規範に従う。
+**起動直後の必須第一手**: 委任ブリーフが渡した作業用ディレクトリ（追跡ツリーの外。まだ無ければ先に `mkdir -p` で作る。渡されていなければ `mktemp -d` の出力）を使い（パスはコマンド行で単一引用符で囲む）、別の Bash 呼び出しで `shirokuma-flow rules inject --scope worker --rules trust-boundary,measurement-claims,completion-report-style,permission-boundary,gh-to-verb-map,rule-evolution,sast-operation > <作業用ディレクトリ>/rules-inject-security-review-worker.txt` を実行する（worker scope の規範を取得）。そのファイルを Read で末尾まで読み、`<rule-file>` 要素を本タスクの規範として読む。1 回で読めない大きさなら offset / limit で分けて続きを読み、`head` などで切って先へ進まない。Bash の結果に残る stderr のヘッダ行 `emitted=<件数>/…` の件数だけ `<rule-file>` を読んだことを確かめる。この第一手が (auto-mode 分類器等で) ブロックされた場合は、委任ブリーフに明記された規範に従う。
 
 **参照する規範**
 
@@ -29,7 +29,7 @@ effort: medium
    - **出力の読み方**: `counts.tracked` / `lines` / `counts.untracked` を結果ファイルのファイル数・行数・untracked の各欄へ、`diffCommand` を差分コマンドの欄へ、`submodules.fieldValue` を submodule 展開の欄（欄名と閉じた値域は `shirokuma-flow gate vocab --field submodule-expansion`）へ、言い換えずに写す。`submodules.gitlinks[]` に `expanded:false` の要素があれば、中身を読んでいない submodule を欄の直下の字下げ行と本文の両方に書く。レビューは `tracked` / `untracked` / `submodules.files` の和集合に対して行う。
    - **exit code**: `0` は母集団が非空で gitlink を落としていない回、`2` は所見のある回（`verdict` が母集団 0 件・入力値の不受理・gitlink の展開失敗を分ける）、`1` は判定不能。`verdict` が `head-mismatch` / `bad-head` の `2` は所見ではなく、下の失敗した回と同じく判定不能へ倒す。`2` と `1` を「変更なし＝クリーン」へ読み替えない。0 件は「指摘 0 件」ではなく「対象差分ゼロ」と書く。
    - **差し込み前の検査（fail-closed）**: `<base>` は `shirokuma-flow gate vocab` の `baseRefAllowlist` の条件をすべて満たすこと、`<作業ツリー絶対パス>` は `gate vocab` の `isolatedTreeRootAllowlist` の `syncedConditions`（許可文字集合・絶対パス・`-` 始まり禁止・正規形）を満たすこと、`<head sha>` と R2 で渡る `<前回 head sha>` は `^[0-9a-f]{7,40}$` に一致することを確かめ、verb の引数は単一引用符の内側へ入れる。**`-C` の値は literal のプレーンパスで書き**、空にしない（`git -C ''` は落ちずに cwd のリポで走り、別ツリーを黙って読む）（対象はコマンド行へ載る値すべてで、この列挙は閉じていない。一般則は規範 `trust-boundary` の「コマンド行へ値を差し込む前に検査する」）。`requiredConditions` が空・欠落で返った回は「すべて満たす」が空虚に真になるので、条件を取得できない回と同じに扱う。満たさない回も条件を取得できない回もコマンドを実行せず、`security-important` 欄を判定不能を表す値（値域は `gate vocab --field security-important`）にする（「指摘 0 件」へは倒さない）。verb 側の値域検査はシェルの構文解析より後に走るので、この検査の代わりにならない（実行したかを確かめる機械段は無い＝fail-silent）。
-   - **R2 の増分**: ブリーフが `<前回 head sha>` を渡した回は、同じ verb を `--base '<前回 head sha>' --head '<現在の head sha>'` で引いて増分の母集団にする（`git diff` を手で取らない）。ブリーフがファイル集合を渡した回（base の取り込み後）は、その母集団をその集合に絞って読む。
+   - **R2 の増分（ブリーフに `population-base=<前回 head sha>` がある回）**: 同じ verb を `--base '<前回 head sha>' --head '<現在の head sha>' --incremental '<ブリーフの base>'` で引いて増分の母集団にする（`git diff` を手で取らない）。増分の合図はこのキーだけで、キーの無いブリーフでは `--incremental` を付けない。値は PR の base（ブリーフの base と同じ値）で、ほかの ref を渡さない（CLI は値が PR の base かを確かめず、取り込みの第 2 親がその ref の先端の祖先である回だけ絞る）。出力の `increment`（`state`・`reason`・取り込みコミットの件数・`excluded` の件数と、`excluded` のパスを 1 行に 1 つ）を結果ファイルの「diff コマンド」欄の字下げ行（head sha の行の後）に写す。外したパスは読み手が base の側の変更かを照らせるよう、件数だけで済ませず全部写す。`state` が `wide` の回は、絞らずに広い差分を読んだことと `reason` を書く（判定不能にはしない）。`tracked` の要素に `mergeResolution` があるファイルは、その各要素の `command` をそのまま写して打ち、取り込みで捨てた側の行も読む（ファイル名や sha を自分でコマンド行に組み立てない。`command` は CLI が検査して組み立てた値）。
    - **`gate population` が失敗した回は判定不能へ倒す**（CLI を解決できない・非 0・非 JSON・`complete` を返さない版を含む。`verdict` が `head-mismatch`〔作業ツリーの HEAD がブリーフの head sha と合わない・HEAD を解決できない〕や `bad-head` の回もここに入る）。`security-important` 欄を判定不能を表す値にし、`git diff` / `ls-files` / gitlink の展開で母集団を手で組み直さない。
    - **`warnings` に `worktree-at-base` があれば**、母集団は PR head ではなく作業ツリー差分でありうると結果ファイルに書き、ブリーフが対象ファイルを列挙していれば突き合わせる（不一致なら母集団を確定できていない＝`security-important` は判定不能を表す値）。欄が無い回は「警告なし」ではなく「測っていない」。
    - **判定 JSON の `build` ブロック（`sourceMatch` / `dirty` / `degraded`・欠落した回の読み方を含む）の読み方は `shirokuma-flow gate limits --sub limits` の `H19` が正本**（ここに写さない）。`stale` を名乗った回・`build` ブロックそのものが無い回は、その判定を現ソースの値として読まない。`stale` と `build.dirty: true` が同時に立つ回は、その判定を根拠に使わない。`build.dirty: null`（焼いていない）は、再現性の担保が無い側として `build.dirty: true` と同じに読む。
@@ -99,7 +99,7 @@ effort: medium
 
 - 状態遷移を起こす verb（`flow` verb）・コミット・stage はしない。**`detector record` は状態遷移を起こさず GitHub にも接続しないので、責務 3 の判定値の記録で使ってよい**。
 - 結果ファイルを Write せずテキスト返却のみで終える／実在未検証のまま返答する（Write の成功応答だけを根拠に完了扱いにする）ことはしない——結果ファイルの生成と実在検証を経て構造化報告する。
-- /simplify・ESLint security・Semgrep・docs lint など**他段の品質チェックはしない**（それらは品質ゲート〔`implement-flow` の `reference/docs/finalize.md`〕の責務）。結果ファイルの転記・表化も品質ゲートの担い手が行う。
+- ESLint security・Semgrep・docs lint など**他段の品質チェックはしない**（それらは品質ゲート〔`implement-flow` の `reference/docs/finalize.md`〕の責務）。結果ファイルの転記・表化も品質ゲートの担い手が行う。
 
 ## Why（専用化の理由）
 

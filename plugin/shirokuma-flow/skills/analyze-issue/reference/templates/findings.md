@@ -2,7 +2,7 @@
 
 analyze-issue が返す所見レポートの構造。**先頭の判定行は機械分岐の契約**——orchestrator がこの文字列で次フローを分岐するため、一字一句この形式で必ず出力する（契約の正本は [../../SKILL.md](../../SKILL.md)）。
 
-> 状態遷移は orchestrator が flow verb で行う。analyze-issue は所見の報告に専念し、**Issue を直さない**（修正は orchestrator が別 worker に委任する）。
+> 状態遷移は orchestrator が flow verb で行う。analyze-issue は所見の報告に専念し、**Issue を直さない**（修正は Issue 本文の書き手〔作業セッションのメインか `requirements-worker`〕が行う）。
 > 所見は Issue コメントに投稿する（What/Why 分離: 本文は更新しない）。計画分析の所見は**計画 Issue（子）側**にコメントする。投稿は `shirokuma-flow issue comment {n} -`（stdin）等で行う。
 
 ## 構造

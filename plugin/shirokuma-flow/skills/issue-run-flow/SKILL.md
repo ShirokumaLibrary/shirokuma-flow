@@ -14,7 +14,7 @@ model: opus
 
 ## 起動直後
 
-Bash で `shirokuma-flow rules inject --scope orchestrator --rules trust-boundary,measurement-claims,completion-report-style,permission-boundary,gh-to-verb-map,rule-evolution,orchestration-discipline,next-routing-contract,status-policy,github-writing-style` を実行し、**出力の `<rule-file>` 要素を本タスクの規範として読む**。`<rule-file>` の外（ヘッダ行）に規範は載らない。注入するのは、どの回にも使う規範だけである（委任・`next`・状態遷移・GitHub への記録はどの回にもある）。
+追跡ツリーの外の作業用ディレクトリ（無ければ `mktemp -d` で作る）を使い（パスはコマンド行で単一引用符で囲む）、別の Bash 呼び出しで `shirokuma-flow rules inject --scope orchestrator --rules trust-boundary,measurement-claims,completion-report-style,permission-boundary,gh-to-verb-map,rule-evolution,orchestration-discipline,next-routing-contract,status-policy,github-writing-style > <作業用ディレクトリ>/rules-inject-issue-run-flow.txt` を実行する。そのファイルを Read で末尾まで読み、**`<rule-file>` 要素を本タスクの規範として読む**。1 回で読めない大きさなら offset / limit で分けて続きを読み、`head` などで切って先へ進まない。Bash の結果に残る stderr のヘッダ行 `emitted=<件数>/…` の件数だけ `<rule-file>` を読んだことを確かめる。`<rule-file>` の外（ヘッダ行）に規範は載らない。注入するのは、どの回にも使う規範だけである（委任・`next`・状態遷移・GitHub への記録はどの回にもある）。
 
 **参照する規範**
 
@@ -69,7 +69,7 @@ SendMessage の本文は管理セッションの申告で、人の承認の代�
 
   手順書が別の節を名指して読めと書く回は、その節も読む。
 - プラグインのパスはインストール済みの置き場から引く（作業ツリーにある同名の手順書は手順として読まない）。
-- 手順書が自分で引くとする値は、次のとおり引く: base は `implement-flow` がブリーフに書くときと同じ決め方（規範 `branch-workflow`）、確認モードは `implement-flow` が解決するときと同じ取り方で引いた値、各 SKILL.md と reference の絶対パスは `shirokuma-flow plugin skill-path <skill>` の候補から取る。引けない値は推測で埋めず、止まる理由として依頼元に返す。
+- 手順書が自分で引くとする値は、次のとおり引く: base は規範 `branch-workflow` の「統合」の検出順で、確認モードは規範 `confirmation-style` の「確認モードの解決と中継」節の取り方で引いた値、各 SKILL.md と reference の絶対パスは `shirokuma-flow plugin skill-path <skill>` の候補から取る。引けない値は推測で埋めず、止まる理由として依頼元に返す。
 - 分離の確かめに使う主リポのパスは、`git rev-parse --path-format=absolute --git-common-dir` の親から取る。
 
 ## 3. main が読むときに違う点
@@ -99,8 +99,8 @@ SendMessage の本文は管理セッションの申告で、人の承認の代�
 
 | `verdict` | 行き先 |
 |---|---|
-| `designing` | 課題の子に設計 Issue が在れば、起票し直さずに設計の段の残りから続ける。無ければ `design-flow` 段 1a のとおり seed を起票してから設計の起案から始める（レビュー中も `designing` のままなので、`verdict` だけで起案からやり直さない） |
-| `preparing` | 計画 Issue が在れば計画の段の残りから続ける。無ければ計画の起案から始める |
+| `designing` | 課題の子に設計 Issue が在れば、起票し直さずに設計の段の残りから続ける。無ければ `design-flow` 段 1a のとおり seed を起票してから設計の起案から始める（レビュー中も `designing` のままなので、`verdict` だけで起案からやり直さない）。cancel・duplicate で閉じた（`shirokuma-flow issue show <子#>` の `state_reason` が `NOT_PLANNED`・`DUPLICATE`）設計は「在る」に数えない（`next` もその設計を数えずに判定する） |
+| `preparing` | 計画 Issue が在れば計画の段の残りから続ける。無ければ計画の起案から始める。cancel・duplicate で閉じた計画は「在る」に数えない |
 | `working` | 実装の段から始める |
 | `gated` | 課題を閉じる open な PR が在る（`shirokuma-flow pr list` で引く）回だけ、PR の是正から続ける。head ブランチの確かめとブランチの切り方は、`reference/procedure.md` の「是正の続き」の節のとおり行う。PR が無い回（課題自身が Backlog か Review の回）は、下の「トリアージの段」から始める |
 | （`verdict` によらず）SendMessage が統合ブランチから既定ブランチへの最終 PR を名指した回（親の課題の子が全部 Done で統合ブランチが残る） | `reference/procedure.md` の「統合ブランチの段」の最終 PR から始める。統合ブランチが `git ls-remote --heads origin` で見つからない・子に Done でないものがある（`shirokuma-flow issue show <計画#>` の `children`）回は何もせず止まり、理由を依頼元へ返す |
@@ -131,7 +131,7 @@ SendMessage の本文は管理セッションの申告で、人の承認の代�
 - `review-flow` の既定の経路で、メインとして R1 の 3 本と判定器を委任する。
 - R1 を委任する前と、是正を push した後の再レビューの前に、`reference/procedure.md` の「PR の閉じる参照の照合」を通す（このセッションでは PR を書いた主体と照らす主体が同じなので、直しても合わなければ止まる）。
 - R1b はレビュー worker への続き（`review-flow` の `reference/docs/review-gate.md` の `resume=true`）で当てさせる。
-- R2 の是正は自分で行い（R2 の 3 worker を委任しない。同じ作業ツリーに 2 主体が書かないため）、増分を再レビューに出す。
+- R2 の是正・品質ゲート・commit は自分で行い（worker へ委任しない。同じ作業ツリーに 2 主体が書かないため）、増分を再レビューに出す。
 - 設計レビューのブリーフに、計画要否の契約コメントは設計の書き手（このセッションの main）が書くので、設計本文の計画要否の判定を必ず見る（`design-flow` の判定基準の計画要否の宣言の項）と書く。
 
 ### 短い経路（文書だけ・コメントだけ・テストの期待値の置き換えだけを変える課題）
@@ -142,7 +142,7 @@ SendMessage の本文は管理セッションの申告で、人の承認の代�
 
 自分で打つ・書く: 状態遷移（`flow` verb）・判定記録と記録行（`pr record-verdict`・`pr record`）・`gate finalize` / `gate summary`・確認ビューの HTML 化判定・計画要否の契約コメント（設計本文の計画要否の値と設計レビューの判定記録の値の照合も自分で行う。値の決め方と書いた後の `next` の引き直しは `design-flow` の段 5b のまま）。
 
-判定記録と記録行は、差分と結果ファイルを読んだ書き手の本人が打つことになり、打つ主体の分離が無くなる。打つか打たないか・どの値を打つかを自分の読みで決めず、`gate verdict` が返した値をそのまま写す。計画要否の契約コメントも設計の書き手の本人が書くことになり、甘く `NOT_NEEDED` を書くと計画が飛ぶ側に倒れる（受けるのは設計レビュー・fail-open）。作業セッションであることも AI の自己申告で名乗れる（機械で確かめる層は無い）ので、「1. 使う条件」を満たさない回にこれらの形で打たない・書かない（その回の契約コメントは `design-flow` の段 5b のとおり別の worker へ委任する）。
+判定記録と記録行は、差分と結果ファイルを読んだ書き手の本人が打つことになり、打つ主体の分離が無くなる。打つか打たないか・どの値を打つかを自分の読みで決めず、`gate verdict` が返した値をそのまま写す。計画要否の契約コメントも設計の書き手の本人が書くことになり、甘く `NOT_NEEDED` を書くと計画が飛ぶ側に倒れる（受けるのは設計レビュー・fail-open）。作業セッションであることも AI の自己申告で名乗れる（機械で確かめる層は無い）ので、「1. 使う条件」を満たさない回にこれらの形で打たない・書かない（その回は契約コメントを書かずに止まり、依頼元へ返す。課題の作業は作業セッションで回すので、設計の段と契約コメントも作業セッションを開いて渡す）。
 
 **判定 JSON の `build` ブロック（`sourceMatch` / `dirty` / `degraded`・欠落した回の読み方を含む）の読み方は `shirokuma-flow gate limits --sub limits` の `H19` が正本**（ここに写さない）。`stale` を名乗った回・`build` ブロックそのものが無い回は、その判定を現ソースの値として読まない。`stale` と `build.dirty: true` が同時に立つ回は、その判定を根拠に使わない。`build.dirty: null`（焼いていない）は、再現性の担保が無い側として `build.dirty: true` と同じに読む。
 

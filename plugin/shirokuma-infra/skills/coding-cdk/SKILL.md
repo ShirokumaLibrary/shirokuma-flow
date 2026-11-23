@@ -11,7 +11,7 @@ disable-model-invocation: true
 
 ## スコープ
 
-- **カテゴリ:** 変更系ワーカー
+- **読み手:** 実装の段で作業セッションのメインが、SKILL.md と reference を Read で文書として読んで実装する（Skill では起動しない。併用するかの判定は規範 `delegation-and-checks` の「拡張スキルの併用判定」）。
 - **スコープ:** CDK コンストラクトの実装・修正（Write / Edit / Bash）。`designing-aws` の設計成果物をもとに、L2/L3 コンストラクト、スタック分割、環境別設定管理、CI/CD 連携を実装する。CDK v2 TypeScript を前提とする。
 - **スコープ外:** AWS リソースの選定・設計判断（`designing-aws` に委任）、docker-compose によるローカル環境構築（`coding-infra` に委任）
 
@@ -123,7 +123,7 @@ CI/CD 連携: [reference/templates/github-actions-cdk.yml.template](reference/te
 **実装チェック**:
 - `interface Props` を Stack/Construct ごとに定義し、型安全性を確保
 - 環境変数・シークレットは SSM / Secrets Manager 経由で注入
-- スタック間依存は `cdk.Fn.importValue` または Props 経由で解決
+- スタック間依存は Props 経由か SSM / Secrets Manager の名前解決で解決し、CFN export（`cdk.Fn.importValue` / `exportName`）は既定にしない（export 元のスタックの更新・削除がロックされる。`web-rds-split-stack.ts.template` 冒頭の「疎結合の原則」）
 
 ### ステップ 4: 検証
 
@@ -143,7 +143,7 @@ npm test
 
 ### ステップ 5: 完了レポート
 
-変更内容をコメントとして Issue に記録する。
+変更内容は実装サマリー（`implement-flow` の `reference/docs/quality-gate.md` の手順で書く）に書く。Issue へのコメントは、依頼元が名指した回だけ書く。
 
 ## リファレンスドキュメント
 
@@ -152,7 +152,9 @@ npm test
 | [reference/patterns/cdk-constructs.md](reference/patterns/cdk-constructs.md) | L2/L3 コンストラクト使い分け・Props 設計・合成パターン | コンストラクト実装時 |
 | [reference/patterns/environment-config.md](reference/patterns/environment-config.md) | 環境別設定管理（cdk.json / Props / SSM）| 環境別スタック分離時 |
 | [reference/patterns/cdk-aspects.md](reference/patterns/cdk-aspects.md) | Aspects によるタグ付け・暗号化・コスト管理ガバナンス | ガバナンス要件実装時 |
-| [reference/templates/stack-structure.ts.template](reference/templates/stack-structure.ts.template) | Network/Stateful/Stateless 3スタック分割テンプレート | スタック設計時 |
+| [reference/patterns/cdk-nextjs-construct.md](reference/patterns/cdk-nextjs-construct.md) | cdk-nextjs の construct の選び方・版の要件・Props | cdk-nextjs をデプロイ先にする時 |
+| [reference/templates/stack-structure.ts.template](reference/templates/stack-structure.ts.template) | Network/Stateful/Stateless 3スタック分割テンプレート | スタック設計時（汎用コンテナ経路） |
+| [reference/templates/web-rds-split-stack.ts.template](reference/templates/web-rds-split-stack.ts.template) | Web（cdk-nextjs）/ Data（RDS）の 2 スタック分離テンプレート | cdk-nextjs と RDS を組む時 |
 | [reference/templates/github-actions-cdk.yml.template](reference/templates/github-actions-cdk.yml.template) | OIDC 認証・cdk diff/deploy ワークフロー | CI/CD 設定時 |
 
 ## クイックコマンド
@@ -170,7 +172,7 @@ npx tsc --noEmit                      # 型チェック（デプロイ前に必�
 
 ## 次のステップ
 
-`implement-flow` チェーンではなくスタンドアロンで起動された場合:
+実装の段で併読した回は、`implement-flow` の段の順序の続き（品質ゲート・commit・PR 作成）へ戻る。この skill では commit も PR 作成もしない:
 
 ```
 実装完了。次のステップ:

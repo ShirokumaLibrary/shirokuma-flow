@@ -89,6 +89,16 @@
 #               {DEV_BRANCH} in these comments -- i.e. the people who followed
 #               this procedure correctly are exactly the ones the check fails.
 #
+# Also set before installing (not placeholders, but values to check):
+#   - node-version: '24' matches the cdk-nextjs requirement (Node v24) and the
+#       Dockerfile base image node:24-alpine. Use an LTS line; if the repository
+#       has .nvmrc / .node-version, use that value in every job instead.
+#   - Every `uses:` below is a tag reference (@v4 etc.). Pin each one to a full
+#       commit SHA with the version as a trailing comment before installing
+#       (coding-cicd reference github-actions-patterns.md, section
+#       "サードパーティ Action のピン留め"). Look the SHA up in the action's own
+#       releases; do not copy a SHA from an example.
+#
 # What actually happens if you leave a placeholder unreplaced (it differs per
 # placeholder -- do NOT assume "unreplaced" always means "silent"):
 #   - a branch-name placeholder in on.*.branches
@@ -168,7 +178,7 @@ jobs:
       - name: Setup Node.js
         uses: actions/setup-node@v4
         with:
-          node-version: '20'
+          node-version: '24'
           cache: 'npm'
           cache-dependency-path: ${{ env.CDK_DIR }}/package-lock.json
 
@@ -227,7 +237,7 @@ jobs:
       - name: Setup Node.js
         uses: actions/setup-node@v4
         with:
-          node-version: '20'
+          node-version: '24'
           cache: 'npm'
           cache-dependency-path: ${{ env.CDK_DIR }}/package-lock.json
 
@@ -274,7 +284,7 @@ jobs:
       - name: Setup Node.js
         uses: actions/setup-node@v4
         with:
-          node-version: '20'
+          node-version: '24'
           cache: 'npm'
           cache-dependency-path: ${{ env.CDK_DIR }}/package-lock.json
 
@@ -314,7 +324,7 @@ jobs:
       - name: Setup Node.js
         uses: actions/setup-node@v4
         with:
-          node-version: '20'
+          node-version: '24'
           cache: 'npm'
           cache-dependency-path: ${{ env.CDK_DIR }}/package-lock.json
 

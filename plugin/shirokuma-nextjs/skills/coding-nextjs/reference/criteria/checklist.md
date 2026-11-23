@@ -12,7 +12,7 @@
 
 ## 2. server action（規約 2）
 
-- [ ] `"use server"` ファイルの export **関数**は action のみ（ヘルパーの同居 export なし・type export は可）
+- [ ] `"use server"` ファイルの値の export は action のみ（ヘルパー・定数・スキーマの同居 export なし・型だけの export〔`export type`〕は可）
 - [ ] 各 action が **認証 → 入力検証 → 処理 → revalidate/redirect** の順
 - [ ] 検証済みの明示フィールドだけをデータ操作に渡している（マスアサインメントなし）
 - [ ] 更新・削除に所有権（または権限）チェックがある
@@ -30,15 +30,15 @@
 
 ## 4. アノテーション（規約 4）
 
-- [ ] 各 `page.tsx` に `@screen <Name>`（**PascalCase**）と `@route` がある
-- [ ] コンポーネントに `@usedComponents`、server action ファイルに `@usedActions` がある
+- [ ] 各 `page.tsx` に `@screen <Name>`（**PascalCase**）がある
+- [ ] 各 `page.tsx` に、その画面（子の client component を含む）が呼ぶ server action を並べた `@usedActions` がある（`nextjs feature-map` は page ファイルだけを読み、server action のファイル・コンポーネントの注釈は拾わない）
 - [ ] 視覚確認が要る画面には `@screenshot`（必要なら `-viewport` / `-auth` / `-waitFor`）がある
 
 検証コマンド（**`nextjs` verb はコア CLI に固定で入っていない**——下記「前提」を先に確かめる）:
 
 ```bash
 shirokuma-flow nextjs lint -p .          # @screen の欠落（warn）・PascalCase 違反（error）
-shirokuma-flow nextjs feature-map -p .   # route ↔ 画面名 ↔ コンポーネントの抽出結果を目視確認
+shirokuma-flow nextjs feature-map -p .   # route ↔ 画面名 ↔ コンポーネント ↔ action の抽出結果を目視確認
 shirokuma-flow nextjs routes -p .        # 追加した route が認識されているか
 ```
 
@@ -88,4 +88,4 @@ shirokuma-flow lint coverage      # 実装ファイル ↔ テストファイル
 - [ ] 本番のサーバ側エラーを追える。ログは 1 行 1 件の JSON（時刻・要求の ID・経路・エラーの名前とスタック）で出し、スタックを元のソースの行へ戻せるようサーバ側の source map を作って公開しない場所に置く。**何を防ぐか**: 本番のエラーはクライアントには要約だけが返り、ビルド後のスタックはそのままではソースの行に戻らない。追試状況: `要確認（未追試）`（source map を作る設定の名前と、ログ基盤がスタックを戻せるかは、使う版とログ基盤で確かめる）
 - [ ] CDN の後ろに置くアプリでは、クライアントの IP を CDN が上書きする専用のヘッダ 1 本だけから読み、`X-Forwarded-For` を読まない。**何を防ぐか**: `X-Forwarded-For` はクライアントが自分で値を入れて送れるので、レート制限や監査ログの IP を偽れる。CDN 側でクライアントが送った同名のヘッダを捨てて上書きする設定とそろえる。**この読み方が安全なのは、オリジンへ CDN を経ずに届かない構成に限る**（オリジンを直接叩けると、専用のヘッダもクライアントが自分で付けられる）。オリジンを CDN に絞る方法は `shirokuma-infra` の designing-aws スキル `reference/patterns/aws-resource-patterns.md`「ALB の受け口を CDN に絞る」。追試状況: `要確認（未追試）`（ヘッダの名前と上書きの設定は CDN ごとに違うので、使う CDN のドキュメントと本物の要求で確かめる）
 
-> 完了後の品質ゲート（finalize）・コミット・状態遷移は orchestrator / 各 worker の責務（このスキルでは行わない）。
+> 完了後の品質ゲート・コミット・PR 作成は作業セッションのメインが `implement-flow` の手順で行う（このスキルでは行わない）。

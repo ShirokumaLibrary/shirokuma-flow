@@ -73,7 +73,7 @@ cdk-nextjs は "One architecture does not fit all" として 4 つの construct 
 
 ## 既定フレーバー `NextjsGlobalFunctions` の理由
 
-- **VPC/NAT 不要**: Lambda がデフォルトでは VPC 外に置かれ、NAT Gateway（~$32/月/AZ + データ処理料）が発生しない。CloudFront + Lambda + S3 + DynamoDB はいずれも VPC を必須としない。
+- **VPC/NAT 不要**: Lambda がデフォルトでは VPC 外に置かれ、NAT Gateway（AZ ごとの時間課金 + データ処理料。額は `local-to-prod-mapping.md` の「コスト概算」）が発生しない。CloudFront + Lambda + S3 + DynamoDB はいずれも VPC を必須としない。
 - **月額概算 ~$8**: 小規模トラフィック前提の最小構成。CloudFront・Lambda・S3・DynamoDB はいずれも従量課金で、アイドル時のコストが小さい。ALB（~$20/月・常時課金）や NAT Gateway を持つコンテナフレーバー（`Nextjs*Containers`）より出発点として安い。
 - **最小構成から始める方針と一致**: トラフィックが予測可能・大規模になった段階で `NextjsGlobalContainers`（ALB + ECS Fargate）へ上書き移行する。最初からコンテナ + ALB を積まない。
 
@@ -85,7 +85,7 @@ cdk-nextjs は "One architecture does not fit all" として 4 つの construct 
 
 - **S3・DynamoDB は Gateway 型 VPC エンドポイントが使え無料**（時間課金・データ処理料なし）。cdk-nextjs のキャッシュ層（S3 + DynamoDB）は Lambda が VPC アタッチされていても Gateway 型エンドポイント経由で到達でき、**この 2 サービスのために NAT Gateway は不要**。
 - **RDS 等の同一 VPC リソースへの到達も NAT 不要**: 同一 VPC 内の private subnet に置いた RDS へは VPC 直結で到達する（インターネットを経由しない）ため NAT を要しない。
-- **Interface 型エンドポイントが要るサービスはコストが乗る**: Secrets Manager・SQS・SNS・SES など**ほとんどの AWS サービスは Interface 型 VPC エンドポイント（AWS PrivateLink）が必要**で、時間課金 + データ処理料（~$0.01/h/AZ）が発生する。NAT Gateway（~$32/月/AZ + データ処理）よりは安いがゼロではない。VPC アタッチした Lambda からこれらへ到達するなら Interface 型エンドポイントを設計に含める。
+- **Interface 型エンドポイントが要るサービスはコストが乗る**: Secrets Manager・SQS・SNS・SES など**ほとんどの AWS サービスは Interface 型 VPC エンドポイント（AWS PrivateLink）が必要**で、時間課金 + データ処理料（~$0.01/h/AZ）が発生する。NAT Gateway（AZ ごとの時間課金 + データ処理料。額は `local-to-prod-mapping.md` の「コスト概算」）よりは安いがゼロではない。VPC アタッチした Lambda からこれらへ到達するなら Interface 型エンドポイントを設計に含める。
 - **判断ヒント**: 「Lambda VPC アタッチ + RDS」の組み合わせ自体は、キャッシュ層の S3/DynamoDB が Gateway 型で無料なので既定の「VPC/NAT 不要 ~$8/月」からの乖離は限定的。Secrets Manager 等 Interface 型が要るサービスをどれだけ使うかでコストが決まる。NAT Gateway を無条件に足す前に、到達先がどのエンドポイント種別で足りるかを確認する。
 
 > エンドポイント種別の一般則は `aws-resource-patterns.md` の「NAT Gateway vs VPC Endpoint」表と揃える。
@@ -119,6 +119,6 @@ ISR / data cache / full route cache 用のキャッシュ層は construct が自
 ## 参照
 
 - `aws-resource-patterns.md`（designing-aws・同一 patterns ディレクトリ）: 汎用コンピュート選定（ECS Fargate + ALB）・NAT Gateway vs VPC Endpoint の一般則。**汎用コンテナ経路**（cdk-nextjs を使わない構成。Next.js アプリを含む）はこちら。**コンテナフレーバー（`Nextjs*Containers`）はこちらではなく本ファイルの選定マトリクス**。
-- `static-asset-delivery.md`（designing-aws・同一 patterns ディレクトリ）: **静的資産の配信**を扱う。本ファイルの 4 construct はいずれも「S3 静的資産」を自動構成するが、**Content-Type / 圧縮 / キャッシュのどこまでを construct が決めるかはこの配布物の記述からは読めない（未確認）**。construct を選んだ後も、配信経路の選定と配信属性の確認はあちらを通す。
+- `static-asset-delivery.md`（designing-aws・同一 patterns ディレクトリ）: **静的資産の配信**を扱う。本ファイルの 4 construct はいずれも「S3 静的資産」を自動構成するが、**Content-Type / 圧縮 / キャッシュのどこまでを construct が決めるかはこの配布物の記述からは読めない（未確認）**。construct を選んだ後も、あちらを通す（配信経路はあちらの §1 の「cdk-nextjs を選んだ回の読み方」のとおり construct が選んだ形として読み、配信属性の確認は省かない）。
 - `long-lived-connections.md`（designing-aws・同一 patterns ディレクトリ）: **接続の寿命**を扱う。ALB を持つ構成（`Nextjs*Containers` ＝コンテナフレーバー）で SSE / ストリーミングを出すなら通す。**ALB を持たない構成（既定 `NextjsGlobalFunctions` / `NextjsRegionalFunctions`）で接続の寿命を何が決めるかは、あちらにも本ファイルにも記述が無い（未確認）**——それでも設計成果物には同じ 4 行を書き、値が引けなければ「引けなかった」と書く。
 - `local-to-prod-mapping.md`（designing-aws・同一 patterns ディレクトリ）: ローカル↔本番マッピング・コスト概算。「アプリコンテナ」行の cdk-nextjs 分岐はこちらから本ファイルへ相互参照。

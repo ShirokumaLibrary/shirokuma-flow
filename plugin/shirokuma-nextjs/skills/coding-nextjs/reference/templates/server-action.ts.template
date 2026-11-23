@@ -4,12 +4,11 @@
  * {{Name}} の server action 群。
  *
  * 構造の順序（SKILL.md 規約 2）: 認証 → 入力検証（zod 等）→ 処理 → revalidate/redirect。
- *
- * @usedActions list{{Name}}s, create{{Name}}, update{{Name}}, delete{{Name}}
  */
 // テンプレート変数: {{name}}=小文字単数形 / {{Name}}=PascalCase 単数形
 // - 認証（requireUser）とデータ層（db）はプロジェクトの実装に置き換える。
 // - client 入力（formData / 引数）は信頼しない。検証前に使わない。
+// - どの画面がどの action を使うかは、その page の `@usedActions` に書く（feature-map は page ファイルだけを読む）。
 // - 300 行 or 8 関数を超えたら queries / mutations に分割する（criteria/checklist.md 参照）。
 
 import { revalidatePath } from "next/cache"

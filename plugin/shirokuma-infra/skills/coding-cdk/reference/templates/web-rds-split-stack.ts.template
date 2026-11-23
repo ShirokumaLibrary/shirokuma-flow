@@ -179,7 +179,7 @@ export class DataStack extends cdk.Stack {
       const engine = isPostgres
         ? rds.DatabaseClusterEngine.auroraPostgres({
             // 版照合: enum 追加後は `AuroraPostgresEngineVersion.VER_x_y` へ差し替え。
-            version: rds.AuroraPostgresEngineVersion.of('16.4', '16'),
+            version: rds.AuroraPostgresEngineVersion.of('18.3', '18'),
           })
         : rds.DatabaseClusterEngine.auroraMysql({
             version: rds.AuroraMysqlEngineVersion.of('8.0.mysql_aurora.3.08.0', '8.0'),
@@ -210,7 +210,7 @@ export class DataStack extends cdk.Stack {
       // 予測可能・定常低負荷の小規模本番。
       const engine = isPostgres
         ? rds.DatabaseInstanceEngine.postgres({
-            version: rds.PostgresEngineVersion.of('16.4', '16'),
+            version: rds.PostgresEngineVersion.VER_18,
           })
         : rds.DatabaseInstanceEngine.mysql({
             version: rds.MysqlEngineVersion.of('8.0.39', '8.0'),
@@ -272,7 +272,7 @@ export class DataStack extends cdk.Stack {
 //       （`Fn.importValue` は使わない＝削除ロック回避）。
 //
 // 注意（本テンプレでの扱い）:
-//   cdk-nextjs は experimental v0.x。実 prop 名（`buildDirectory` 等）・construct 名・
+//   cdk-nextjs は experimental v0.x。実 prop 名（`relativePathToWorkspace` 等）・construct 名・
 //   `overrides` の構造はピン版の型定義（`node_modules/cdk-nextjs`）を正として照合する
 //   （どの construct があるかは `nextjs-deploy.md` の「4 アーキテクチャ construct の選定マトリクス」を見る）
 //   （実照合は実装時〔coding-cdk〕に、実 prop 名・overrides 構造をピン版の型定義と突き合わせる）。
@@ -321,8 +321,9 @@ export class WebStack extends cdk.Stack {
     // import { NextjsGlobalFunctions } from 'cdk-nextjs';
     //
     // new NextjsGlobalFunctions(this, 'Site', {
-    //   // buildDirectory: 実 prop 名はピン版の型定義で照合する。
-    //   nextjsPath: '.',
+    //   // Next.js プロジェクトの場所（coding-cdk の `cdk-nextjs-construct.md` と同じ prop 名。
+    //   // 実名はピン版の型定義で照合する）。
+    //   relativePathToWorkspace: '.',
     //   environment: {
     //     DATABASE_HOST: dbEndpoint,
     //     DATABASE_PORT: dbPort,

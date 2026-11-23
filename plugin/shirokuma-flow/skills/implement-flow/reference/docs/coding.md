@@ -59,7 +59,7 @@
 
 ## review-flow の Nit 合流（是正の巡）
 
-`fix-recommendation` 欄が「あり」相当の値の回（欄名と値域は `shirokuma-flow gate vocab --field fix-recommendation` が正本）は、Important の是正と併せて、コードレビュー結果ファイルの改善提案表（Nit 候補の列挙）を当てる対象として読む。**列挙された Nit 候補は「何を当てるか」を判断し直さず、レビュアーが列挙・判断した対象として当てる**。Important の是正と同じ commit・同じ再レビューの巡に含める（別の commit・別の巡を起こさない）。
+是正の手（`gate verdict` の `nextActions[]` のうち、この手順書を名指す手）が `nit-candidates=merge` を運んだ回は、Important の是正と併せて、コードレビュー結果ファイルの改善提案表（Nit 候補の列挙）を当てる対象として読む。**列挙された Nit 候補は「何を当てるか」を判断し直さず、レビュアーが列挙・判断した対象として当てる**。Important の是正と同じ commit・同じ再レビューの巡に含める（別の commit・別の巡を起こさない）。
 
 ## 外部入力
 

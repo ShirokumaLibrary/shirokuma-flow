@@ -6,7 +6,7 @@ model: opus
 
 # writing-project-rules（プロジェクト固有の規範を書く）
 
-人の依頼を起点に、このプロジェクト自身の規範を 1 本書き、課題・PR・`review-flow` まで進めて merge の手前で止めるスキル。配布物の規範（`.shirokuma/dist/rules/`）は編集しない。規範の最終確定は人の merge で行う（[[rule-evolution]] の例外の経路・[[memory-operations]]「規範への昇格はユーザー指示時」）。
+人の依頼を起点に、このプロジェクト自身の規範を 1 本書き、課題・PR・`review-flow` まで進めて merge の手前で止めるスキル。配布物の規範（CLI に同梱され、プロジェクトの中には無い）は編集しない。規範の最終確定は人の merge で行う（[[rule-evolution]] の例外の経路・[[memory-operations]]「rule / glossary の変更の最終確定はユーザー指示時のみ」）。
 
 > **合否は verb で決める**: frontmatter・名前の衝突・注入・指した名前の実在は、既存の verb の exit code と出力で判定する。散文で判定し直さない。
 > **誰が何を行うか**: 管理セッションのメインがこのスキルを起動し、依頼があったかの判断（手順 1）・置き場が一意に決まらない回の人への問い（手順 2）・課題の起票と状態遷移（手順 4）・merge を打たない歯止め（手順 9）を持つ。管理セッションのメインはファイルを編集しない（規範 `orchestration-discipline` C16）——ブランチと手順 3・5・6・7・8 の確かめ・書き換え・コミット・PR・`review-flow` は、課題を作業セッションへ渡し、作業セッションのメインが本 SKILL.md の該当の手順を手順書として読んで行う（渡し方は skill `implement-flow` の `reference/docs/issue-run.md`「作業セッションで回す回」。commit と PR は skill `committing-and-opening-pr`）。SendMessage には本 skill の名前と、担当する手順の番号・依頼の要旨・決めた置き場を書く。作業セッションは依頼の有無を判断し直さない（判断は管理セッションのメインが済ませて渡す）。**代わりの経路**: 課題を立てられない回（GitHub Project が未設定で `issue create` が通らない・`issue create` が失敗して直せない）に限り、人が `claude -w` で開いたセッションで本 skill を打ち、そのセッションのメインが手順 3〜8 を行う（PR 本文の BLUF に `代わりの経路: <理由>` の 1 行を残す・理由は上の条件のどれか）。課題を立てられる回はこの経路を使わず、AI が自分でこの経路を選ばない。

@@ -10,10 +10,10 @@ docker-compose サービス構成・Dockerfile マルチステージ設計の決
 |---------|-----------|---------|
 | アプリケーション | Next.js、Node.js API | ホットリロード設定、env ファイル |
 | データベース | PostgreSQL、MySQL | 永続化ボリューム、初期化スクリプト |
-| キャッシュ | Redis | 揮発性 vs 永続化の選択 |
+| キャッシュ | Valkey（Redis 互換） | 揮発性 vs 永続化の選択 |
 | メッセージング | RabbitMQ、Kafka | 管理 UI ポート |
 | AWS エミュレーション | LocalStack | サービス設定、起動順序 |
-| 補助ツール | MailHog、Adminer | 開発時のみ起動 |
+| 補助ツール | Mailpit、Adminer | 開発時のみ起動 |
 
 ### サービス設計判断
 

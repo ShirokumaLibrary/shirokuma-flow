@@ -11,7 +11,7 @@ CI/CD パイプラインの構築・修正を支援する。初回はプロジ�
 
 ## スコープ
 
-- **カテゴリ:** 変更系ワーカー
+- **読み手:** 実装の段で作業セッションのメインが、SKILL.md と reference を Read で文書として読んで実装する（Skill では起動しない。併用するかの判定は規範 `delegation-and-checks` の「拡張スキルの併用判定」）。
 - **スコープ:** GitHub Actions ワークフローファイルの実装・修正（Write / Edit / Bash）。CI（テスト・ビルド）と CD（環境別デプロイ）の両ワークフローを対象とする。
 - **スコープ外:** AWS リソース設計（`designing-aws` に委任）、CDK コンストラクト実装（`coding-cdk` に委任）、docker-compose によるローカル環境構築（`coding-infra` に委任）
 
@@ -177,7 +177,7 @@ cat .github/workflows/cd.yml
 
 ### ステップ 6: 完了レポート
 
-変更内容をコメントとして Issue に記録する。
+変更内容は実装サマリー（`implement-flow` の `reference/docs/quality-gate.md` の手順で書く）に書く。Issue へのコメントは、依頼元が名指した回だけ書く。
 
 ## リファレンスドキュメント
 
@@ -208,7 +208,7 @@ gh run view {run-id}
 
 ## 次のステップ
 
-`implement-flow` チェーンではなくスタンドアロンで起動された場合:
+実装の段で併読した回は、`implement-flow` の段の順序の続き（品質ゲート・commit・PR 作成）へ戻る。この skill では commit も PR 作成もしない:
 
 ```
 実装完了。次のステップ:

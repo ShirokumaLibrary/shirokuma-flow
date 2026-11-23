@@ -14,11 +14,11 @@ disable-model-invocation: true
 
 ## スコープ
 
-- **カテゴリ:** 調査系ワーカー
+- **読み手:** 設計の起案をする作業セッションのメインが、SKILL.md と reference を Read で文書として読んで設計に併記する（Skill では起動しない。併用するかの判定は規範 `delegation-and-checks` の「拡張スキルの併用判定」）。
 - **スコープ:** プロジェクト構成・既存インフラの読み取り（Read / Grep / Glob / Bash 読み取り専用コマンド）、AWS リソース設計ドキュメントの生成（Write/Edit — 設計成果物への書き込み）、Issue 本文への設計セクション追記。
 - **スコープ外:** CDK コンストラクトの実装（`coding-cdk` に委任）、AWS リソースの実際のプロビジョニング、Terraform / Pulumi 等の他 IaC ツールの設計
 
-> **設計成果物の書き込みについて**: このスキルが Issue 本文・設計ドキュメントに Write/Edit するのは設計プロセスの成果物であり、プロダクションコードの変更ではない。調査系ワーカーの例外として許可される。
+> **設計成果物の書き込みについて**: この skill の観点で書くのは設計 Issue の本文・設計ドキュメント（設計の成果物）で、プロダクションコードは変えない。
 
 ## ワークフロー
 
@@ -35,9 +35,7 @@ disable-model-invocation: true
 
 ### 1. 設計コンテキスト確認
 
-`design-flow` から委任された場合、Design Brief と要件が渡される。そのまま使用する。
-
-スタンドアロンで起動された場合、Issue 本文と計画セクションから要件を把握する。
+対象の課題と設計 Issue の本文から設計要件を把握する。設計の起案の段で読む回は、`design-flow` の設計雛形（`reference/templates/design-doc.md`）の Design Brief 節に書いた目的・制約・スコープに沿って、この skill の観点を当てる。
 
 ### 2. フレームワーク判定ゲート（最初の分岐）
 
@@ -151,7 +149,7 @@ disable-model-invocation: true
 | [reference/patterns/env-mapping.md](reference/patterns/env-mapping.md) | 環境変数マッピングパターン | 環境変数設計時 |
 | [reference/patterns/account-isolation.md](reference/patterns/account-isolation.md) | アカウント分離戦略（段階移行・OU 構成・移行トリガー） | 本番/検証のアカウント境界設計時 |
 
-> LocalStack のエンドポイント切り替えパターンは委任ブリーフで渡される（または coding-infra スキル併用時にその reference を読む）。
+> LocalStack のエンドポイント切り替えパターンは、同じ skill の [reference/patterns/local-to-prod-mapping.md](reference/patterns/local-to-prod-mapping.md)「エンドポイント切り替えパターン」節を読む（ローカル側の実装の詳細は `coding-infra` の `reference/patterns/localstack.md`）。
 
 ## アンチパターン
 
@@ -166,9 +164,9 @@ disable-model-invocation: true
 
 ## 次のステップ
 
-`design-flow` 経由で呼ばれた場合、制御は自動的にオーケストレーターに戻る。
+設計の起案の段で併読した回は、`design-flow` の「段の順序」の続き（設計レビュー・承認）へ戻る。この skill は設計レビューと承認を行わない。
 
-スタンドアロンで起動された場合:
+この skill だけを読んで設計した回の次のステップ:
 
 ```
 AWS リソース設計完了。次のステップ:
@@ -180,6 +178,6 @@ AWS リソース設計完了。次のステップ:
 
 - **設計判断がこのスキルの最優先事項** — CDK の実装詳細は `coding-cdk` の責務
 - **ビルド検証は不要** — このスキルは設計ドキュメントを生成し、実行可能コードは作成しない
-- Design Brief が渡された場合はそれに基づいて設計。スタンドアロン時は Issue から要件を把握してから設計
+- 対象の Issue の本文から要件を把握し、設計雛形の Design Brief 節に沿って設計する
 - AWS サービスの可用性リージョン差異に注意（使うリージョンでの提供状況を AWS のリージョン別サービス一覧で確かめる）
 - コスト見積もりは概算で十分。詳細は AWS Pricing Calculator に委ねる

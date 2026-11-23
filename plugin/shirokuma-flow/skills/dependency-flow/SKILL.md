@@ -8,7 +8,7 @@ model: opus
 
 ## 起動直後
 
-Bash で `shirokuma-flow rules inject --scope orchestrator --rules trust-boundary,measurement-claims,completion-report-style,permission-boundary,gh-to-verb-map,rule-evolution,orchestration-discipline,next-routing-contract,status-policy,dependency-update` を実行し、**出力の `<rule-file>` 要素を本タスクの規範として読む**。`<rule-file>` の外（ヘッダ行）に規範は載らない。
+追跡ツリーの外の作業用ディレクトリ（無ければ `mktemp -d` で作る）を使い（パスはコマンド行で単一引用符で囲む）、別の Bash 呼び出しで `shirokuma-flow rules inject --scope orchestrator --rules trust-boundary,measurement-claims,completion-report-style,permission-boundary,gh-to-verb-map,rule-evolution,orchestration-discipline,next-routing-contract,status-policy,dependency-update > <作業用ディレクトリ>/rules-inject-dependency-flow.txt` を実行する。そのファイルを Read で末尾まで読み、**`<rule-file>` 要素を本タスクの規範として読む**。1 回で読めない大きさなら offset / limit で分けて続きを読み、`head` などで切って先へ進まない。Bash の結果に残る stderr のヘッダ行 `emitted=<件数>/…` の件数だけ `<rule-file>` を読んだことを確かめる。`<rule-file>` の外（ヘッダ行）に規範は載らない。
 
 **参照する規範**
 
@@ -26,7 +26,7 @@ Bash で `shirokuma-flow rules inject --scope orchestrator --rules trust-boundar
 
 - **引数あり（PR 番号を渡された）**: その PR だけを扱う。識別信号（`head` / `author`）は `shirokuma-flow pr show <PR#>` で取る。依存更新 PR の識別に外れたら**中止して報告する**（通常 PR として処理しない）。
 - **引数なし**: `shirokuma-flow pr list --state open` で列挙し、下表の信号でクライアント側分類する。**既定（自律）は分類結果を報告に載せてそのまま 1 件ずつ処理に入る**（誤検出は識別の 2 信号 AND と `submit` 前の検証で落ちる）。**確認モード（`確認モード: guided` の明示がある回）は発見結果を `AskUserQuestion` で提示して確認を取ってから処理に入る。** 確認モードの解決値・受信側既定・中継義務は [[confirmation-style]]「確認モードの解決と中継」節が正本（ここに写さない）。
-  - `--limit` は渡さない（CLI の既定に委ねる）。`truncated=true` を観測したら `--limit` を明示して取り直す。**上限は CLI のエラー文言が正本**なので、既定値・上限をここに書かない。
+  - `--limit` は渡さない（CLI の既定に委ねる）。`truncated=true` を観測したら `--limit` を明示して取り直す。**上限は CLI のエラー文言が正本**。
   - **`total` / `count` / `truncated` を毎回報告に載せる**。`truncated=true` のまま「依存更新 PR は N 件」と言わない（取りこぼしは沈黙するため）。
 
 | 信号 | 使うか | Why |
@@ -52,7 +52,7 @@ Bash で `shirokuma-flow rules inject --scope orchestrator --rules trust-boundar
    - **隔離ツリーの絶対パスは任意入力**——置き場所の config キーが未宣言なら渡さず、worker の既定（`mktemp -d` の出力配下）に委ねる。**どちらに倒れたかは V5 に残す**（既定へ倒れても何のエラーも出ないため）。**未宣言（degraded）と値域違反（人へ渡す）は別の事象**で、`config get` のエラーの `reason` で区別する。組み立て方・値の条件・置き場所の用意・倒れる向きの根拠は [reference/verification.md](reference/verification.md)。
    - **展開する submodule パスの一覧も任意入力**——config キー（`dependency.isolatedTreeSubmodules`）が未宣言なら渡さず、worker は展開しない（**倒れる向きは隔離ツリーの絶対パスと同じ degraded**）。**この degraded は静かである**——展開されなかった submodule に依存する検査は skip され、skip は終了コードに出ない（fail-open かつ fail-silent）ので、**どちらに倒れたかは V5 に残す**（欄 `submodule 展開（隔離ツリー）` の値をそのまま転記する）。**未宣言（degraded）と値域違反〔空配列・配列でない値を含む〕（人へ渡す）は別の事象**で、`config get` のエラーの `reason` で区別する。値の条件・渡し方・展開の担い手は [reference/verification.md](reference/verification.md)。
    - **V4 発火要否だけは別扱い**——「否」と**断定できるときだけ**渡し、断定できなければ**渡さない**（worker は渡されなければ「要」に倒す）。迷ったまま「否」を渡すと V4 が skip されたまま `可` が成立しうる＝fail-open。断定できる条件は [reference/verification.md](reference/verification.md)。
-   - 責務の詳細・安全設計・受容している範囲は **worker 定義が正本**。ここに書き写さない（二重管理を作らない）。
+   - 責務の詳細・安全設計・受容している範囲は **worker 定義が正本**。
 2. **結果ファイルの実在と検証母集団の欄を機械検証する**（worker の実在確認報告を鵜呑みにせず二重防御する）。委任した worker の報告受領後、`shirokuma-flow gate artifacts --profile dependency-verify --file dependency='<結果ファイルの絶対パス>'` を引く。**見出し・欄名・値域の正本はコード内のレジストリ**で、欄名が要るとき（報告へ載せる・課題化レーンの起票に書く等）は `shirokuma-flow gate vocab --profile dependency-verify` から引く（本手順は欄名の逐語を持たない）。
    - **コマンド行へ値を差し込む前に検査する**: `--file` へ渡す絶対パスに埋め込む PR 番号が `^[0-9]+$` を満たすことを**差し込む前に**確かめ、通った値も**単一引用符で囲んで**渡す。**`gate` 側の値域検査をこの検査の代わりにしない**——注入はシェルの構文解析時に済み、verb の検査はそれより後（プロセス内）でしか効かないので、両者は別の層である。満たさない回は verb を引かず、下記の欠落と同じ経路へ回す。
    - **判定は JSON ＋ exit code の二重で受け取る**: `ok: true` と `complete: true` が揃った回だけを判定が成立した回として読み、`files[].exists`（結果ファイルの実在。verb が自分で確かめるので worker の報告に依存しない）と `findings[]`（欄ごとの所見）と `checked`（実施した欄検査の件数）を読む。**`exists: false` と「欄が無い」は別フィールドで返る**ので、不在と欠落を取り違えない。**`complete` を欠く回・`ok: false` の回・`shirokuma-flow` や `gate artifacts` を解決できない回は判定不能**であって pass ではない（fail-closed）。
@@ -67,7 +67,7 @@ Bash で `shirokuma-flow rules inject --scope orchestrator --rules trust-boundar
 5. `shirokuma-flow submit <PR#>`（Backlog → Review）。
    - `Status がありません` で落ちたら**中止して人に渡す**（当該 PR を Project へ載せる依頼）。黙って迂回しない。
    - **それ以外のエラー（不許可の遷移など）も中止して人に渡す**。想定していた分岐に当たらないものを自分で解釈して迂回しない。
-   - 成功したら `shirokuma-flow status <PR#>` を確認し、`Review` でなければ `submit` を打ち直す（登録と Status 書き込みの順序競合が残るため。verb は冪等）。**打ち直しは 1 回まで**——それでも `Review` にならなければ中止して人に渡す（繰り返し上書きされる原因は入口の外にあるため、打ち続けても収束しない）。
+   - 成功したら `shirokuma-flow pr status <PR#>` の `project_status` を確認し、`Review` でなければ `submit` を打ち直す（登録と Status 書き込みの順序競合が残るため。verb は冪等）。**打ち直しは 1 回まで**——それでも `Review` にならなければ中止して人に渡す（繰り返し上書きされる原因は入口の外にあるため、打ち続けても収束しない）。
 6. **ここで終了**。`submit` 後は人の `merge` を待つだけで、`review-flow` へは合流させない（依存更新 PR の差分はマニフェストとロックファイルだけで、コード差分の観点が空振りするため）。
    - **依存更新 PR はレビュー判定の記録（`review-flow` 段 2）を持たないので、`pr checks` の `merge` は授権の有無にかかわらず常に `runBy:"human"` になる**（`nextActions` に `review-flow` の起動の案内が並んでも、本入口はそれに従って合流させない）。
    - **人へ依頼する `merge` の形は、`shirokuma-flow pr checks <PR#>` の `nextActions[]` の `merge` 要素の `args` をそのまま写す**。merge verb は merge 条件（レビュー判定の記録を含む）を自分で評価し、満たさない回は書き込まずに失敗するので、依存更新 PR の `args` には通常 `--override <未充足の条件 id,…>` が付く。人はその行に `!` を前置して打つ（AI はこの形を打てない＝hook `merge-override`）。`args` を自分で組み立てない。
@@ -85,7 +85,7 @@ Bash で `shirokuma-flow rules inject --scope orchestrator --rules trust-boundar
 | やらない | 誰が | Why |
 |---|---|---|
 | `merge` | 正本は [[branch-workflow]]「自律境界」（配布先の既定は人・config 側に事前授権の記録がある範囲では AI） | mainline への取り込みは既定で人ゲート（射程を読む手順も同節が正本で、**読み取れない回は既定〔人ゲート〕へ倒す**）。入口はどちらの回でも打たず、通常レールへ渡す |
-| `approve` | 既定は orchestrator（打ち手は `next` の `runBy` に従う）（`IssueType=ADR` 候補も含む。ADR 候補の確定の打ち手は `next` の `runBy` に従う＝形と主体の正本は [[status-policy]] の `approve` 条項）／確認モード（`確認モード: guided` の明示がある回）は人 | 追従 Issue のトリアージは既存レール（判定の正本は `issue-flow`「状態遷移」節と [[confirmation-style]]「確認モードの解決と中継」節） |
+| `approve` | 既定は orchestrator（打ち手は `next` の `runBy` に従う）（`IssueType=ADR` 候補も含む。ADR 候補の確定の打ち手は `next` の `runBy` に従う＝形と主体の正本は [[status-policy]] の `approve` 条項）／確認モード（`確認モード: guided` の明示がある回）は人 | 追従 Issue のトリアージは既存レール（判定の正本は `issue-flow`「状態遷移（打ち方）」節と [[confirmation-style]]「確認モードの解決と中継」節） |
 | 処分（据え置き / bot への ignore 指示 / close）の**選択** | 人 | 実質不可逆（確定後の実行だけを入口が代行する） |
 | 追従実装 / 要件分析 / 設計要否判定 | `implement-flow` / `analyze-issue` / `design-flow` | 入口は振り分けに留める |
 | 検証の実走そのもの | worker | メインの文脈を膨らませる作業はサブエージェント（隔離ツリーでの実走） |

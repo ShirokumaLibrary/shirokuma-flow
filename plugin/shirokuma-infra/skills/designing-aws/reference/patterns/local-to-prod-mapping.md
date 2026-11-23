@@ -12,19 +12,19 @@
 | S3（LocalStack） | `localstack/localstack:4` | Amazon S3 | バケットポリシー・暗号化必須 |
 | SQS（LocalStack） | `localstack/localstack:4` | Amazon SQS | Standard / FIFO 選択 |
 | SNS（LocalStack） | `localstack/localstack:4` | Amazon SNS | ファンアウトパターン |
-| Mailhog / Mailpit | `mailhog/mailhog` | Amazon SES | 送信者検証・バウンス対応 |
+| Mailpit | `axllent/mailpit` | Amazon SES | 送信者検証・バウンス対応 |
 | MinIO | `minio/minio` | Amazon S3 | MinIO と S3 API は互換 |
 | Elasticsearch | `elasticsearch:8` | Amazon OpenSearch Service | インデックス設計は移行可能 |
 | Minio + nginx | nginx | CloudFront + S3、または CloudFront + アプリのオリジン | 静的アセット配信。**この行は経路を確定しない**——選定と配信属性（Content-Type / 圧縮 / キャッシュ）は `static-asset-delivery.md`（同一 patterns ディレクトリ）が正本 |
 | アプリコンテナ（汎用） | カスタム | ECS Fargate / App Runner | ポート・ヘルスチェックパス確認 |
-| アプリコンテナ（Next.js） | カスタム | cdk-nextjs（`NextjsGlobalFunctions` ほか 4 構成） | 既定は `nextjs-deploy.md`（同一 patterns ディレクトリ）。next.config の `adapterPath` 追加・`output: "standalone"` 不使用が前提 |
+| アプリコンテナ（Next.js） | カスタム | cdk-nextjs（`NextjsGlobalFunctions` を含む 4 構成） | 既定は `nextjs-deploy.md`（同一 patterns ディレクトリ）。next.config の `adapterPath` 追加・`output: "standalone"` 不使用が前提 |
 | nginx（リバースプロキシ） | `nginx` | ALB（Application Load Balancer） | パスベースルーティング。**本番で nginx が残るかどうかを明示する**——長時間接続（SSE / ストリーミング）を持つ設計では、残るか否かで対処が変わる（`long-lived-connections.md`〔同一 patterns ディレクトリ〕§3） |
 | DynamoDB Local | `amazon/dynamodb-local` | Amazon DynamoDB | テーブル設計の移行がほぼそのまま |
 | Lambda（SAM local） | `amazon/aws-sam-cli-emulation-*` | AWS Lambda | ランタイム・メモリ・タイムアウト確認 |
 | EventBridge（LocalStack） | `localstack/localstack:4` | Amazon EventBridge | ルール構文互換 |
 | Secrets Manager（LocalStack） | `localstack/localstack:4` | AWS Secrets Manager | 認証情報管理 |
 
-> **アプリコンテナ（Next.js）のビルド出力申し送り**: cdk-nextjs を選ぶ場合、本番用 Dockerfile は construct が自前生成し、ローカルの standalone ビルド出力を本番へ持ち出さない（ローカル compose は `target: dev` のまま据え置く）。**汎用コンテナ経路**（cdk-nextjs をデプロイ先にしない構成）を選ぶ場合のみ standalone マルチステージ Dockerfile を本番イメージに使う。デプロイ先の選定と互換契約は `nextjs-deploy.md`（同一 patterns ディレクトリ）。
+> **アプリコンテナ（Next.js）のビルド出力申し送り**: cdk-nextjs を選ぶ場合、本番用 Dockerfile は construct が自前生成し、ローカルの standalone ビルド出力を本番へ持ち出さない（ローカル compose は `target: dev` のまま据え置く。dev ステージの例は coding-infra スキルの `reference/patterns/dockerfile.md`「ローカル開発用の dev ステージ」）。**汎用コンテナ経路**（cdk-nextjs をデプロイ先にしない構成）を選ぶ場合のみ standalone マルチステージ Dockerfile を本番イメージに使う。デプロイ先の選定と互換契約は `nextjs-deploy.md`（同一 patterns ディレクトリ）。
 
 ## ローカル断片合成 → 本番 CDK の動線
 
@@ -48,11 +48,13 @@
 AWS_ENDPOINT_URL=http://localhost:4566
 AWS_ACCESS_KEY_ID=test
 AWS_SECRET_ACCESS_KEY=test
-AWS_DEFAULT_REGION=us-east-1
+AWS_DEFAULT_REGION=us-east-1   # aws CLI が読む
+AWS_REGION=us-east-1           # アプリの AWS SDK for JavaScript v3 が読む（AWS_DEFAULT_REGION は読まない）
 DATABASE_URL=postgresql://user:password@localhost:5432/myapp
 
 # .env.production（本番 — エンドポイント上書きなし）
 AWS_DEFAULT_REGION={region}
+AWS_REGION={region}
 DATABASE_URL={Secrets Manager から注入}
 # 認証情報は IAM Task Role で自動提供
 ```
@@ -69,7 +71,7 @@ const isLocal = process.env.NODE_ENV === "development" || !!process.env.AWS_ENDP
 const localConfig = isLocal
   ? {
       endpoint: process.env.AWS_ENDPOINT_URL ?? "http://localhost:4566",
-      region: process.env.AWS_DEFAULT_REGION ?? "us-east-1",
+      region: process.env.AWS_REGION, // 既定のリージョンを持たない（.env の値を使う）
       credentials: {
         accessKeyId: process.env.AWS_ACCESS_KEY_ID ?? "test",
         secretAccessKey: process.env.AWS_SECRET_ACCESS_KEY ?? "test",
@@ -94,13 +96,13 @@ export function getS3Client(): S3Client {
   if (process.env.NODE_ENV === "development") {
     return new S3Client({
       endpoint: process.env.AWS_ENDPOINT_URL ?? "http://localhost:4566",
-      region: "us-east-1",
+      region: process.env.AWS_REGION, // 直書きしない（.env の値を使う）
       forcePathStyle: true,
       credentials: { accessKeyId: "test", secretAccessKey: "test" },
     });
   }
   // 本番: IAM Task Role が自動的に認証情報を提供
-  return new S3Client({ region: process.env.AWS_DEFAULT_REGION });
+  return new S3Client({ region: process.env.AWS_REGION });
 }
 ```
 
@@ -114,7 +116,7 @@ export function getS3Client(): S3Client {
 - [ ] マルチ AZ 有効化（本番推奨）
 - [ ] パラメータグループのカスタマイズ
 
-### Redis → ElastiCache (Valkey)
+### Valkey → ElastiCache (Valkey)
 
 - [ ] クラスターモード vs スタンドアロンの選択
 - [ ] 自動フェイルオーバーの設定（マルチ AZ）
@@ -136,7 +138,7 @@ export function getS3Client(): S3Client {
 - [ ] ライフサイクルポリシー（期限切れファイルの削除、Glacier への移行）
 - [ ] バージョニングの設定（本番バケットは有効推奨）
 
-### メール（Mailhog/Mailpit）→ Amazon SES
+### メール（Mailpit）→ Amazon SES
 
 - [ ] 送信者ドメインの検証（DNS TXT レコード）
 - [ ] サンドボックスモードからの脱出リクエスト（本番利用時）
@@ -152,6 +154,6 @@ export function getS3Client(): S3Client {
 | ElastiCache Valkey cache.t4g.micro | 小規模キャッシュ | ~$15 |
 | ECS Fargate（0.25vCPU / 0.5GB × 2タスク） | 最小構成 | ~$15 |
 | ALB（最小トラフィック） | — | ~$20 |
-| NAT Gateway | 各 AZ 1つ | ~$45/AZ |
+| NAT Gateway | 各 AZ 1つ | ~$45/AZ + データ処理料 |
 
 > 上記は参考値。実際のコストは AWS Pricing Calculator で試算すること。

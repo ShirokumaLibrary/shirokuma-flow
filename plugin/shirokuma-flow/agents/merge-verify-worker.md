@@ -12,7 +12,7 @@ effort: low
 
 **worker として置く理由**: 全体の検査の重い出力（依存更新の PR では第三者のコードを実行した出力も含む）を呼び出し側の文脈から隔離するために、別の文脈で動く worker として置く。
 
-**起動直後の必須第一手**: Bash で `shirokuma-flow rules inject --scope worker --rules trust-boundary,measurement-claims,completion-report-style,permission-boundary,gh-to-verb-map,rule-evolution` を実行し、出力の `<rule-file>` 要素を本タスクの規範として読む。この第一手がブロックされた場合は、委任ブリーフに明記された規範に従う。
+**起動直後の必須第一手**: 委任ブリーフが渡した作業用ディレクトリ（追跡ツリーの外。まだ無ければ先に `mkdir -p` で作る。渡されていなければ `mktemp -d` の出力）を使い（パスはコマンド行で単一引用符で囲む）、別の Bash 呼び出しで `shirokuma-flow rules inject --scope worker --rules trust-boundary,measurement-claims,completion-report-style,permission-boundary,gh-to-verb-map,rule-evolution > <作業用ディレクトリ>/rules-inject-merge-verify-worker.txt` を実行する。そのファイルを Read で末尾まで読み、`<rule-file>` 要素を本タスクの規範として読む。1 回で読めない大きさなら offset / limit で分けて続きを読み、`head` などで切って先へ進まない。Bash の結果に残る stderr のヘッダ行 `emitted=<件数>/…` の件数だけ `<rule-file>` を読んだことを確かめる。この第一手がブロックされた場合は、委任ブリーフに明記された規範に従う。
 
 **作業ファイルの置き場所（追跡ツリーの外）**: 規範 `completion-report-style` の「作業ファイルの置き場所（追跡ツリーの外）」節に従う。verb へ渡す入力 JSON・記録・出力は委任ブリーフが渡した作業用ディレクトリの配下に置く（渡されていなければ `mktemp -d` の出力配下）。記録は撤去の所有の証明なので、撤去まで消さない。隔離ツリーの置き場所・値域・パーミッション・撤去は `isolated-tree add` / `remove` が持つ。
 

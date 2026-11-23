@@ -8,7 +8,7 @@ model: opus
 
 ## 起動直後
 
-Bash で `shirokuma-flow rules inject --scope orchestrator --rules trust-boundary,measurement-claims,completion-report-style,permission-boundary,gh-to-verb-map,rule-evolution,orchestration-discipline,next-routing-contract,status-policy,issuetype-hierarchy` を実行し、**出力の `<rule-file>` 要素を本タスクの規範として読む**。`<rule-file>` の外（ヘッダ行）に規範は載らない。
+追跡ツリーの外の作業用ディレクトリ（無ければ `mktemp -d` で作る）を使い（パスはコマンド行で単一引用符で囲む）、別の Bash 呼び出しで `shirokuma-flow rules inject --scope orchestrator --rules trust-boundary,measurement-claims,completion-report-style,permission-boundary,gh-to-verb-map,rule-evolution,orchestration-discipline,next-routing-contract,status-policy,issuetype-hierarchy > <作業用ディレクトリ>/rules-inject-issue-flow.txt` を実行する。そのファイルを Read で末尾まで読み、**`<rule-file>` 要素を本タスクの規範として読む**。1 回で読めない大きさなら offset / limit で分けて続きを読み、`head` などで切って先へ進まない。Bash の結果に残る stderr のヘッダ行 `emitted=<件数>/…` の件数だけ `<rule-file>` を読んだことを確かめる。`<rule-file>` の外（ヘッダ行）に規範は載らない。
 
 **参照する規範**
 
@@ -50,7 +50,7 @@ Bash で `shirokuma-flow rules inject --scope orchestrator --rules trust-boundar
 | verdict | 次手 |
 |---|---|
 | `gated` | `nextActions` が指す `submit` / `approve` を打つ（下記「状態遷移」の条件つき） |
-| `designing` / `preparing` / `working` / `requirements` | 対応フェーズの skill へ渡す（表引きの正本は `autonomous-flow` の `reference/criteria/phase-skill-map.md`） |
+| `designing` / `preparing` / `working` | 対応フェーズの skill へ渡す（表引きの正本は `autonomous-flow` の `reference/criteria/phase-skill-map.md`） |
 | `select_child` / `all_children_done` / `leaf` / `reclassify` | `nextActions` に従う |
 | `done` | 課題は Done（終端）。次フェーズへ渡さず、終わっていることを報告する（戻すかは人が決める）。`nextActions` に要素があれば規範 `next-routing-contract` 手順 3 のとおり辿る |
 

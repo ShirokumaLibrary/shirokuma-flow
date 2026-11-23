@@ -10,7 +10,7 @@
 - **BC 見出しは `#### {連番}. {BC 名}` で書く**（行頭が `####` ＋ 半角スペース ＋ 数字 ＋ `.` ＋ 半角スペース）。`auditing-docs` の **DDD レベル L1 以上**の検査はこの形の行を数え、0 件なら `ddd-artifact-empty`(error) になる。下の雛形本文の `#### 1. {BC 名…}` がそのままこの形なので、**検査は雛形を追認するだけで新しい書式を課さない**。
 - **集約の不変条件（INV）は本書に置かない**（[domain-model.md](domain-model.md) へ送る）。本書の「不変条件」欄は BC 全体で守るルールで、集約 INV の機械検査は L2 で `domain/domain-model.md` に当たる。
 - **儀式化しない**: DDD は実用的に借りる道具。BC 数を無理に増やさず、複雑さに見合う粒度で切る。
-- 状態遷移・Issue 提出は orchestrator が flow verb で行う（worker は本文を作るだけ）。
+- 状態遷移・Issue 提出は `design-flow` の「段の順序」のとおりに flow verb で打つ。
 
 ---
 

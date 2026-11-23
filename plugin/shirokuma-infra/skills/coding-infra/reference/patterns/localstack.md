@@ -36,7 +36,7 @@ localstack:
   ports:
     - "${LOCALSTACK_PORT:-4566}:4566"   # 統合エンドポイント
   environment:
-    - SERVICES=${LOCALSTACK_SERVICES:-s3,sqs,sns}
+    - SERVICES=${LOCALSTACK_SERVICES:-s3,sqs,sns,secretsmanager,ses}
     - AWS_DEFAULT_REGION=${AWS_DEFAULT_REGION:-us-east-1}
     - LOCALSTACK_AUTH_TOKEN=${LOCALSTACK_AUTH_TOKEN:-}  # Pro 版のみ
   volumes:
@@ -122,6 +122,7 @@ pip install awscli-local
 AWS_ACCESS_KEY_ID=test
 AWS_SECRET_ACCESS_KEY=test
 AWS_DEFAULT_REGION=us-east-1
+AWS_REGION=us-east-1   # アプリの AWS SDK for JavaScript v3 が読む（下の「環境変数パターン」と同じく両方を置く）
 ```
 
 LocalStack は任意の認証情報を受け入れる。慣例として `test` / `test` を使用する。

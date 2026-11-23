@@ -14,11 +14,11 @@ AWS CDK のコンストラクト構造・スタック分割・Props 設計・Asp
 
 ## スコープ
 
-- **カテゴリ:** 調査系ワーカー
+- **読み手:** 設計の起案をする作業セッションのメインが、SKILL.md と reference を Read で文書として読んで設計に併記する（Skill では起動しない。併用するかの判定は規範 `delegation-and-checks` の「拡張スキルの併用判定」）。
 - **スコープ:** 既存 CDK コードの読み取り（Read / Grep / Glob / Bash 読み取り専用）、CDK 設計ドキュメントの生成（Write/Edit — 設計成果物への書き込み）、Issue 本文への設計セクション追記。
 - **スコープ外:** AWS リソース選定（`designing-aws` に委任）、CDK コンストラクトの実装（`coding-cdk` に委任）、docker-compose 設計（`designing-infra` に委任）
 
-> **設計成果物の書き込みについて**: このスキルが Issue 本文・設計ドキュメントに Write/Edit するのは設計プロセスの成果物であり、プロダクションコードの変更ではない。調査系ワーカーの例外として許可される。
+> **設計成果物の書き込みについて**: この skill の観点で書くのは設計 Issue の本文・設計ドキュメント（設計の成果物）で、プロダクションコードは変えない。
 
 ## ワークフロー
 
@@ -39,9 +39,7 @@ cat {infra-dir}/cdk.json 2>/dev/null
 
 ### 1. 設計コンテキスト確認
 
-`design-flow` から委任された場合、Design Brief と要件が渡される。そのまま使用する。
-
-スタンドアロンで起動された場合、Issue 本文と計画セクションから設計要件を把握する。
+対象の課題と設計 Issue の本文から設計要件を把握する。設計の起案の段で読む回は、`design-flow` の設計雛形（`reference/templates/design-doc.md`）の Design Brief 節に書いた目的・制約・スコープに沿って、この skill の観点を当てる。
 
 ### 2. 設計フレームワーク適用（観点ごとに評価）
 
@@ -56,7 +54,7 @@ cat {infra-dir}/cdk.json 2>/dev/null
 
 ### 3. 設計出力・レビュー
 
-設計出力テンプレート（スタック構成・設計決定・Props・Aspects・cross-stack 参照）とレビューチェックリストは reference を参照して埋める。状態遷移は orchestrator が flow verb で行う。
+設計出力テンプレート（スタック構成・設計決定・Props・Aspects・cross-stack 参照）とレビューチェックリストは reference を参照して埋める。状態遷移は `design-flow` の段の順序で行う（この skill では打たない）。
 
 ## リファレンスドキュメント
 
@@ -66,9 +64,9 @@ cat {infra-dir}/cdk.json 2>/dev/null
 
 ## 次のステップ
 
-`design-flow` 経由で呼ばれた場合、制御は自動的にオーケストレーターに戻る。
+設計の起案の段で併読した回は、`design-flow` の「段の順序」の続き（設計レビュー・承認）へ戻る。この skill は設計レビューと承認を行わない。
 
-スタンドアロンで起動された場合:
+この skill だけを読んで設計した回の次のステップ:
 
 ```
 CDK コンストラクト設計完了。次のステップ:

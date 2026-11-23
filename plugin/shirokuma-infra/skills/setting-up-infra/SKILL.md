@@ -21,10 +21,10 @@ model: opus
 
 ## ビルド出力の申し送り契約（本番デプロイ先で分岐）
 
-ローカル compose の `app` サービスはローカル開発用のビルド（`target: dev`）で据え置く。本番デプロイ先へのビルド出力の申し送り契約は選択で二分し、ローカル側はどちらでも変えない:
+ローカル compose の `app` サービスはローカル開発用のビルド（`target: dev`。ステージの例は coding-infra スキルの `reference/patterns/dockerfile.md`「ローカル開発用の dev ステージ」）で据え置く。本番デプロイ先へのビルド出力の申し送り契約は選択で二分し、ローカル側はどちらでも変えない:
 
 - **汎用コンテナ経路**（cdk-nextjs をデプロイ先にしない構成・ECS Fargate + ALB 等）: Next.js は `output: "standalone"` でビルドし、standalone マルチステージ Dockerfile でイメージ化する。Dockerfile 雛形は coding-infra スキルの `reference/patterns/dockerfile.md` を参照。
-- **cdk-nextjs（`NextjsGlobalFunctions` ほか 4 構成）**: next.config に `adapterPath` を追加し `output: "standalone"` は使わない。本番用 Dockerfile は cdk-nextjs が自前生成するため手書きしない。デプロイ先の互換契約は designing-aws スキルの `reference/patterns/nextjs-deploy.md` を参照。
+- **cdk-nextjs（`NextjsGlobalFunctions` を含む 4 構成）**: next.config に `adapterPath` を追加し `output: "standalone"` は使わない。本番用 Dockerfile は cdk-nextjs が自前生成するため手書きしない（ローカル compose 用には `base`・`deps`・`dev` だけの Dockerfile を置く）。デプロイ先の互換契約は designing-aws スキルの `reference/patterns/nextjs-deploy.md` を参照。
 
 ローカル docker-compose 本体はこの分岐で変わらない（ローカルは `target: dev` のまま）。分岐するのは本番ビルド出力の申し送り先だけ。
 
@@ -56,8 +56,8 @@ services:
     #   /var/lib/postgresql/18/docker へ移ったため、単一マウント先は /var/lib/postgresql。
     #   17 のマウント先（/var/lib/postgresql/data）へ挿すと新規ボリュームでも起動しない
     #   （上流エントリポイントのガードで Exited (1)・docker-library/postgres#1259）。
-    #   メジャーを上げるときは image と volumes: を必ず対で見直す（17→18 で実際に動いた。19 以降がどうなるかは
-    #   測っていないので、上げる人が実物の PGDATA を確かめること）。
+    #   メジャーを上げるときは image と volumes: を必ず対で見直す（17 と 18 ではマウント先が違う。19 以降は
+    #   確かめていないので、上げる人が実物の PGDATA を確かめること）。
     #   ⚠ 既に旧マウント先（PGDATA が /var/lib/postgresql/data の版。17 で実測）で稼働している volume を、そのまま 18 の新マウント先へ当て替えても起動しない
     #     （上流ガードが「there appears to be PostgreSQL data in: /var/lib/postgresql」で Exited (1)）。
     #     データは消えないし空のクラスタも作られない——倒れる向きは fail-closed。移行は旧イメージで
@@ -85,7 +85,7 @@ services:
   app:
     build:
       context: .
-      target: dev
+      target: dev                    # Dockerfile の dev ステージ（coding-infra の dockerfile.md「ローカル開発用の dev ステージ」）
     container_name: {project}-app
     restart: unless-stopped
     environment:

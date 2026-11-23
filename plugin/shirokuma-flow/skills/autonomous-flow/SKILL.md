@@ -8,7 +8,7 @@ model: opus
 
 ## 起動直後
 
-Bash で `shirokuma-flow rules inject --scope orchestrator --rules trust-boundary,measurement-claims,completion-report-style,permission-boundary,gh-to-verb-map,rule-evolution,orchestration-discipline,next-routing-contract,status-policy,confirmation-style,branch-workflow` を実行し、**出力の `<rule-file>` 要素を本タスクの規範として読む**。`<rule-file>` の外（ヘッダ行）に規範は載らない。
+追跡ツリーの外の作業用ディレクトリ（無ければ `mktemp -d` で作る）を使い（パスはコマンド行で単一引用符で囲む）、別の Bash 呼び出しで `shirokuma-flow rules inject --scope orchestrator --rules trust-boundary,measurement-claims,completion-report-style,permission-boundary,gh-to-verb-map,rule-evolution,orchestration-discipline,next-routing-contract,status-policy,confirmation-style,branch-workflow > <作業用ディレクトリ>/rules-inject-autonomous-flow.txt` を実行する。そのファイルを Read で末尾まで読み、**`<rule-file>` 要素を本タスクの規範として読む**。1 回で読めない大きさなら offset / limit で分けて続きを読み、`head` などで切って先へ進まない。Bash の結果に残る stderr のヘッダ行 `emitted=<件数>/…` の件数だけ `<rule-file>` を読んだことを確かめる。`<rule-file>` の外（ヘッダ行）に規範は載らない。
 
 続けて `shirokuma-flow config authorizations` を 1 回引き、出力の `summaryLines` と `note` をこの回の前提として示す（値をこの skill に写さない）。要約は開始時点の写しで授権の出どころではない——各操作を打てるかは、その時点の `next` / `pr checks` の `runBy` に従う。引けなかった回（verb が無い・失敗した）は「授権の範囲を引けなかった」と 1 行示して進む。確認モードの回も同じ形で引く。締めの報告の「授権の範囲内なのに控えた操作」は規範 `orchestration-discipline` C13 のとおり出す。
 
@@ -65,6 +65,8 @@ Issue を**全フェーズ自動で**進める orchestrator。各フェーズ or
 | `leaf` | `nextActions` に従う。sub は Done / Blocked の回だけ `leaf` になる。空なら何もしない（`done` を打たない） |
 | `reclassify` | `nextActions` に従い（`issue set-kind <n> normal` → `next <n>`）、引き直した verdict でこの表を引き直す |
 | `done` | 課題は Done（終端）。skill を起動せず、終わっていることを報告して次の課題へ進む（戻すかは人が決める）。`nextActions` に要素があれば規範 `next-routing-contract` 手順 3 のとおり辿る |
+| `human_task` | 対象は人への依頼。skill を起動せず、`nextActions` の 1 件を規範 `next-routing-contract` 手順 3 のとおり辿る（`runBy:"human"` の要素は締めの報告で人に出す。`issue human-task-close` の要素は、依頼の操作の効果か用済みの理由を確かめてから打つ・規範 `orchestration-discipline` C13 / C16） |
+| `undetermined` | skill を起動せず、`shirokuma-flow status <n>` で状態を確かめ、判断できなければその課題を止めて人へ返す |
 
 `requirements` / `reviewing` は `next` が出さない。requirements-flow / review-flow は phase-skill-map 表2のタイミングで文脈起動する。
 
@@ -106,4 +108,4 @@ Issue を**全フェーズ自動で**進める orchestrator。各フェーズ or
 | ドキュメント | 内容 | 読むタイミング |
 |------------|------|--------------|
 | [reference/criteria/irreversible-operations.md](reference/criteria/irreversible-operations.md) | 不可逆/外向き操作リスト（境界の判定原則・条件付き自動実行の 2 操作とゲート・祖先 close を含めない理由・停止して人に確認する操作の列挙・倒れる向き・マージ安全装置・連続失敗の全停止・停止記録・監査） | **`approve` の実行前（毎回）**・**`duplicate` の実行前（毎回）**・クローズ提案前・境界判定・`NEEDS_REVISION`/未解決検知時・止まるとき（停止記録を `requirements-worker` へ委任する前） |
-| [reference/criteria/phase-skill-map.md](reference/criteria/phase-skill-map.md) | verdict / phase→skill 単一正本（起動 skill を決定的に特定） | routing の段 3（毎回） |
+| [reference/criteria/phase-skill-map.md](reference/criteria/phase-skill-map.md) | verdict / phase→skill 単一正本（起動 skill を決定的に特定） | routing の段 2（毎回） |

@@ -2,13 +2,15 @@
  * {{Name}} 一覧画面（server component・既定）。
  *
  * @screen {{Name}}List
- * @route /{{name}}s
+ * @usedActions list{{Name}}s
  * @screenshot
  * @screenshot-viewport 1280x720
  * @screenshot-auth required
  */
 // テンプレート変数: {{name}}=小文字単数形（例: post）/ {{Name}}=PascalCase 単数形（例: Post）
 // - @screen は PascalCase 必須（`shirokuma-flow nextjs lint` が検査する）。
+// - `@usedActions` には、この画面（子の client component を含む）が呼ぶ server action を並べる
+//   （`shirokuma-flow nextjs feature-map` は page ファイルだけを読む。route はファイルの位置から導く）。
 // - @screenshot 系は視覚確認が要る画面のみ（不要なら 3 行とも削除。
 //   @screenshot-auth は required|none|optional、@screenshot-waitFor <値> も指定可）。
 // - データ取得は server component で直接行い、client へは props で渡す。

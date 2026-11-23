@@ -28,8 +28,8 @@ services:
     #   /var/lib/postgresql/18/docker へ移ったため、単一マウント先は /var/lib/postgresql。
     #   17 のマウント先（/var/lib/postgresql/data）へ挿すと新規ボリュームでも起動しない
     #   （上流エントリポイントのガードで Exited (1)・docker-library/postgres#1259）。
-    #   メジャーを上げるときは image と volumes: を必ず対で見直す（17→18 で実際に動いた。19 以降がどうなるかは
-    #   測っていないので、上げる人が実物の PGDATA を確かめること）。
+    #   メジャーを上げるときは image と volumes: を必ず対で見直す（17 と 18 ではマウント先が違う。19 以降は
+    #   確かめていないので、上げる人が実物の PGDATA を確かめること）。
     #   ⚠ 既に旧マウント先（PGDATA が /var/lib/postgresql/data の版。17 で実測）で稼働している volume を、そのまま 18 の新マウント先へ当て替えても起動しない
     #     （上流ガードが「there appears to be PostgreSQL data in: /var/lib/postgresql」で Exited (1)）。
     #     データは消えないし空のクラスタも作られない——倒れる向きは fail-closed。移行は旧イメージで
@@ -58,7 +58,7 @@ services:
   app:
     build:
       context: .
-      target: dev                    # マルチステージ Dockerfile の dev ステージ（reference/patterns/dockerfile.md）
+      target: dev                    # マルチステージ Dockerfile の dev ステージ（reference/patterns/dockerfile.md「ローカル開発用の dev ステージ」）
     container_name: {project}-app
     restart: unless-stopped
     environment:
